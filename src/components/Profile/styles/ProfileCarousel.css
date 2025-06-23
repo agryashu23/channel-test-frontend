@@ -1,0 +1,58 @@
+.slick-list {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  cursor: grabbing;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  height: 400px !important;
+  object-fit: cover !important;
+}
+
+.slick-slide img {
+  height: 420px;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+}
+
+.slick-dots {
+  position: static !important; /* Ensure dots are below the image */
+  margin-top: 10px; /* Add space between image and dots */
+  display: flex !important;
+  justify-content: center;
+  flex-direction: row;
+}
+
+.slick-dots li {
+  margin: 0 4px; /* Space between dots */
+}
+
+.slick-dots li button:before {
+  font-size: 0;
+  content: "";
+  display: block;
+  height: 8px;
+  width: 8px;
+  background-color: transparent;
+  border: 1px solid var(--theme-secondaryText);
+  opacity: 1;
+  border-radius: 50%;
+}
+
+.slick-dots li.slick-active button:before {
+  background-color: var(--theme-secondaryText);
+  height: 8px;
+  margin-top: 0px;
+  width: 8px;
+  border-radius: 12px;
+}
+
+@media (max-width: 500px) {
+  .slick-list {
+    height: 300px !important;
+  }
+  .slick-slide img {
+    height: 300px !important;
+  }
+}

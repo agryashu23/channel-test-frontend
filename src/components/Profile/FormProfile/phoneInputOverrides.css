@@ -1,0 +1,82 @@
+.custom-phone-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  z-index: 40;
+  background-color: transparent;
+  border: 1px solid var(--theme-emptyEvent); /* Tailwind's border-gray-300 */
+  border-radius: 0.375rem; /* Tailwind's rounded-md */
+  padding: 0.5rem; /* Tailwind's px-4 */
+  font-family: Inter, sans-serif; /* Tailwind's font-inter */
+}
+
+.custom-phone-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding-left: 0.5rem; /* Tailwind's pl-2 */
+  background-color: transparent;
+  color: var(--theme-primaryBackground); 
+}
+
+.custom-phone-input .flag-dropdown {
+  border: none;
+  background-color: transparent;
+  padding-right: 0.5rem; /* Tailwind's pr-2 */
+}
+
+.custom-phone-input .flag-dropdown:hover {
+  cursor: pointer;
+}
+
+.react-tel-input .form-control {
+  background: transparent;
+  border: none;
+}
+
+.custom-phone-input input {
+  color: var(--theme-secondaryText);
+  font-weight: normal;
+  font-size: 14;
+}
+
+.react-tel-input .flag-dropdown.open {
+  background: transparent;
+}
+.react-tel-input .flag-dropdown.open .selected-flag {
+  background: transparent;
+}
+.react-tel-input .country-list {
+  background-color: var(--theme-tertiaryBackground);
+}
+.react-tel-input .country-list .country.highlight {
+  background-color: var(--theme-sidebarHighlight);
+}
+.flag-dropdown.open:hover {
+  background: transparent;
+}
+.custom-phone-input .flag-dropdown:hover {
+  background: transparent;
+}
+.react-tel-input:hover .flag-dropdown:hover,
+.react-tel-input .flag-dropdown:focus {
+  background: transparent;
+}
+.custom-phone-input:hover {
+  background: transparent;
+}
+.react-tel-input:hover .flag-dropdown.open:hover .selected-flag:hover {
+  background: transparent;
+}
+.react-tel-input .country-list .country-name {
+  color: var(--theme-secondaryText);
+}
+.react-tel-input .country-list .country:hover {
+  background: var(--theme-chatDivider);
+}
+.custom-phone-input .flag-dropdown:hover {
+  background: transparent;
+}
+.react-tel-input .selected-flag:hover {
+  background: transparent;
+}

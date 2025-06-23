@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter/Inter-Bold.ttf');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/Inter/Inter-Regular.ttf');
+  font-weight: 200;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Familjen Grotesk';
+  src: url('./assets/fonts/Familjen/FamiljenGrotesk-Regular.ttf') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Familjen Grotesk';
+  src: url('./assets/fonts/Familjen/FamiljenGrotesk-Medium.ttf') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ✅ src/index.css or your main CSS file */
+:root {
+  --theme-primaryBackground: #e8e8e8;
+  --theme-secondaryBackground: #ffffff;
+  --theme-tertiaryBackground: #f6f6f6;
+   --theme-sidebarHighlight: #eaeaea;
+  --theme-sidebarBackground: #f7f7f7;
+  --theme-chatBackground: #ffffff;
+  --theme-primaryText: #32302c;
+  --theme-secondaryText: #1d1b16;
+  --theme-chatDivider: #edecea;
+  --theme-sidebarDivider: #dedede;
+  --theme-modalBorder: #e1e1e1;
+  --theme-calendarMarkings: #1d1b16;
+  --theme-onboardBackground: #d9d9d9;
+  --theme-emptyEvent: #898989;
+  --theme-footerBackground: #101010;
+  --theme-buttonDisable: #dddddd;
+  --theme-buttonDisableText: #7b7b7b;
+  --theme-buttonEnable: #1e68ea;
+  --theme-error: #f2b8b5;
+  --theme-welcomeColor: #f6f6f6;
+  --theme-welcomeProfile: #efefef;
+  --theme-sidebarColor: #ff8c4e;
+  --theme-placeholder: #91918e;
+  --theme-subtitle: #32302c;
+  --theme-dropdown: #dfdfdf;
+  --theme-description: #91918e;
+  --theme-profileColor: #dfdfdf;
+  --theme-homeToggle: #ffffff;
+  --theme-chips_home: #ffa676;
+  --theme-pricingBackground: #303030;
+}
+
+.dark {
+  --theme-primaryBackground: #202020;
+  --theme-secondaryBackground: #252525;
+  --theme-sidebarBackground: #202020;
+  --theme-tertiaryBackground: #2c2c2c;
+  --theme-chatBackground: #5a5a5a;
+  --theme-primaryText: #c4c4c4;
+  --theme-secondaryText: #e4e4e4;
+  --theme-chatDivider: #3c3c3c;
+  --theme-sidebarDivider: #2c2c2c;
+  --theme-sidebarHighlight: #2c2c2c;
+  --theme-modalBorder: #333333;
+  --theme-calendarMarkings: #cac4d0;
+  --theme-onboardBackground: #d9d9d9;
+  --theme-emptyEvent: #898989;
+  --theme-footerBackground: #101010;
+  --theme-buttonDisable: #3F3F3F;
+  --theme-buttonDisableText: #c4c4c4;
+  --theme-buttonEnable: #1e69ea;
+  --theme-error: #f2b8b5;
+  --theme-welcomeColor: #363636;
+  --theme-welcomeProfile: #3c3c3c;
+  --theme-sidebarColor: #ff8c4e;
+  --theme-placeholder: #969696;
+  --theme-subtitle: #a3a3a3;
+  --theme-dropdown: #28262b;
+  --theme-description: #bbbbbb;
+  --theme-profileColor: #7b7b7c;
+  --theme-homeToggle: #32302c;
+  --theme-chips_home: #ffa676;
+  --theme-pricingBackground: #303030;
+}
+
+
+
+* {
+  margin: 0;
+  font-family: 'Inter';
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body ,#root{
+  height: 100%;
+  min-height: 100%;
+  overscroll-behavior: none; /* or auto */
+}
+
+.slick-list {
+  height: 260px;
+}
+
+/* html,
+body {
+  height: 100%;
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Inter';
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+} */
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

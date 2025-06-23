@@ -1,0 +1,47 @@
+export class ChannelImages{
+    static HomeBackground = require("../../assets/images/home_background.svg");
+    static CommunityPage = require("../../assets/channel_images/community_page.png");
+    static HomeImage = require("../../assets/channel_images/home_image.png");
+    static PricingImage = require("../../assets/icons/pricing_card.svg");
+    static CLogo = require("../../assets/icons/logo.svg");
+    static DarkLogo = require("../../assets/lightIcons/logo_light.svg");
+    static ArrowUp = require("../../assets/icons/up-arrow.svg");
+    static Add = require("../../assets/icons/add_btn.svg");
+    static CreateChannel = require("../../assets/lightIcons/create_channel_light.svg");
+    static ArrowDown = require("../../assets/icons/arrow_drop_down.svg");
+    static ArrowDownLight = require("../../assets/lightIcons/arrow_drop_down_light.svg");
+    static ArrowUpLight = require("../../assets/lightIcons/arrow_drop_up_light.svg");
+    static Close = require("../../assets/icons/Close.svg");
+    static Profile = require("../../assets/icons/profile.svg");
+    static ColorProfile = require("../../assets/images/color_profile.svg");
+    static Upload = require("../../assets/icons/Upload.svg");
+    static UploadLight = require("../../assets/lightIcons/upload_light.svg");
+    static Unsplash = require("../../assets/icons/Unsplash.svg");
+    static UnsplashLight = require("../../assets/lightIcons/unsplash_light.svg");
+    static DragDrop = require("../../assets/icons/dragdrop.png");
+    static ArrowForward = require("../../assets/icons/arrow_forward_dark.svg");
+    static ArrowBack = require("../../assets/icons/arrow_back.svg");
+    static ArrowBackLight = require("../../assets/lightIcons/arrow_back_light.svg");
+    static ProfileIcon = require("../../assets/icons/profile.svg");
+    static AddIcon = require("../../assets/icons/addIcon.svg");
+    static AddIconLight = require("../../assets/lightIcons/add_light.svg");
+    static ChipIcon = require("../../assets/icons/chip_icon.svg");
+    static CurationIcon = require("../../assets/icons/curation_icon.svg");
+    static CurationIconLight = require("../../assets/lightIcons/curation_light.svg");
+    static ChipIconLight = require("../../assets/lightIcons/chip_icon_light.png");
+    static Edit = require("../../assets/icons/Edit.svg");
+    static Delete = require("../../assets/icons/Delete.svg");
+    static EditLight = require("../../assets/lightIcons/edit_light.svg");
+    static DeleteLight = require("../../assets/lightIcons/delete_light.svg");
+    static CategoryIcon = require("../../assets/icons/category.svg");
+    static CategoryIconLight = require("../../assets/lightIcons/category_light.svg");
+    static DropDown = require("../../assets/icons/arrow_drop_down.svg");
+    static DropUp = require("../../assets/icons/arrow_drop_up.svg");
+    static FAQCover = require("../../assets/images/Faq_empty_state.svg");
+    static CreateNewLight = require("../../assets/lightIcons/create_new_light.svg");
+    static Dots = require("../../assets/icons/three_dots.svg");
+    static DotsLight = require("../../assets/lightIcons/faqs_dots_light.svg");
+    static ShareIcon = require("../../assets/icons/share_icon.svg");
+    static ShareIconLight = require("../../assets/lightIcons/share_icon_light.svg");
+ 
+}
