@@ -12,6 +12,7 @@ import documentImage from "../../../assets/images/Attachment.svg";
 import { FaPlay } from "react-icons/fa";
 
 import useModal from "./../../hooks/ModalHook";
+import Loading from "../../../widgets/Loading";
 
 const ResourcePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,11 +23,15 @@ const ResourcePage = () => {
   const [resourceChats, setResourceChats] = useState([]);
   const myData = useSelector((state) => state.myData);
   const Chats = useSelector((state) => state.chat.resourceChats);
+  const loading  = useSelector((state) => state.chat.resourceLoading);
   const dispatch = useDispatch();
   const [hoveredMedia, setHoveredMedia] = useState({
     mediaId: null,
     mediaIndex: null,
   });
+
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const [showMediaMenu, setShowMediaMenu] = useState(false);
   const [filterItems, setFilterItems] = useState([]);
 
@@ -57,8 +62,10 @@ const ResourcePage = () => {
   };
 
   useEffect(() => {
-    dispatch(fetchResourceChats(topicId));
-  }, [topicId]);
+    if(myUserId){
+      dispatch(fetchResourceChats(topicId));
+    }
+  }, [topicId,myUserId]);
 
   // const handleRefilterChats = () => {
   //   const resourceChat = resourceChats.filter((chat) =>
@@ -123,7 +130,7 @@ const ResourcePage = () => {
         setResourceChats(updatedResourceChats);
       })
       .catch((error) => {
-        console.error("Issue in pushing to resources. Please try again.");
+        console.error(error);
       });
   };
 
@@ -203,7 +210,9 @@ const ResourcePage = () => {
         />
       </div>
 
-      {resourceChats.length === 0 ? (
+      {
+        loading ? <div className="mt-4 flex justify-center items-center"><Loading text="Loading Resources..." /></div> :
+      resourceChats.length === 0 ? (
         <div className="text-theme-primaryText mt-20 text-center font-light text-sm">
           No Resources found...
         </div>
@@ -232,16 +241,16 @@ const ResourcePage = () => {
                         {new Date(chat.createdAt).toLocaleString()}
                       </div>
                       {media.type === "image" ? (
-                        <div className="relative h-40">
+                        <div className="relative h-36">
                           <img
                             src={media.url}
                             alt={media.name}
-                            className="h-36 rounded-md object-cover w-auto max-w-52 flex-shrink-0"
+                            className="h-36 rounded-md object-cover w-full flex-shrink-0"
                             loading="lazy"
                           />
                         </div>
                       ) : media.type === "video" ? (
-                        <div className="relative h-36 max-w-52">
+                        <div className="relative h-36 max-w-56">
                           {activeVideoId === media._id ? (
                             <video
                               controls
@@ -294,7 +303,7 @@ const ResourcePage = () => {
                             className={`absolute ${
                               media.type === "document"
                                 ? "top-4 right-1"
-                                : "top-3 right-5"
+                                : "top-3 right-1"
                             }  cursor-pointer`}
                             onClick={() => handleShowMediaMenu(chat._id, index)}
                           >

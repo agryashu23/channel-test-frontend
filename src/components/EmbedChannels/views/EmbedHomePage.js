@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { postRequestUnAuthenticated } from "./../../../services/rest";
 import { fetchMyData, clearMyData } from "../../../redux/slices/myDataSlice";
@@ -12,17 +12,22 @@ import {
 import { setEmbedItem } from "../embedSlices/embedHomeSlice";
 import Modals from "./../../../utils/modals";
 import EmbedHeaderPage from "./EmbedHeaderPage";
+import { fetchBusinessCredentials } from "../../../redux/slices/businessSlice";
 
 const EmbedHomePage = () => {
   const [loading, setLoading] = useState(false);
   const [embedLoadTimeout, setEmbedLoadTimeout] = useState(false);
   const [readyToRender, setReadyToRender] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const business = useSelector((state) => state.business);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
   const embedDataReceivedRef = useRef(false);
+  const {username} = useParams();
+
+
 
   const fetchData = async () => {
     try {

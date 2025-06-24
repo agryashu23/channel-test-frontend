@@ -10,7 +10,7 @@ import AddIcon from "../../../assets/icons/addIcon.svg";
 import AddIconLight from "../../../assets/lightIcons/add_light.svg";
 import useModal from "./../../hooks/ModalHook";
 import { useParams } from "react-router-dom";
-import { fetchEventChats } from "../../../redux/slices/chatSlice";
+import { fetchTopicEvents } from "../../../redux/slices/eventItemsSlice";
 
 const EventsPage = () => {
   const today = new Date();
@@ -23,7 +23,8 @@ const EventsPage = () => {
   const [selectedDate, setSelectedDate] = useState(today);
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
-  const Chats = useSelector((state) => state.chat.eventChats);
+  const EventItems = useSelector((state) => state.eventItems);
+  const Events = EventItems.events;
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownContainerRef = useRef(null);
   const months = Array.from({ length: 12 }, (v, i) =>
@@ -36,26 +37,23 @@ const EventsPage = () => {
   );
 
   useEffect(() => {
-    dispatch(fetchEventChats(topicId));
+    dispatch(fetchTopicEvents(topicId));
   }, []);
 
   const getDaysArray = (year, month) => {
-    const monthIndex = month;
-    const date = new Date(year, monthIndex, 1);
+    const date = new Date(year, month, 1);
     const result = [];
-    const firstDayOffset = date.getDay();
-
+    const firstDayOffset = (date.getDay() + 6) % 7;
     for (let i = 0; i < firstDayOffset; i++) {
       result.push(null);
     }
-
-    while (date.getMonth() === monthIndex) {
-      result.push(new Date(date)); // store each date
+    while (date.getMonth() === month) {
+      result.push(new Date(date));
       date.setDate(date.getDate() + 1);
     }
     return result;
   };
-
+  
   const days = getDaysArray(currentDate.getFullYear(), currentDate.getMonth());
 
   const handleMonthChange = (month) => {
@@ -135,16 +133,15 @@ const EventsPage = () => {
     };
   }, []);
 
-  const upcomingEvents = Chats.filter(
-    (chat) =>
-      chat.event &&
-      new Date(chat.event.startDate) >= new Date(today.toDateString())
+  const upcomingEvents = Events.filter(
+    (event) =>
+      new Date(event.startDate) >= new Date(today.toDateString())
   );
 
-  const eventsForSelectedDate = Chats.filter(
-    (chat) =>
-      chat.event &&
-      new Date(chat.event.startDate).toDateString() ===
+  const eventsForSelectedDate = Events.filter(
+    (event) =>
+      
+      new Date(event.startDate).toDateString() ===
         selectedDate.toDateString()
   );
 
@@ -233,9 +230,10 @@ const EventsPage = () => {
 
               {monthDropdownOpen && (
                 <div className="absolute z-10 max-h-90 overflow-y-auto custom-scrollbar bg-theme-tertiaryBackground border border-theme-chatBackground rounded-lg shadow-lg">
-                  {months.map((month) => (
+                  {months.map((month, index) => (
                     <div
                       className="p-2 text-left text-sm text-theme-secondaryText hover:bg-chatBackground"
+                      key={`${month}-${index}`}
                       onClick={() => handleMonthChange(month)}
                     >
                       {month}
@@ -268,9 +266,11 @@ const EventsPage = () => {
               </div>
 
               {yearDropdownOpen && (
-                <div className="absolute z-10 max-h-90 overflow-y-auto custom-scrollbar bg-theme-tertiaryBackground border border-theme-chatBackground rounded-lg shadow-lg">
-                  {years.map((year) => (
+                <div className="absolute z-10 max-h-90 overflow-y-auto custom-scrollbar left-6 
+                bg-theme-tertiaryBackground border border-theme-chatBackground rounded-lg shadow-lg">
+                  {years.map((year, index) => (
                     <div
+                    key={`${year}-${index}`}
                       className="p-2 text-left text-sm text-theme-secondaryText hover:bg-chatBackground"
                       onClick={() => handleYearChange(year.toString())}
                     >
@@ -282,48 +282,36 @@ const EventsPage = () => {
             </div>
           </div>
           <div className="grid grid-cols-7 ml-2 space-x-1">
-            {["M", "T", "W", "T", "F", "S", "S"].map((day) => (
-              <div className="text-theme-primaryText  font-light text-[10px]">
+            {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
+              <div className="text-theme-primaryText  font-light text-[10px]" key={`${day}-${index}`}>
                 {day}
               </div>
             ))}
           </div>
           <div className="grid grid-cols-7 gap-1 mt-3  ">
-            {Array.from({
-              length:
-                new Date(
-                  currentDate.getFullYear(),
-                  currentDate.getMonth(),
-                  1
-                ).getDay() - 1,
-            }).map((_, index) => (
-              <div key={`empty-${index}`} className="h-6 w-6"></div>
+          {days.map((day, index) => (
+              <div
+                key={`${index}`}
+                className={`text-center rounded-full h-6 w-6 text-sm font-light cursor-pointer ${
+                  day &&
+                  selectedDate.toDateString() === day.toDateString()
+                    ? "bg-theme-secondaryText text-theme-primaryBackground p-0.5"
+                    : "text-theme-primaryText"
+                }`}
+                onClick={() => day && setSelectedDate(day)}
+              >
+                {day ? (day.getDate() <= 9 ? "0" + day.getDate() : day.getDate()) : ""}
+              </div>
             ))}
-            {days.map(
-              (day, index) =>
-                day && (
-                  <div
-                    className={`text-center rounded-full h-6 w-6 text-sm font-light cursor-pointer ${
-                      selectedDate.toDateString() === day.toDateString()
-                        ? "bg-theme-secondaryText text-theme-primaryBackground p-0.5"
-                        : "text-theme-primaryText"
-                    }`}
-                    onClick={() => setSelectedDate(day)}
-                  >
-                    {day.getDate() <= "9" ? "0" + day.getDate() : day.getDate()}
-                  </div>
-                )
-            )}
           </div>
 
           {eventsForSelectedDate.length > 0 ? (
-            eventsForSelectedDate.map((chat) => (
-              <div key={chat._id} className="w-full my-3 ">
+            eventsForSelectedDate.map((event, index) => (
+              <div key={`${index}-${event._id}`} className="w-full my-3 ">
                 <EventCard
                   width="w-full"
                   imageHeight="h-32"
-                  chatId={chat._id}
-                  event={chat.event}
+                  event={event}
                   color="bg-theme-[#353535]"
                   openDropdownId={openDropdownId}
                   handleToggleDropdown={handleToggleDropdown}
@@ -348,17 +336,17 @@ const EventsPage = () => {
       {selectedTab === "All upcoming events" && (
         <div className="mt-4">
           {upcomingEvents.length > 0 ? (
-            upcomingEvents.map((chat, index) => (
-              <div key={`${chat._id}-${index}`} className="w-full my-3">
+            upcomingEvents.map((event, index) => (
+              <div key={`${event._id}-${index}`} className="w-full my-3">
                 <EventCard
                   width="w-full"
                   imageHeight="h-32"
-                  chatId={chat._id}
-                  event={chat.event}
+                  event={event}
                   color="bg-theme-[#353535]"
                   openDropdownId={openDropdownId}
                   handleToggleDropdown={handleToggleDropdown}
                   btnPadding="px-1"
+                  btnFlex="flex-col"
                   spacing="space-x-2"
                   topSpacing="mt-3"
                 />

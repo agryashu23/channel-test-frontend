@@ -8,7 +8,7 @@ import { AddToCalendarButton } from "add-to-calendar-button-react";
 import ReactDOM from "react-dom";
 import Test from "../../../assets/images/test.png";
 import MapPin from "../../../assets/icons/map-pin.svg";
-import { joinEvent } from "../../../redux/slices/eventSlice";
+import { joinEvent } from "../../../redux/slices/eventItemsSlice";
 
 import {
   deleteChip,

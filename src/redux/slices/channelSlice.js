@@ -140,8 +140,11 @@ const initialState = {
   _id: "",
   name: "",
   visibility: "anyone",
+  business:"",
   editability: "me",
   members: [],
+  paywall:false,
+  paywallPrice:"",
   cover_image: null,
   admins: [],
   topics: [],
@@ -270,9 +273,9 @@ export const channelSlice = createSlice({
       .addCase(removeMember.fulfilled, (state, action) => {
         state.status = "idle";
         const removeData = action.payload;
-        if (state._id === removeData.channelId) {
+        if (state._id === removeData.channel) {
           let memberIndex = state.members.findIndex(
-            (member) => member === removeData.userId
+            (member) => member === removeData.user
           );
           if (memberIndex !== -1) {
             state.members.splice(memberIndex, 1);

@@ -13,12 +13,12 @@ import {
 const PageForm = ({ isOpen, onClose, topic }) => {
   const modalRef = useRef(null);
   const [activeTab, setActiveTab] = useState("resources");
-  const [forceOpen, setForceOpen] = useState(window.innerWidth >= 1170);
+  const [forceOpen, setForceOpen] = useState(window.innerWidth >= 1150);
   const myData = useSelector((state) => state.myData);
 
   useEffect(() => {
     const handleResize = () => {
-      setForceOpen(window.innerWidth >= 1170);
+      setForceOpen(window.innerWidth >= 1150);
     };
 
     window.addEventListener("resize", handleResize);

@@ -286,7 +286,6 @@ const DMChatData = ({ receiver, sender, onNewMessageSent }) => {
     </a>
   );
 
-  const isOwner = username === myData?.username;
 
   if (loading) {
     return <TopicChatSkeleton />;
@@ -524,7 +523,7 @@ const DMChatData = ({ receiver, sender, onNewMessageSent }) => {
                     <Linkify componentDecorator={componentDecorator}>
                       <p
                         className={`text-theme-secondaryText text-sm font-light my-1 
-      whitespace-pre-wrap break-words break-all w-full max-w-full`}
+      whitespace-pre-wrap break-words w-full max-w-full`}
                       >
                         {chat.content}
                       </p>

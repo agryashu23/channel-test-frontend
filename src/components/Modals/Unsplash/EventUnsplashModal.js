@@ -89,7 +89,7 @@ const EventUnsplashModal = () => {
         />
         <div className="fixed z-50 inset-0 flex items-center justify-center">
           <Dialog.Content
-            className="bg-theme-tertiaryBackground rounded-xl overflow-hidden shadow-xl transform transition-all w-3/4 h-3/4 lg:w-1/3 sm:w-1/2 pt-5 pl-5 flex flex-col"
+            className="bg-theme-tertiaryBackground rounded-xl overflow-hidden shadow-xl transform transition-all w-[85%] h-3/4 lg:w-2/5 sm:w-1/2 pt-5 pl-5 pr-3 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <Dialog.Title />

@@ -10,6 +10,7 @@ import TopicHomeSkeleton from "./../skeleton/Topic/TopicHomeSkeleton";
 import InviteTopicPage from "./../Channel/InviteTopicPage";
 import { connectSocketWithUser } from "../../utils/socket";
 import { getAppPrefix } from "./../EmbedChannels/utility/embedHelper";
+import { fetchBusinessCredentials } from "../../redux/slices/businessSlice";
 
 import {
   React,
@@ -25,17 +26,13 @@ import {
 
 const PageHome = () => {
   const { channelId, topicId } = useParams();
-
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const dispatch = useDispatch();
   const topic = useSelector((state) => state.topic);
   const topicStatus = useSelector((state) => state.topic.topicstatus);
-  const channel = useSelector((state) => state.channel);
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  // const [loading, setLoading] = useState(true);
   const galleryUsername = useSelector((state) => state.galleryData.username);
-  const channelLoading = useSelector((state) => state.channel.loading);
   const location = useLocation();
   const fromGallery = location.state?.fromGallery;
   const params = useParams();
@@ -43,41 +40,51 @@ const PageHome = () => {
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get("code");
   const navigate = useNavigate();
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
+  const business = useSelector((state) => state.business);
+
+  useEffect(() => {
+    if (isLoggedIn && username) {
+      if(!business.business?._id){
+        dispatch(fetchBusinessCredentials(username));
+      }
+    }
+  }, [isLoggedIn,username]);
+
+  useEffect(() => {
+    dispatch(fetchTopic(topicId));
+  }, [topicId, channelId]);
+
+  useEffect(() => {
+    if (isLoggedIn && myUserId) {
+      connectSocketWithUser(myUserId);
+    }
+  }, [isLoggedIn, myUserId]);
+
+  
+
   const toggleBottomSheet = () => {
     setIsBottomSheetOpen(!isBottomSheetOpen);
   };
   const closeBottomSheet = () => setIsBottomSheetOpen(false);
-  useEffect(() => {
-    dispatch(fetchTopic(topicId));
-    dispatch(fetchChannel(channelId));
-    // dispatch(fetchTopicSubscription(topicId));
-  }, [topicId, channelId, dispatch]);
 
   useEffect(() => {
-    if (isLoggedIn && myData?._id) {
-      connectSocketWithUser(myData._id);
-    }
-  }, [isLoggedIn, myData?._id]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isLoggedIn) {
+    if (!isLoggedIn && !myUserId) {
+      const timeout = setTimeout(() => {
         navigate(
           `${getAppPrefix()}/get-started?redirect=${getAppPrefix()}/account/${username}/channel/${channelId}/c-id/topic/${topicId}`
         );
-      }
-    }, 200);
+      }, 500); 
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoggedIn, username, channelId, topicId, myUserId, navigate]);
 
-    return () => clearTimeout(timer);
-  }, [isLoggedIn, navigate, username, channelId, topicId]);
+  const loading = topicStatus === "loading";
 
-  const loading = topicStatus === "loading" || channelLoading;
-  const isChannelMember = channel?.members?.includes(myData?._id);
-  const isTopicOwner = topic.user === myData._id;
-  const isUnauthorized =
-    (!isChannelMember && !isTopicOwner) ||
-    (channel.visibility === "me" && !isTopicOwner) ||
-    (channel.visibility === "invite" && !isTopicOwner);
+  const isMember = topic?.members?.find(member=>member.user.toString()===myUserId.toString() && member.status==="joined");
+  const isRequested = topic?.members?.find(member=>member.user.toString()===myUserId.toString() && member.status==="request");
+  const isTopicOwner = topic?.user._id ===myUserId;
 
   if (inviteCode) {
     dispatch(setTopicField({ field: "loadingStatus", value: "idle" }));
@@ -91,14 +98,30 @@ const PageHome = () => {
     );
   }
 
-  if (loading) {
+  if (loading || !topic || !topic._id) {
     return <TopicHomeSkeleton />;
   }
 
-  if (isLoggedIn && isUnauthorized && myData._id) {
+  if (isLoggedIn &&  myUserId && !isTopicOwner && !isMember && isRequested) {
     return (
       <div className="w-full h-screen bg-theme-secondaryBackground text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
-        <p>You don't have authorization to this topic</p>
+        <p>You have already requested to join this topic. Waiting for approval...</p>
+        <div
+          className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
+         bg-theme-secondaryText py-2 px-3 text-theme-primaryBackground w-max"
+          onClick={() =>
+            navigate(`${getAppPrefix()}/account/${username}/channel/${channelId}`)
+          }
+        >
+          Return to Channel Page
+        </div>
+      </div>
+    );
+  }
+  if (isLoggedIn &&  myUserId && !isTopicOwner &&  !isMember && !isRequested) {
+    return (
+      <div className="w-full h-screen bg-theme-secondaryBackground text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
+        <p>You have not joined this topic. Please join the Topic from Channel Page.</p>
         <div
           className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
          bg-theme-secondaryText py-2 px-3 text-theme-primaryBackground w-max"
@@ -115,24 +138,13 @@ const PageHome = () => {
   return (
     <div className="w-full h-full bg-theme-secondaryBackground flex flex-row ">
       <div className="flex-1 overflow-hidden">
-        {/* <PageHeader
-          channelName={channelName}
-          topic={topic}
-          // toggleSidebar={toggleSidebar}
-          toggleBottomSheet={toggleBottomSheet}
-          isOpen={isBottomSheetOpen} 
-          username={username}
-          channelId={channelId}
-          // isSidebarOpen={isSidebarOpen}
-        /> */}
         <PageChat
           topicId={topicId}
           topic={topic}
           channelId={channelId}
           isLoggedIn={isLoggedIn}
           myData={myData}
-          channel={channel}
-          channelName={channel.name}
+          channelName={topic.channel.name}
           toggleBottomSheet={toggleBottomSheet}
           isOpen={isBottomSheetOpen}
           username={username}
@@ -144,7 +156,7 @@ const PageHome = () => {
           isOpen={isBottomSheetOpen}
           onClose={closeBottomSheet}
           topic={topic}
-          channel={channel}
+          channel={topic.channel}
         />
       </div>
     </div>

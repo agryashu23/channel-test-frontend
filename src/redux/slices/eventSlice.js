@@ -57,23 +57,7 @@ export const deleteChatEvent = createAsyncThunk(
     }
   }
 );
-export const joinEvent = createAsyncThunk(
-  "event/joinEvent",
-  async (eventId, { rejectWithValue }) => {
-    try {
-      const response = await postRequestAuthenticated("/join/event", {
-        eventId,
-      });
-      if (response.success) {
-        return response.event;
-      } else {
-        return rejectWithValue(response.message);
-      }
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+
 
 const initialState = {
   name: "",

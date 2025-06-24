@@ -96,10 +96,10 @@ const TopicsTab = ({ channelId, isOwner }) => {
 
   if (status === "loading") {
     return (
-      <div className="text-theme-secondaryText text-center mt-12 justify-center items-center">
+      <div className="text-theme-secondaryText text-center flex mt-12 justify-center items-center">
         <Loading text="Loading topics..."/>
       </div>
-    );
+    ); 
   }
 
   const handleEditModal = (topic) => {

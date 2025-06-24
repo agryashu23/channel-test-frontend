@@ -4,12 +4,15 @@ import {
   postRequestAuthenticated,
 } from "./../../services/rest";
 
-export const fetchbusinessCredentials = createAsyncThunk(
+export const fetchBusinessCredentials = createAsyncThunk(
   "business/fetchcredentials",
-  async (_, { rejectWithValue }) => {
+  async (username, { rejectWithValue }) => {
     try {
-      const response = await postRequestAuthenticated(
-        `/fetch/business/credentials`
+      const response = await postRequestUnAuthenticated(
+        `/fetch/business/credentials`,
+        {
+          username: username,
+        }
       );
       if (response.success) {
         return response.business;
@@ -124,15 +127,15 @@ const businessSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchbusinessCredentials.pending, (state) => {
+      .addCase(fetchBusinessCredentials.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchbusinessCredentials.fulfilled, (state, action) => {
+      .addCase(fetchBusinessCredentials.fulfilled, (state, action) => {
         state.loading = false;
         state.business = action.payload;
       })
-      .addCase(fetchbusinessCredentials.rejected, (state, action) => {
+      .addCase(fetchBusinessCredentials.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

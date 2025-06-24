@@ -7,9 +7,6 @@ import {
 } from "./../../services/rest";
 import { postRequestUnAuthenticated } from "./../../services/rest";
 import {
-  createChatEvent,
-  joinEvent,
-  deleteChatEvent,
   editChatEvent,
 } from "./eventSlice";
 

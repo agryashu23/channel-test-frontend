@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import Menu from "../../assets/icons/menu.svg";
 import UserSidebar from "./../Sidebar/UserSidebar";
+import { fetchBusinessCredentials } from "../../redux/slices/businessSlice";
+import { useSelector ,useDispatch} from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const Landing = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const business = useSelector((state) => state.business);
+  const auth = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   const closeSidebar = () => setIsSidebarOpen(false);
+  const {username} = useParams();
 
-  // useEffect(() => {
-  //   const decodedPageName = decodeURIComponent(pageName || "");
-  //   const channelIndex = channels.findIndex(
-  //     (channel) => channel.name === channelName
-  //   );
-  //   const pageIndex =
-  //     channelIndex !== -1
-  //       ? channels[channelIndex].pages.findIndex(
-  //           (page) => page === decodedPageName
-  //         )
-  //       : -1;
-  //   setExpandedChannels((prev) =>
-  //     prev.map((_, i) => (i === channelIndex ? true : prev[i]))
-  //   );
-  //   setSelectedPages({ [channelIndex]: pageIndex });
-  // }, [channelName, pageName]);
+ 
+
   useEffect(() => {
     const isMobile = window.innerWidth < 640;
     if (isSidebarOpen && isMobile) {

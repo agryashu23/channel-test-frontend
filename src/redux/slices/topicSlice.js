@@ -101,18 +101,24 @@ export const visitTopic = createAsyncThunk(
 // );
 
 const initialState = {
+  _id:"",
   name: "",
-  user: "",
+  user: {},
   visibility: "anyone",
   channel: {},
   editability: "me",
-  allowedVisibleUsers: [],
-  allowedEditUsers: [],
-  _id: "",
   topicstatus: "idle",
+  members:[],
+  paywall:false,
+  paywallPrice:"",
+  whatsappEnabled:false,
+  summaryEnabled:false,
+  summaryType:"",
+  summaryTime:"",
   topicNameError: false,
   loading: false,
   code: "",
+  business:""
 };
 
 export const topicSlice = createSlice({
@@ -131,8 +137,15 @@ export const topicSlice = createSlice({
       state._id = "";
       state.topicstatus = "idle";
       state.topicNameError = false;
-      state.allowedVisibleUsers = [];
-      state.allowedEditUsers = [];
+      state.members = [];
+      state.paywall = false;
+      state.user={};
+      state.paywallPrice = "";
+      state.whatsappEnabled = false;
+      state.summaryEnabled = false;
+      state.summaryType = "";
+      state.summaryTime = "";
+      state.business = "";
     },
   },
   extraReducers: (builder) => {
@@ -143,18 +156,7 @@ export const topicSlice = createSlice({
       .addCase(fetchTopic.fulfilled, (state, action) => {
         Object.assign(state, initialState, action.payload);
         state.topicstatus = "idle";
-        state.channel = action.payload.channel;
       })
-
-      // .addCase(fetchTopicSubscription.fulfilled, (state, action) => {
-      //   if ("subscription" in action.payload) {
-      //     state.payment_subscription = action.payload.subscription;
-      //   }
-      //   if ("plan" in action.payload) {
-      //     state.payment_plan = action.payload.plan;
-      //   }
-      // })
-
       .addCase(updateTopic.fulfilled, (state, action) => {
         Object.assign(state, initialState, action.payload);
         state.topicstatus = "idle";

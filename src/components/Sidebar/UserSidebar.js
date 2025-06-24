@@ -70,19 +70,21 @@ const UserSidebar = ({ closeSidebar }) => {
   };
 
   useEffect(() => {
-    if ((!userChannels || userChannels.length === 0) && fetchedChannelsOnce===false) {
+    if (!fetchedChannelsOnce) {
       dispatch(fetchMyChannels());
     }
-  }, []);
+  }, [fetchedChannelsOnce]);
+  
+
 
   useEffect(() => {
-    const initialExpandedState = {};
-    if(userChannels.length>0){
+    if (userChannels.length > 0 && channelId) {
+      const initialExpandedState = {};
       userChannels.forEach((channel) => {
         initialExpandedState[channel._id] = channel._id === channelId;
       });
+      setExpandedChannels(initialExpandedState);
     }
-    setExpandedChannels(initialExpandedState);
   }, [userChannels, channelId]);
   
   

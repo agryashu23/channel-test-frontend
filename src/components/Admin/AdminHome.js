@@ -12,7 +12,7 @@ import Menu from "../../assets/icons/menu.svg";
 import ArrowBack from "../../assets/icons/arrow_back.svg";
 import APITab from "./Tabs/APITab";
 import SettingsTab from "./Tabs/SettingsTab";
-import { fetchbusinessCredentials } from "./../../redux/slices/businessSlice";
+import { fetchBusinessCredentials } from "./../../redux/slices/businessSlice";
 import RequestTab from "./Tabs/RequestTab";
 
 const AdminHome = () => {
@@ -43,7 +43,7 @@ const AdminHome = () => {
   }, []);
 
   useEffect(() => {
-    dispatch(fetchbusinessCredentials());
+    dispatch(fetchBusinessCredentials());
   }, [dispatch]);
 
   useEffect(() => {

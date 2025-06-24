@@ -26,13 +26,13 @@ export const fetchTopics = createAsyncThunk(
   }
 );
 
-export const fetchOtherTopics = createAsyncThunk(
-  "topic/fetch-other-topics",
-  async (data, { rejectWithValue }) => {
+export const fetchMyTopics = createAsyncThunk(
+  "topic/fetch-my-topics",
+  async (channelId, { rejectWithValue }) => {
     try {
       const response = await postRequestAuthenticated(
-        "/fetch/other/topics",
-        data
+        "/fetch/my/channel/topics",
+       {channelId}
       );
       if (response.success) {
         return response.topics;
@@ -44,7 +44,7 @@ export const fetchOtherTopics = createAsyncThunk(
     }
   }
 );
-export const fetchMembers = createAsyncThunk(
+export const fetchChannelMembers = createAsyncThunk(
   "reorderTopics/fetchChannelMembers",
   async (channelId, { rejectWithValue }) => {
     try {
@@ -72,8 +72,9 @@ export const removeMember = createAsyncThunk(
         "/remove/channel/member",
         data
       );
+      console.log(response);
       if (response.success) {
-        return response.member;
+        return response.membership;
       } else {
         return rejectWithValue(response.message);
       }
@@ -148,12 +149,13 @@ const initialState = {
   topics: [],
   members: [],
   topicMembers:[],
+  channelMembers:[],
   removeChannelId: "",
   removeUser: {},
   status: "idle",
   memberStatus: "idle",
   error: false,
-  otherTopics: [],
+  myTopics:[],
   reorderStatus: "idle",
 };
 
@@ -183,19 +185,23 @@ export const reorderTopicSlice = createSlice({
         state.status = "idle";
         state.topics = action.payload;
       })
-      .addCase(fetchOtherTopics.pending, (state) => {
+      .addCase(fetchMyTopics.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(fetchOtherTopics.fulfilled, (state, action) => {
+      .addCase(fetchMyTopics.rejected, (state, action) => {
         state.status = "idle";
-        state.otherTopics = action.payload;
+        state.error = action.payload;
       })
-      .addCase(fetchMembers.pending, (state) => {
+      .addCase(fetchMyTopics.fulfilled, (state, action) => {
+        state.status = "idle";
+        state.myTopics = action.payload;
+      })
+      .addCase(fetchChannelMembers.pending, (state) => {
         state.memberStatus = "loading";
       })
-      .addCase(fetchMembers.fulfilled, (state, action) => {
+      .addCase(fetchChannelMembers.fulfilled, (state, action) => {
         state.memberStatus = "idle";
-        state.members = action.payload;
+        state.channelMembers = action.payload;
       })
       .addCase(removeMember.pending, (state) => {
         state.status = "loading";
@@ -203,11 +209,11 @@ export const reorderTopicSlice = createSlice({
       .addCase(removeMember.fulfilled, (state, action) => {
         state.status = "idle";
         const removeData = action.payload;
-        let memberIndex = state.members.findIndex(
-          (member) => member._id === removeData.userId
+        let memberIndex = state.channelMembers.findIndex(
+          (member) => member._id === removeData._id
         );
         if (memberIndex !== -1) {
-          state.members.splice(memberIndex, 1);
+          state.channelMembers.splice(memberIndex, 1);
         }
       })
       .addCase(createTopic.fulfilled, (state, action) => {

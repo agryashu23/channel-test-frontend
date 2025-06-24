@@ -8,7 +8,6 @@ import {
 import { postRequestUnAuthenticated } from "./../../services/rest";
 import {
   createChatEvent,
-  joinEvent,
   deleteChatEvent,
   editChatEvent,
 } from "./eventSlice";
@@ -17,7 +16,7 @@ export const fetchTopicChats = createAsyncThunk(
   "channelChat/fetchChats",
   async ({ topicId, limit = 15, skip = 0 }, { rejectWithValue }) => {
     try {
-      const response = await postRequestUnAuthenticated("/fetch/topic/chats", {
+      const response = await postRequestAuthenticated("/fetch/topic/chats", {
         topicId,
         limit,
         skip,
@@ -58,7 +57,7 @@ export const fetchResourceChats = createAsyncThunk(
   "channelChat/fetchResourceChats",
   async (topicId, { rejectWithValue }) => {
     try {
-      const response = await postRequestUnAuthenticated(
+      const response = await postRequestAuthenticated(
         "/fetch/resource/chats",
         {
           topicId: topicId,
@@ -74,23 +73,8 @@ export const fetchResourceChats = createAsyncThunk(
     }
   }
 );
-export const fetchEventChats = createAsyncThunk(
-  "channelChat/fetchEventChats",
-  async (topicId, { rejectWithValue }) => {
-    try {
-      const response = await postRequestUnAuthenticated("/fetch/event/chats", {
-        topicId: topicId,
-      });
-      if (response.success) {
-        return response.chats;
-      } else {
-        return rejectWithValue(response.message);
-      }
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+
+
 export const createTopicChat = createAsyncThunk(
   "channelChat/createChat",
   async (data, { rejectWithValue }) => {
@@ -171,12 +155,8 @@ export const pushToResource = createAsyncThunk(
         "/push/to/resource",
         data
       );
-      const resourceData = {
-        chatId: response.chatId,
-        mediaId: response.mediaId,
-      };
       if (response.success) {
-        return resourceData;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -247,32 +227,13 @@ export const markAsRead = createAsyncThunk(
     }
   }
 );
-// export const removeReaction = createAsyncThunk(
-//   "channelChat/remove-reaction",
-//   async (data, { rejectWithValue }) => {
-//     try {
-//       const response = await postRequestAuthenticated("/remove/reaction", data);
-//       if (response.success) {
-//         const data = {
-//           chatId: response.chatId,
-//           reaction: response.reaction,
-//         };
-//         return data;
-//       } else {
-//         return rejectWithValue(response.message);
-//       }
-//     } catch (error) {
-//       return rejectWithValue(error.message);
-//     }
-//   }
-// );
+
 
 export const chatSlice = createSlice({
   name: "chatSlice ",
   initialState: {
     chats: [],
     resourceChats: [],
-    eventChats: [],
     brandChats: [],
     chatStatus: "idle",
     chatError: null,
@@ -293,7 +254,6 @@ export const chatSlice = createSlice({
     loading: false,
     loadingMore: false,
     brandLoading: false,
-    eventLoading: false,
     resourceLoading: false,
   },
   reducers: {
@@ -397,36 +357,32 @@ export const chatSlice = createSlice({
         state.resourceLoading = false;
         state.chatError = action.payload || action.error.message;
       })
-      .addCase(fetchEventChats.pending, (state) => {
-        state.eventLoading = true;
-      })
-      .addCase(fetchEventChats.fulfilled, (state, action) => {
-        state.eventLoading = false;
-        state.eventChats = action.payload;
-      })
-      .addCase(fetchEventChats.rejected, (state, action) => {
-        state.eventLoading = false;
-        state.chatError = action.payload || action.error.message;
-      })
+      
       .addCase(pushToResource.pending, (state) => {
         state.chatStatus = "loading";
       })
       .addCase(pushToResource.fulfilled, (state, action) => {
         state.chatStatus = "idle";
-        const mediaData = action.payload;
-        let index = state.chats.findIndex(
-          (item) => item._id === mediaData.chatId
+        const response = action.payload;
+        let index = state.resourceChats.findIndex(
+          (item) => item._id === response.chat._id
         );
         if (index !== -1) {
-          let mediaIndex = state.chats[index].media.findIndex(
-            (item) => item._id === mediaData.mediaId
+          let mediaIndex = state.resourceChats[index].media.findIndex(
+            (item) => item._id === response.mediaId
           );
-          state.chats[index].media[mediaIndex].resource = true;
+          if (mediaIndex !== -1) {
+            state.resourceChats[index].media[mediaIndex].resource = true;
+          }
+        }
+        else{
+          state.resourceChats.push(response.chat);
         }
       })
       .addCase(createChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const chat = action.payload;
+        console.log(chat);
         state.chats.push(chat);
       })
       .addCase(deleteChatEvent.fulfilled, (state, action) => {
@@ -455,14 +411,19 @@ export const chatSlice = createSlice({
       .addCase(removeFromResource.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const mediaData = action.payload;
-        let index = state.chats.findIndex(
+        let index = state.resourceChats.findIndex(
           (item) => item._id === mediaData.chatId
         );
         if (index !== -1) {
-          let mediaIndex = state.chats[index].media.findIndex(
+          let mediaIndex = state.resourceChats[index].media.findIndex(
             (item) => item._id === mediaData.mediaId
           );
-          state.chats[index].media[mediaIndex].resource = false;
+          if(mediaIndex !== -1){
+            state.resourceChats[index].media[mediaIndex].resource = false;
+          }
+          else{
+            state.resourceChats.splice(index, 1);
+          }
         }
       })
       .addCase(removeFromResource.rejected, (state, action) => {
@@ -509,13 +470,7 @@ export const chatSlice = createSlice({
           state.chats.splice(index, 1);
         }
       })
-      .addCase(joinEvent.fulfilled, (state, action) => {
-        const event = action.payload;
-        const index = state.chats.findIndex((item) => item._id === event.chat);
-        if (index !== -1) {
-          state.chats[index].event = event;
-        }
-      })
+      
 
       .addCase(deleteTopicChat.rejected, (state, action) => {
         state.chatStatus = "idle";

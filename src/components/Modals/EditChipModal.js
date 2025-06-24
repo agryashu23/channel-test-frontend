@@ -547,7 +547,7 @@ const EditChipModal = () => {
                     <img
                       src={Event}
                       alt="event"
-                      className-="w-5 h-5 mr-1 bg-theme-primaryText"
+                      className="w-5 h-5 mr-1 bg-theme-primaryText"
                     />
                     <span className="ml-1 text-xs sm:text-sm font-inter font-normal">
                       Event

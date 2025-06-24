@@ -405,11 +405,11 @@ const channelItemsSlice = createSlice({
         state.status = "idle";
         const removeData = action.payload;
         let channelIndex = state.channels.findIndex(
-          (channel) => channel._id === removeData.channelId
+          (channel) => channel._id === removeData.channel
         );
         if (channelIndex !== -1) {
           let memberIndex = state.channels[channelIndex].members.findIndex(
-            (member) => member === removeData.userId
+            (member) => member === removeData.user
           );
           if (memberIndex !== -1) {
             state.channels[channelIndex].members.splice(memberIndex, 1);

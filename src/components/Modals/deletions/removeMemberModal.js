@@ -26,7 +26,7 @@ const RemoveMemberModal = () => {
   const handleRemove = () => {
     const formDataToSend = new FormData();
     formDataToSend.append("channelId", removeChannelId);
-    formDataToSend.append("userId", removeUser._id);
+    formDataToSend.append("userId", removeUser.user._id);
     dispatch(removeMember(formDataToSend))
       .unwrap()
       .then(() => {
@@ -34,7 +34,7 @@ const RemoveMemberModal = () => {
         handleClose();
       })
       .catch((error) => {
-        alert(error);
+        console.log(error);
       });
   };
 
@@ -48,7 +48,7 @@ const RemoveMemberModal = () => {
             <div className="flex flex-col p-5">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-theme-secondaryText text-lg font-normal fonr-inter">
-                  Delete Category
+                 Remove member
                 </h2>
                 <img
                   src={Close}
@@ -58,8 +58,7 @@ const RemoveMemberModal = () => {
                 />
               </div>
               <div className="mt-2 text-theme-secondaryText font-normal font-inter">
-                Do you really want to delete the remove {removeUser.username}{" "}
-                from channel?
+                Do you really want to remove {removeUser.username} from this channel?
               </div>
               <div className="flex flex-row mt-5 space-x-8">
                 <button

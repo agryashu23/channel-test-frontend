@@ -60,6 +60,7 @@ import {
 import { showCustomToast } from "../../widgets/toast";
 import UserTopicsTab from "./Tabs/UserTopicsTab";
 import Loading from "../../widgets/Loading.js";
+import { fetchBusinessCredentials } from "../../redux/slices/businessSlice";
 
 const ChannelPage = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -76,6 +77,8 @@ const ChannelPage = () => {
   const channelstatus = useSelector((state) => state.channel.channelstatus);
   const [file, setFile] = useState(null);
   const [isEditCover, setIsEditCover] = useState(null);
+  const [isRemoveCover, setIsRemoveCover] = useState(null);
+
 
   const location = useLocation();
   const fromGallery = location.state?.fromGallery;
@@ -90,6 +93,7 @@ const ChannelPage = () => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const isSubdomain = useSelector((state) => state.auth.isSubdomain);
   const [activeTab, setActiveTab] = useState("topics");
+  const business = useSelector((state) => state.business);
 
   // console.log(channel);
 
@@ -97,6 +101,14 @@ const ChannelPage = () => {
     { id: 1, name: "Topics", href: "topics" },
     { id: 2, name: "Members", href: "members" },
   ];
+
+  useEffect(() => {
+    if (isLoggedIn && username) {
+      if(!business.business?._id){
+        dispatch(fetchBusinessCredentials(username));
+      }
+    }
+  }, [isLoggedIn, username]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -194,12 +206,25 @@ const ChannelPage = () => {
   };
 
   const handleRemoveCover = () => {
-    setFile(null);
-    dispatch(removeCover(channel._id));
+    dispatch(removeCover(channel._id))
+    .then(() => {
+      setIsRemoveCover(false);
+      // dispatch(setChannelField({ field: "cover_image", value: "" }));
+      // dispatch(setChannelField({ field: "imageSource", value: "" }));
+    })
+    .catch((error) => {
+      alert(error);
+    });
+  };
+
+  const toggleRemoveCover = () => {
+    closeDropdown();
+     setFile(null);
     dispatch(setChannelField({ field: "cover_image", value: "" }));
     dispatch(setChannelField({ field: "imageSource", value: "" }));
-    closeDropdown();
-  };
+    setIsRemoveCover(true);
+  }
+
   const handleSaveCover = () => {
     const formDataToSend = new FormData();
     formDataToSend.append("channel", channel._id);
@@ -341,7 +366,6 @@ const ChannelPage = () => {
 
   const isOwner = myData?._id.toString() === channel?.user?._id?.toString();
 
-
   const channelButtonState=()=>{
     if(!isLoggedIn || !myData?._id){
       return "Join channel";
@@ -402,6 +426,15 @@ const ChannelPage = () => {
             {channelstatus === "loading" ? "Saving" : "Save"}
           </div>
         )}
+         {isRemoveCover && (
+          <div
+            className="absolute left-3 top-3 cursor-pointer bg-theme-secondaryText px-3 text-sm font-light py-1.5
+         text-theme-primaryBackground rounded-lg"
+            onClick={handleRemoveCover}
+          >
+           {channelstatus === "loading" ? "Removing" : "Remove"}
+          </div>
+        )}
       </div>
       {isOwner && (
         <div className="absolute right-4 sm:top-2 top-14">
@@ -451,9 +484,9 @@ const ChannelPage = () => {
                 onChange={handleCoverUpload}
               />
             </div>
-            <div
+           {channel.cover_image && <div
               className="flex flex-row px-4 items-center"
-              onClick={handleRemoveCover}
+              onClick={toggleRemoveCover}
             >
               <img
                 src={Stack}
@@ -471,7 +504,7 @@ const ChannelPage = () => {
               >
                 Remove cover
               </p>
-            </div>
+            </div>}
           </div>
         </div>
       )}

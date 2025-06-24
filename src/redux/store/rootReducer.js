@@ -39,6 +39,7 @@ import dmReducer from "./../slices/dmSlice";
 import adminReducer from "./../slices/adminSlice";
 import businessReducer from "./../slices/businessSlice";
 import pollReducer from "./../slices/pollSlice";
+import eventItemsReducer from "./../slices/eventItemsSlice";
 
 export const appReducer = {
   auth: authReducer,
@@ -81,6 +82,7 @@ export const appReducer = {
   admin: adminReducer,
   business: businessReducer,
   poll: pollReducer,
+  eventItems: eventItemsReducer,
 };
 
 const combinedReducer = combineReducers(appReducer);

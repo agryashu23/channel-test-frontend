@@ -55,7 +55,7 @@ const Pricing = () => {
           Annualy (~15% off)
         </button>
       </div>
-      {loading?<div className="mt-12"><Loading text={"Loading..."}  /></div>:<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6  w-full max-w-7xl mt-12">
+      {loading?<div className="mt-12 flex justify-center items-center"><Loading text={"Loading..."}  /></div>:<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6  w-full max-w-7xl mt-12">
         {plans?.map((plan, index) => (
           <PricingCard key={index} plan={plan} type={activeTabPricing} />
         ))}

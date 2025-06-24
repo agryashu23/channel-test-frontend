@@ -58,25 +58,18 @@ const PageChat = ({
   channelId,
   isLoggedIn,
   myData,
-  channel,
   channelName,
   toggleBottomSheet,
   isOpen,
   username,
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const isDark = document.documentElement.classList.contains("dark");
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState("");
   const [notificationDropdown, setNotificationDropdown] = useState(false);
-  const [successPage, setSuccessPage] = useState(false);
-  const [otpPage, setOtpPage] = useState(false);
-  const [otpBackend, setOtpBackend] = useState("");
-  const [otp, setOtp] = useState("");
+  const business = useSelector((state) => state.business.business);
   const [isBrandTalk, setIsBrandTalk] = useState(false);
-  const [whatsAppNumber, setWhatsAppNumber] = useState("");
-  const [error, setError] = useState("");
   const [fileObjects, setFileObjects] = useState([]);
   const inputRef = useRef(null);
   const addMenuRef = useRef(null);
@@ -84,27 +77,19 @@ const PageChat = ({
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
-
   const emojiRef = useRef(null);
   const channelChat = useSelector((state) => state.chat);
-  const chatStatus = useSelector((state) => state.chat.chatStatus);
   const newMessageScrollRef = useRef(null);
-  const Chats = useSelector((state) => state.chat.chats);
   const { handleOpenModal } = useModal();
-  const previousChatLength = useRef(0);
-  const [isChecked, setIsChecked] = useState(false);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
+  
+  // useEffect(() => {
+  //   if (!channel.members?.includes(myData._id)) {
+  //     dispatch(visitTopic(topicId));
+  //   }
+  // }, [topicId]);
 
-  useEffect(() => {
-    if (!channel.members?.includes(myData._id)) {
-      dispatch(visitTopic(topicId));
-    }
-  }, [topicId]);
-
-  useEffect(() => {
-    if (myData.whatsapp_number === "") {
-      setNotificationDropdown(true);
-    }
-  }, []);
 
   useEffect(() => {
     setFileObjects([]);
@@ -164,44 +149,15 @@ const PageChat = ({
     const maxFileSize = 20 * 1024 * 1024;
 
     if (files.length <= 10) {
-      const newFiles = []; // Array to hold files, including compressed images
+      const newFiles = []; 
       const promises = files.map((file) => {
         return new Promise((resolve, reject) => {
           if (file.size > maxFileSize) {
             alert(
               `The file "${file.name}" exceeds the 20 MB size limit and will not be uploaded.`
             );
-            return resolve(null); // Skip the file
+            return resolve(null); 
           }
-
-          if (
-            file.size >= 8 * 1024 * 1024 &&
-            file.size <= maxFileSize &&
-            file.type.startsWith("image")
-          ) {
-            // If the file is an image and larger than 8MB, compress it
-            new Compressor(file, {
-              quality: 0.5,
-              maxWidth: 1920,
-              maxHeight: 1080,
-              success(result) {
-                const newFile = {
-                  id: uuidv4(),
-                  url: URL.createObjectURL(result),
-                  name: result.name,
-                  type: result.type.startsWith("video") ? "video" : "image",
-                  size: result.size,
-                };
-                dispatch(addMediaItem(newFile)); // Dispatch compressed image
-                newFiles.push(result); // Add compressed image to newFiles
-                resolve();
-              },
-              error(err) {
-                alert("Image compression failed: " + err);
-                reject(err);
-              },
-            });
-          } else {
             const newFile = {
               id: uuidv4(),
               url: URL.createObjectURL(file),
@@ -209,10 +165,9 @@ const PageChat = ({
               type: file.type.startsWith("video") ? "video" : "image",
               size: file.size,
             };
-            dispatch(addMediaItem(newFile)); // Dispatch the original file
-            newFiles.push(file); // Add original file to newFiles
+            dispatch(addMediaItem(newFile)); 
+            newFiles.push(file); 
             resolve();
-          }
         });
       });
 
@@ -288,25 +243,11 @@ const PageChat = ({
     setShowAddMenu(false);
   };
 
-  // useEffect(() => {
-  //   socket.on("connect", () => {
-  //     if (myData._id) {
-  //       socket.emit("identify_user", myData._id);
-  //       dispatch(markAsRead(topicId));
-  //     }
-  //   });
-
-  //   return () => {
-  //     // socket.disconnect();
-  //     socket.off("connect");
-  //   };
-  // }, [topicId]);
-
   useEffect(() => {
-    if (myData._id && topicId) {
+    if (myUserId && topicId) {
       dispatch(markAsRead(topicId));
     }
-  }, [topicId, myData._id]);
+  }, [topicId, myUserId]);
 
   useEffect(() => {
     if (channelChat.media.length > 0 && inputRef.current) {
@@ -387,15 +328,6 @@ const PageChat = ({
     fileObjects.forEach((file) => {
       formDataToSend.append("files", file);
     });
-
-    const messageData = {
-      userId: myData._id,
-      content: channelChat.content,
-      media: channelChat.media,
-      links: links,
-      replyTo: channelChat.replyTo || null,
-      domain: domain,
-    };
     // socket.emit("send_message", messageData);
     dispatch(createBrandChat(formDataToSend))
       .unwrap()
@@ -420,23 +352,22 @@ const PageChat = ({
         setFileObjects([]);
       });
   };
-
   useEffect(() => {
-    if (myData?.username && topicId) {
+    if (myData?.username && topicId && myUserId) {
       socket.emit("join_topic", { username: myData?.username, topicId });
       return () => {
         socket.emit("leave_topic", { username: myData?.username, topicId });
       };
     }
-  }, [topicId, myData?.username]);
+  }, [topicId, myData?.username, myUserId]);
 
   const handleReplyClear = () => {
     dispatch(setChatField({ field: "replyTo", value: null }));
     dispatch(setChatField({ field: "replyUsername", value: "" }));
   };
 
-  const handleEventOpen = () => {
-    dispatch(setEventField({ field: "topic", value: topicId }));
+  const handleEventOpen = (topic) => {
+    dispatch(setEventField({ field: "topic", value: topic._id }));
     handleOpenModal("modalEventOpen");
   };
 
@@ -445,77 +376,13 @@ const PageChat = ({
     field.style.height = `${field.scrollHeight}px`;
   };
 
-  const handlePhoneChange = (value, countryData) => {
-    const countryCode = `+${countryData.dialCode}`;
-    const phoneNumber = value.slice(countryData.dialCode.length);
-    const formattedNumber = `${countryCode}${phoneNumber}`;
-    setWhatsAppNumber(formattedNumber);
-  };
-  const handleCheckboxChange = () => {
-    setIsChecked(true);
-  };
-
-  const handleSave = () => {
-    if (whatsAppNumber.length < 12) {
-      return;
-    }
-    dispatch(updateWhatsAppNumber(whatsAppNumber))
-      .unwrap()
-      .then((response) => {
-        setOtpBackend(response.otp);
-        setOtpPage(true);
-        setError("");
-      })
-      .catch((error) => {
-        setError(error);
-        setOtpPage(false);
-      });
-  };
-
-  const handleChangeOtp = async (value) => {
-    setOtp(value);
-    if (value.length === 6 && value.toString() === otpBackend) {
-      dispatch(saveWhatsAppNumber(whatsAppNumber))
-        .unwrap()
-        .then(() => {
-          setOtpPage(false);
-          setSuccessPage(true);
-          setWhatsAppNumber("");
-          setError("");
-        })
-        .catch((error) => {
-          setError(error);
-        });
-    } else if (value.length === 6) {
-      setError("Enter Correct Otp");
-    }
-  };
-
-  const handleCancel = () => {
-    setOtpPage(false);
-    setIsChecked(false);
-    setWhatsAppNumber("");
-    setOtp("");
-    setOtpBackend("");
-  };
-
-  const handleCloseDropdown = () => {
-    setOtpPage(false);
-    setIsChecked(false);
-    setNotificationDropdown(false);
-    setWhatsAppNumber("");
-    setOtp("");
-    setOtpBackend("");
-  };
-  const handleChangeNumber = () => {
-    setOtpPage(false);
-    setOtp("");
-    setOtpBackend("");
-  };
-
   const handleBrandTalk = () => {
     setIsBrandTalk(!isBrandTalk);
   };
+  const isTopicOwner = topic?.user._id ===myUserId;
+  const isEditor = isTopicOwner || (topic?.members?.find(member=>member.user.toString()===myUserId.toString()
+   && member.status==="joined" && (member.role==="editor" || member.role==="admin"))) || topic.editability==="anyone";
+
 
   return (
     <div
@@ -528,12 +395,10 @@ const PageChat = ({
           channelName={channelName}
           topic={topic}
           topicId={topicId}
-          // toggleSidebar={toggleSidebar}
           toggleBottomSheet={toggleBottomSheet}
           isOpen={isOpen}
           username={username}
           channelId={channelId}
-          // isSidebarOpen={isSidebarOpen}
         />
       )}
 
@@ -549,147 +414,6 @@ const PageChat = ({
           </div>
         </div>
       )}
-
-      {/* {notificationDropdown && (
-        <div
-          className="z-40 w-full items-center bg-theme-chatDivider border-b
-         border-theme-chatDivider px-3 py-2.5 flex flex-row justify-between"
-        >
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              className="appearance-none w-5 h-5 border rounded  cursor-pointer
-               checked:bg-transparent checked:border-white checked:before:content-['✓'] 
-               checked:before:text-theme-secondaryText checked:before:text-sm checked:before:flex 
-               checked:before:items-center checked:before:justify-center bg-theme-buttonEnable
-               border-theme-primaryText"
-              onChange={handleCheckboxChange}
-              checked={isChecked}
-            />
-            <span className="xs:text-sm text-xs text-theme-description">
-              Enable WhatsApp notifications for this conversation
-            </span>
-          </label>
-
-          <img
-            src={Close}
-            alt="close"
-            className="w-3.5 h-3.5 cursor-pointer"
-            onClick={handleCloseDropdown}
-          />
-        </div>
-      )} */}
-      {/* {isChecked && (
-        <div
-          className="absolute z-[99] bottom-0 bg-theme-tertiaryBackground border-b w-full
-         border-theme-chatDivider p-4 flex flex-col rounded-t-lg h-2/5"
-        >
-          {!successPage && (
-            <p className="text-theme-secondaryText text-sm font-normal">
-              {otpPage
-                ? `Enter OTP sent on Whatsapp number ${whatsAppNumber}`
-                : "Enter your WhastApp Number"}
-            </p>
-          )}
-
-          {otpPage ? (
-            <div className="flex flex-col mt-5">
-              <OtpInput
-                value={otp}
-                onChange={handleChangeOtp}
-                numInputs={6}
-                renderSeparator={<span className="w-3"></span>}
-                renderInput={(props) => (
-                  <input
-                    {...props}
-                    style={{
-                      width: "34px",
-                      height: "40px",
-                      border: "none",
-                      borderBottom: isDark
-                        ? "2px solid white"
-                        : "2px solid #edecea", // bottom underline
-                      backgroundColor: "transparent", // no box background
-                      textAlign: "center",
-                      color: isDark ? "white" : "#202020",
-                      outline: "none", // removes blue highlight on focus
-                      fontSize: "16px",
-                    }}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                  />
-                )}
-              />
-
-              <p className="text-theme-secondaryText text-xs font-light mt-8">
-                Entered the wrong number?
-                <span
-                  className="ml-1 underline cursor-pointer"
-                  onClick={handleChangeNumber}
-                >
-                  Update Number
-                </span>
-              </p>
-            </div>
-          ) : successPage ? (
-            <div>
-              <div className="text-theme-secondaryText text-sm font-normal flex flex-row space-x-2 items-center">
-                <img src={Verified} alt="success" className="h-4 w-4" />
-                <p>Success!</p>
-              </div>
-
-              <p className="text-theme-secondaryText text-sm font-normal mt-4">
-                Whatsapp notifications have been turned on. You can change your
-                preferences on the settings page later.
-              </p>
-
-              <button
-                className={`w-full py-2.5 mt-5 rounded-lg 
-               text-theme-secondaryText bg-theme-buttonEnable
-             font-normal text-sm`}
-                onClick={handleCloseDropdown}
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-            <div className="relative mt-4">
-              <div className="flex items-center  rounded-md ">
-                <PhoneInput
-                  country="in"
-                  value={whatsAppNumber}
-                  onChange={handlePhoneChange}
-                  containerClass="custom-phone-input"
-                  dropdownClass="z-50"
-                  placeholder="Enter contact number"
-                  excludeCountries={["id"]}
-                />
-              </div>
-              <button
-                className={`w-full py-2.5 mt-5 rounded-lg ${
-                  whatsAppNumber.length < 12
-                    ? "text-theme-buttonDisableText bg-theme-buttonDisable"
-                    : " bg-theme-secondaryText text-theme-primaryBackground"
-                } font-normal text-sm`}
-                onClick={handleSave}
-              >
-                Verify
-              </button>
-              <button
-                className={`w-full py-2.5 mt-3 rounded-lg font-normal text-sm text-theme-secondaryText border border-theme-secondaryText`}
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-          {!successPage && (
-            <p className="mt-6 text-theme-error text-sm font-normal">{error}</p>
-          )}
-        </div>
-      )} */}
-
-      {/* Chat Section */}
       <div className="flex flex-col flex-grow overflow-hidden">
         {isBrandTalk ? (
           <div className="bg-theme-primaryBackground w-full h-full overflow-y-auto">
@@ -697,7 +421,7 @@ const PageChat = ({
               topicId={topicId}
               isLoggedIn={isLoggedIn}
               myData={myData}
-              user_id={topic.user}
+              user_id={topic.user._id}
               onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
               channelName={channelName}
             />
@@ -707,13 +431,14 @@ const PageChat = ({
             <PageChatData
               topicId={topicId}
               isLoggedIn={isLoggedIn}
+              business={business}
+              topic={topic}
               myData={myData}
               onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
             />
           </div>
         )}
 
-        {/* Media Preview Section */}
         {channelChat.media.length > 0 && (
           <div className="w-full bg-theme-chatDivider flex flex-row space-x-5 overflow-x-auto custom-scrollbar flex-shrink-0 z-50 pl-4 pr-2 pt-4 pb-2">
             {channelChat.media.map((item, index) => (
@@ -758,7 +483,6 @@ const PageChat = ({
             ))}
           </div>
         )}
-
         {channelChat.replyTo && channelChat?.replyUsername && (
           <div className="text-theme-secondaryText bg-theme-chatDivider mt-1 py-1 px-4 text-sm font-light w-full flex flex-row justify-between items-center">
             <p>Replying to {channelChat.replyUsername}</p>
@@ -770,12 +494,7 @@ const PageChat = ({
             </div>
           </div>
         )}
-
-        {/* Input Section (preserved, just moved below reply/media) */}
-        {(topic.editability === "anyone" ||
-          topic.user === myData._id ||
-          (topic.editability === "invite" &&
-            topic.allowedEditUsers?.includes(myData._id))) && (
+        {isEditor && (
           <div className="flex flex-col items-center px-2 pt-2 pb-3 space-x-2 bg-theme-secondaryBackground border-t border-t-theme-chatDivider">
             <div className="relative flex flex-row items-center w-full">
               <img
@@ -868,7 +587,7 @@ const PageChat = ({
                     ref={addMenuRef}
                   >
                     <div className="relative flex flex-row items-center space-x-2 cursor-pointer">
-                      <img src={Media} alt="media" className-="w-5 h-5 mr-1" />
+                      <img src={Media} alt="media" className="w-5 h-5 mr-1" />
                       <p
                         className="block text-theme-emptyEvent"
                         role="menuitem"
@@ -885,7 +604,7 @@ const PageChat = ({
                       />
                     </div>
                     <div className="relative flex flex-row items-center space-x-2  cursor-pointer">
-                      <img src={Document} alt="doc" className-="w-5 h-5 mr-1" />
+                      <img src={Document} alt="doc" className="w-5 h-5 mr-1" />
                       <p
                         className="block text-theme-emptyEvent"
                         role="menuitem"
@@ -905,14 +624,14 @@ const PageChat = ({
                     className="flex flex-row items-center space-x-2 px-1 py-2 cursor-pointer "
                     onClick={() => console.log("Poll Clicked")}
                   >
-                    <img src={Poll} alt="poll" className-="w-5 h-5 mr-1" />
+                    <img src={Poll} alt="poll" className="w-5 h-5 mr-1" />
                     <span className="text-theme-emptyEvent">Poll</span>
                   </div> */}
 
-                    {topic.user === myData._id && (
+                    {topic.user._id === myData._id && (
                       <div
                         className="flex flex-row items-center px-1 py-2 cursor-pointer"
-                        onClick={handleEventOpen}
+                        onClick={()=>handleEventOpen(topic)}
                       >
                         <img
                           src={Event}
@@ -929,7 +648,7 @@ const PageChat = ({
                     )}
                   </div>
                 )}
-                {topic.user !== myData._id && (
+                {topic.user._id !== myData._id && business?.parameters?.talkToBrand && (
                   <div
                     className={`${
                       isBrandTalk
@@ -972,35 +691,6 @@ const PageChat = ({
                     Resource
                   </p>
                 </div>
-                {/* <div className="flex flex-row">
-                  <img
-                    src={isOpen ? Close : Menu}
-                    alt="menu"
-                    className={`cursor-pointer xl:hidden sm:flex hidden ${
-                      isOpen ? "w-4 h-4" : "w-7 h-7"
-                    } `}
-                    onClick={toggleBottomSheet}
-                  />
-                  {isOpen ? (
-                    <img
-                      src={Close}
-                      alt="menu"
-                      className={`cursor-pointer flex sm:hidden ${
-                        isOpen ? "w-4 h-4" : "w-7 h-7"
-                      } `}
-                      onClick={toggleBottomSheet}
-                    />
-                  ) : (
-                    <div
-                      className="sm:hidden flex space-x-1 cursor-pointer"
-                      onClick={toggleBottomSheet}
-                    >
-                      <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-                      <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-                      <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-                    </div>
-                  )}
-                </div> */}
               </div>
 
               {(data.length > 0 ||

@@ -5,6 +5,8 @@ import ReplyIcon from "../../assets/icons/reply_icon.svg";
 import EmojiPicker from "emoji-picker-react";
 import ChannelCover from "../../assets/channel_images/channel_cover.svg";
 import ColorProfile from "../../assets/images/color_profile.svg";
+import { IoExpand } from "react-icons/io5";
+
 import playIcon from "../../assets/images/play_button.svg";
 import { format } from "date-fns";
 import {
@@ -15,6 +17,7 @@ import {
   addMessage,
   deleteMessage,
 } from "./../../redux/slices/chatSlice";
+import { fetchTopicEventMembers } from "./../../redux/slices/eventItemsSlice";
 import { pdfjs } from "react-pdf";
 import Profile from "../../assets/icons/profile.svg";
 import documentImage from "../../assets/images/Attachment.svg";
@@ -41,12 +44,20 @@ import {
   useParams,
   useModal,
 } from "../../globals/imports";
+import ImageFullscreenModal from "../chips/widgets/FullScreenModal";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
-const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
+const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business, topic }) => {
   const { handleOpenModal } = useModal();
   const { username } = useParams();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImages, setModalImages] = useState([]);
+  const [modalStartIndex, setModalStartIndex] = useState(0);
+  const myUser = useSelector((state) => state.auth.user);
+
+  const myUserId = myUser?._id;
 
   const navigate = useNavigate();
   const handleClick = (document) => {
@@ -137,8 +148,6 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
     }
   };
 
-  
-
   const isUserNearBottom = () => {
     if (!chatContainerRef.current) return false;
     const threshold = 100;
@@ -227,7 +236,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
     setHasMore(true);
     setShouldScrollToBottom(true);
     firstLoadDone.current = false;
-
+    dispatch(fetchTopicEventMembers(topicId));
     dispatch(fetchTopicChats({ topicId, skip: 0 })).then((res) => {
       if (res.payload) {
         setSkip(15);
@@ -427,7 +436,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
     const formDataToSend = new FormData();
     formDataToSend.append("chatId", chatId);
     formDataToSend.append("mediaId", mediaId);
-
+ 
     dispatch(pushToResource(formDataToSend))
       .unwrap()
       .then(() => {
@@ -435,7 +444,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
         setShowDocumentMenu({ chatId: null, mediaIndex: null });
       })
       .catch((error) => {
-        console.error("Issue in pushing to resources. Please try again.");
+        console.log(error);
       });
   };
 
@@ -448,6 +457,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
   }
 
   return (
+    <>
     <div
       className="w-full h-full max-w-full overflow-x-hidden bg-theme-secondaryBackground pt-2 relative"
       ref={chatContainerRef}
@@ -650,9 +660,9 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                       >
                         {chat.replyTo.content
                           ? chat.replyTo.content
-                          : chat.replyTo.media
+                          : chat.replyTo?.media && chat.replyTo?.media?.length > 0
                           ? "Tap to see Attachment"
-                          : chat.replyTo.event
+                          : chat.replyTo?.event
                           ? "Tap to see Event"
                           : "Tap to see Poll"}
                       </p>
@@ -670,7 +680,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                 <div
                   className={`flex  ${
                     isMyMessage ? "flex-row-reverse" : ""
-                  } w-max md:max-w-[60%] max-w-[90%] items-start`}
+                  } w-max md:max-w-[75%] max-w-[90%] items-start`}
                 >
                   {/* <img
                   src={chat.user?.logo || Profile}
@@ -718,12 +728,15 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                             ? "text-[#FF8C4E] font-medium"
                             : "text-theme-emptyEvent"
                         }  cursor-pointer`}
-                        onClick={() =>
-                          navigate(
-                            `${getAppPrefix()}/account/${
-                              chat.user?.username
-                            }/profile`
-                          )
+                        onClick={()=>{
+                          if(business.parameters.allowDm || topic?.user._id ===myUserId){
+                            navigate(
+                              `${getAppPrefix()}/account/${
+                                chat.user?.username
+                              }/profile`
+                            )
+                          }
+                        }
                         }
                       >
                         {ownMessage ? "You" : chat.user?.username}
@@ -746,7 +759,6 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                       <EventCard
                         width="w-max"
                         imageHeight="h-32"
-                        chatId={chat._id}
                         event={chat.event}
                         color="bg-theme-tertiaryBackground"
                         openDropdownId={openDropdownId}
@@ -781,6 +793,17 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                                   className="h-36 mt-1 rounded-md object-cover min-w-36 w-auto max-w-60"
                                   loading="lazy"
                                 />
+                                 <button
+                                    className="absolute top-1 left-1 text-theme-secondaryText text-sm bg-black bg-opacity-50 p-0.5 rounded-full"
+                                    onClick={() => {
+                                      const images = chat.media.filter((c) => c.type === "image");
+                                      setModalImages(images);
+                                      setModalOpen(true);
+                                      setModalStartIndex(index);
+                                    }}
+                                  >
+                                    <IoExpand />
+                                  </button>
                               </div>
                             ) : media.type === "video" ? (
                               !videoLoaded[videoKey] ? (
@@ -819,7 +842,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                               hoveredMedia.chatId === chat._id &&
                               hoveredMedia.mediaIndex === index && (
                                 <div
-                                  className="absolute top-0 right-1 cursor-pointer"
+                                  className="absolute top-0 right-2 cursor-pointer"
                                   onClick={() =>
                                     handleShowMediaMenu(chat._id, index)
                                   }
@@ -1006,7 +1029,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
                 >
                   {reactionsData.map((reaction, index) =>
                     index === reactionsData.length - 1 ? (
-                      <div className="flex flex-row items-center relative">
+                      <div className="flex flex-row items-center relative" key={`${reaction}-${index}`}>
                         <div
                           onClick={() =>
                             handleReactionClick(reaction, chat._id)
@@ -1105,7 +1128,15 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent }) => {
           </div>
         );
       })}
+      
     </div>
+     <ImageFullscreenModal
+     images={modalImages}
+     isOpen={modalOpen}
+     startIndex={modalStartIndex}
+     onClose={() => setModalOpen(false)}
+   />
+    </>
   );
 };
 

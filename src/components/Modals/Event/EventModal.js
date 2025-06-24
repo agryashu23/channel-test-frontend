@@ -94,20 +94,16 @@ const EventModal = () => {
     const isoDate = date ? date.toISOString() : "";
     dispatch(setEventField({ field: "endDate", value: isoDate }));
   };
-
   const handleStartTimeChange = (date) => {
-    const isoString = date
-      ? date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      : "";
-    dispatch(setEventField({ field: "startTime", value: isoString }));
+    const timePart = date ? date.toISOString().split("T")[1].replace("Z", "") : "";
+    dispatch(setEventField({ field: "startTime", value: timePart }));
   };
-
+  
   const handleEndTimeChange = (date) => {
-    const isoString = date
-      ? date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-      : "";
-    dispatch(setEventField({ field: "endTime", value: isoString }));
+    const timePart = date ? date.toISOString().split("T")[1].replace("Z", "") : "";
+    dispatch(setEventField({ field: "endTime", value: timePart }));
   };
+  
 
   const fetchSuggestions = async (input) => {
     if (input.trim() === "") {
@@ -192,30 +188,6 @@ const EventModal = () => {
         );
         return;
       }
-
-      if (file.size >= 7 * 1024 * 1024) {
-        new Compressor(file, {
-          quality: 0.5,
-          maxWidth: 1920,
-          maxHeight: 1080,
-          success(result) {
-            setFile(result);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              dispatch(
-                setEventField({ field: "cover_image", value: reader.result })
-              );
-              dispatch(
-                setEventField({ field: "cover_image_source", value: "upload" })
-              );
-            };
-            reader.readAsDataURL(result);
-          },
-          error(err) {
-            alert("Image compression failed: " + err);
-          },
-        });
-      } else {
         setFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -227,7 +199,6 @@ const EventModal = () => {
           );
         };
         reader.readAsDataURL(file);
-      }
     }
   };
 
@@ -432,13 +403,13 @@ const EventModal = () => {
                       src={Event}
                       alt="event"
                       style={{ position: "absolute", top: "0", right: "0" }}
-                      className-="dark:block hidden w-5 h-5 "
+                      className="dark:block hidden w-5 h-5 "
                     />
                     <img
                       src={EventLight}
                       alt="event"
                       style={{ position: "absolute", top: "0", right: "0" }}
-                      className-="dark:hidden w-5 h-5 "
+                      className="dark:hidden w-5 h-5 "
                     />
                   </div>
                   <div className="relative w-[45%]">
@@ -454,13 +425,13 @@ const EventModal = () => {
                       src={Event}
                       alt="event"
                       style={{ position: "absolute", top: "0", right: "0" }}
-                      className-="dark:block hidden w-5 h-5 "
+                      className="dark:block hidden w-5 h-5 "
                     />
                     <img
                       src={EventLight}
                       alt="event"
                       style={{ position: "absolute", top: "0", right: "0" }}
-                      className-="dark:hidden w-5 h-5 "
+                      className="dark:hidden w-5 h-5 "
                     />
                   </div>
                 </div>

@@ -12,10 +12,10 @@ import useModal from "./../../hooks/ModalHook";
 import { useDispatch, useSelector } from "react-redux";
 import { setModalModal } from "../../../redux/slices/modalSlice";
 import {
-  joinEvent,
   setEventItems,
   setEventField,
 } from "../../../redux/slices/eventSlice";
+import { joinEvent } from "../../../redux/slices/eventItemsSlice";
 import { AddToCalendarButton } from "add-to-calendar-button-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getAppPrefix } from "../../EmbedChannels/utility/embedHelper";
@@ -23,7 +23,6 @@ import { getAppPrefix } from "../../EmbedChannels/utility/embedHelper";
 const EventCard = ({
   width,
   imageHeight,
-  chatId,
   event,
   color,
   openDropdownId,
@@ -41,7 +40,10 @@ const EventCard = ({
   const [formattedEndTime, setFormattedEndTime] = useState("");
   const { handleOpenModal } = useModal();
   const myData = useSelector((state) => state.myData);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const eventMembers = useSelector((state) => state.eventItems.topicEventMembers);
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -50,8 +52,6 @@ const EventCard = ({
   const dispatch = useDispatch();
 
   const handleEventModal = () => {
-    // dispatch(setModalModal({ field: "event", value: event }));
-    // handleOpenModal("modalEventCardOpen");
     navigate(`/event/${event._id}`);
   };
   const handleDeleteEventModal = () => {
@@ -90,7 +90,7 @@ const EventCard = ({
         .unwrap()
         .then(() => {})
         .catch((error) => {
-          console.error("Issue in joining event. Please try again.");
+          console.log(error);
         });
     } else {
       navigate(`${getAppPrefix()}/get-started?redirect=${fullPath}`);
@@ -168,7 +168,7 @@ const EventCard = ({
   };
 
   useEffect(() => {
-    if (event.startDate) {
+    if (event?.startDate) {
       formatDateTime(
         event.startDate,
         event.endDate,
@@ -176,7 +176,7 @@ const EventCard = ({
         event.endTime
       );
     }
-  }, [event.startDate, event.endDate, event.startTime, event.endTime]);
+  }, [event?.startDate, event?.endDate, event?.startTime, event?.endTime]);
 
   const handleGoogleCalendar = (e) => {
     e.stopPropagation();
@@ -277,6 +277,27 @@ const EventCard = ({
     }
   };
 
+  const eventButtonState=()=>{
+    if(!isLoggedIn || !myData?._id){
+      return "Join event";
+    }
+    else if(event?.user?.toString()===myUserId.toString()){
+      return "Add to calendar";
+    }
+    else if(eventMembers?.find(member=>member.user.toString()===myUserId.toString() && member.event.toString()===event._id.toString() && member.addedToCalendar===true)){
+      return "Event joined";
+    }
+    else if(eventMembers?.find(member=>member.user.toString()===myUserId.toString() && member.event.toString()===event._id.toString() && member.status==="joined")){
+      return "Add to calendar";
+    }else if(eventMembers?.find(request=>request.user.toString()===myUserId.toString() && request.event.toString()===event._id.toString() && request.status==="request")){
+      return "Requested";
+    }else{
+      return "Join event";
+    }
+  }
+
+  const buttonState = eventButtonState();
+
   return (
     <div
       className={`${color} border  border-theme-chatDivider rounded-lg p-3 md:${width} w-full flex xs:flex-row flex-col mb-2`}
@@ -285,14 +306,14 @@ const EventCard = ({
       <div className="flex flex-row items-start justify-between">
         <div className={` xs:w-28 w-full relative`}>
           <img
-            src={event.cover_image ? event.cover_image : Test}
+            src={event?.cover_image ? event.cover_image : Test}
             alt="event-image"
             className={`rounded-lg object-cover flex-shrink-0 ${imageHeight}`}
           />
         </div>
 
         <div className="items-center justify-end ml-2 relative xs:hidden flex">
-          {event.user === myData._id && (
+          {event?.user === myUserId && (
             <div
               className="flex space-x-1 cursor-pointer"
               onClick={toggleDropdown}
@@ -366,12 +387,12 @@ const EventCard = ({
             {date} {time ? "• " + time : ""}
           </p>
           <p className="text-theme-secondaryText text-sm font-normal font-inter mt-1 max-w-72">
-            {event.name}
+            {event?.name}
           </p>
-          {event.locationText && (!event.type || event.type !== "online") && (
+          {event?.locationText && event?.type==="offline" && (
             <div
               className="flex flex-row items-start mt-1 w-full cursor-pointer max-w-64"
-              onClick={() => handleLocation(event.location)}
+              onClick={() => handleLocation(event?.location)}
             >
               <LocationIcon
                 className={`w-7 h-7 mt-[1px] fill-current text-theme-emptyEvent
@@ -382,7 +403,7 @@ const EventCard = ({
               </div>
             </div>
           )}
-          {event.meet_url && (
+          {event?.meet_url && event?.type==="online" && (
             <div className="flex flex-row items-start mt-1 w-full cursor-pointer max-w-64">
               <div className="ml-0.5  text-theme-emptyEvent text-xs font-light font-inter">
                 {event.meet_url}
@@ -398,60 +419,73 @@ const EventCard = ({
               : `flex flex-row ${spacing} items-center`
           }  xs:${topSpacing} mt-3  `}
         >
-          {event.joined_users.includes(myData?._id) ||
-          event.user === myData?._id ? (
-            <div className="relative">
-              <button
-                className={`cursor-pointer text-xs bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center py-2.5 xs:px-3 px-1.5`}
-                onClick={() => handleToggleDropdown(event._id)}
-              >
-                Add to Calendar
-              </button>
-              {openDropdownId === event._id && (
-                <div
-                  className="absolute z-10 border  rounded-lg border-theme-chatDivider bg-theme-tertiaryBackground mt-1 w-max"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                {buttonState === "Add to calendar" && (
+                  <>
+                    <button
+                      className={`cursor-pointer text-xs bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center py-2.5 xs:px-3 px-1.5`}
+                      onClick={() => handleToggleDropdown(event._id)}
+                    >
+                      {buttonState}
+                    </button>
+                    {openDropdownId === event?._id && (
+                      <div
+                        className="absolute z-10 border rounded-lg border-theme-chatDivider bg-theme-tertiaryBackground mt-1 w-max"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div
+                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText
+                          hover:bg-theme-primaryBackground hover:rounded-t-lg px-6 py-3"
+                          onClick={handleGoogleCalendar}
+                        >
+                          <p>Google</p>
+                        </div>
+                        <div className="border-t border-t-theme-chatDivider"></div>
+                        <div
+                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText  hover:bg-theme-primaryBackground px-6 py-3"
+                          onClick={handleDownloadICS}
+                        >
+                          <p>ICS/Apple</p>
+                        </div>
+                        <div className="border-t border-t-theme-chatDivider"></div>
+                        <div
+                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:rounded-b-lg hover:bg-theme-primaryBackground px-6 py-3"
+                          onClick={handleOutlookCalendar}
+                        >
+                          <p>Outlook</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {buttonState === "Requested" && (
                   <div
-                    className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText
-                     hover:bg-theme-primaryBackground hover:rounded-t-lg px-6 py-3"
-                    onClick={handleGoogleCalendar}
+                    className={`cursor-pointer text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                      btnFlex ? "px-4" : btnPadding
+                    } py-2`}
                   >
-                    <p>Google</p>
+                    Requested
                   </div>
-                  <div className="border-t border-t-theme-chatDivider"></div>
+                )}
+
+                {buttonState === "Event joined" && (
                   <div
-                    className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText  hover:bg-theme-primaryBackground px-6 py-3"
-                    onClick={handleDownloadICS}
+                    className={`cursor-default text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                      btnFlex ? "px-4" : "xs:px-3 px-1.5"
+                    } py-2`}
                   >
-                    <p>ICS/Apple</p>
+                    Event joined
                   </div>
-                  <div className="border-t border-t-theme-chatDivider"></div>
+                )}
+
+                {(buttonState === "Join event" || buttonState === "Request access") && (
                   <div
-                    className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:rounded-b-lg hover:bg-theme-primaryBackground px-6 py-3"
-                    onClick={handleOutlookCalendar}
+                    className="cursor-pointer text-sm bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center xs:px-3 px-1.5 py-2"
+                    onClick={handleJoinEvent}
                   >
-                    <p>Outlook</p>
+                    {event?.joining === "public" ? "Join event" : "Request access"}
                   </div>
-                </div>
-              )}
-            </div>
-          ) : event.requested_users.includes(myData._id) ? (
-            <div
-              className={`cursor-pointer text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
-                btnFlex ? "px-4" : btnPadding
-              } py-2`}
-            >
-              Requested
-            </div>
-          ) : (
-            <div
-              className="cursor-pointer text-sm bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center xs:px-3 px-1.5 py-2"
-              onClick={handleJoinEvent}
-            >
-              {event.joining === "public" ? "Join event" : "Request access"}
-            </div>
-          )}
+                )}
           <div
             className={`cursor-pointer text-xs border  border-theme-secondaryText text-theme-secondaryText 
             rounded-md font-normal text-center ${

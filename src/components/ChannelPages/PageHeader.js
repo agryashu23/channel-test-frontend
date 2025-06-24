@@ -1,7 +1,7 @@
 import DropDown from "../../assets/icons/arrow_drop_down.svg";
 import DropDownLight from "../../assets/lightIcons/arrow_drop_down_light.svg";
 import ProfileIcon from "../../assets/icons/profile.svg";
-import { fetchOtherTopics } from "../../redux/slices/reorderTopicSlice.js";
+import { fetchMyTopics } from "../../redux/slices/reorderTopicSlice.js";
 import {
   setCreateTopicField,
   setCreateTopicItems,
@@ -128,9 +128,7 @@ const PageHeader = ({
 
   useEffect(() => {
     const formDataToSend = new FormData();
-    formDataToSend.append("topicId", topicId);
-    formDataToSend.append("channelId", channelId);
-    dispatch(fetchOtherTopics(formDataToSend));
+    dispatch(fetchMyTopics(channelId));
   }, []);
 
   const toggleDropdown = () => {
@@ -351,7 +349,7 @@ const PageHeader = ({
           <div
             className="rounded-full h-7 w-7 sm:hidden flex"
             onClick={() =>
-              navigate(`/embed/channels/account/${myData.username}/profile`)
+              navigate(`${getAppPrefix()}/account/${myData.username}/profile`)
             }
           >
             {/* <img
@@ -390,9 +388,8 @@ const PageHeader = ({
             {topic.allowedVisibleUsers.length} members
           </p> */}
       </div>
-      {/* <div className="block border  border-theme-chatDivider mt-1"></div> */}
-      <div className="sm:hidden flex flex-row space-x-3 w-full overflow-x-auto pl-6 pr-2 pt-0.5 mb-0.5 pb-3">
-        {reorderTopics.otherTopics.map((topic) => {
+      {reorderTopics.myTopics.length > 0 && <div className="sm:hidden flex flex-row space-x-3 w-full overflow-x-auto pl-6 pr-2 pt-0.5 mb-0.5 pb-3">
+        {reorderTopics.myTopics.map((topic) => {
           return (
             <div
               key={topic._id}
@@ -405,15 +402,38 @@ const PageHeader = ({
               onClick={() => toggleTopic(topic._id)}
             >
               <p className="mr-1 text-xs">{topic.name}</p>
-              {/* {topic.unreadCount > 0 && (
+              {topic.unreadCount > 0 && (
                 <div className="w-5 h-5 flex items-center justify-center text-xs bg-theme-sidebarColor rounded-full text-theme-secondaryText">
                   {topic.unreadCount}
                 </div>
-              )} */}
+              )}
             </div>
           );
         })}
-      </div>
+      </div>}
+      {isEmbeddedOrExternal() && reorderTopics.myTopics.length > 0 && <div className="sm:flex hidden flex-row space-x-3 w-full overflow-x-auto pl-6 pr-2 pt-0.5 mb-0.5 pb-3">
+        {reorderTopics.myTopics.map((topic) => {
+          return (
+            <div
+              key={topic._id}
+              className={`flex ${
+                topic._id === topicId
+                  ? "bg-theme-secondaryText text-theme-primaryBackground"
+                  : "border flex-flex-row border-theme-emptyEvent text-theme-secondaryText"
+              } px-3  items-center font-light
+                sm:py-1.5 py-1 text-center  whitespace-nowrap rounded-full cursor-pointer`}
+              onClick={() => toggleTopic(topic._id)}
+            >
+              <p className="mr-1 text-xs">{topic.name}</p>
+              {topic.unreadCount > 0 && (
+                <div className="w-5 h-5 flex items-center justify-center text-xs bg-theme-sidebarColor rounded-full text-theme-secondaryText">
+                  {topic.unreadCount}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>}
     </div>
   );
 };

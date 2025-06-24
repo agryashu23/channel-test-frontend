@@ -5,7 +5,7 @@ import ArrowBackLight from "../../../assets/lightIcons/arrow_back_light.svg";
 import { format, parseISO, parse, isValid } from "date-fns";
 import Test from "../../../assets/images/test.png";
 import MapPin from "../../../assets/icons/map-pin.svg";
-import { joinEvent } from "../../../redux/slices/eventSlice";
+import { joinEvent } from "../../../redux/slices/eventItemsSlice";
 import { setModalModal } from "../../../redux/slices/modalSlice";
 import { postRequestUnAuthenticated } from "../../../services/rest";
 import GoogleMapsEvent from "./GoogleMapsEvent";

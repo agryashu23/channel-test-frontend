@@ -61,6 +61,7 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
       });
   };
 
+
   const handleChannelPage = (channel) => {
     navigate(`/account/${channel.user.username}/channel/${channel._id}`);
   };
