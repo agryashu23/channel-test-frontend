@@ -17,10 +17,12 @@ const TopicModal = () => {
   const topic = useSelector((state) => state.createTopic);
   const Topicstatus = useSelector((state) => state.channelItems.topicstatus);
   const [error, setError] = useState("");
+  const [payError, setPayError] = useState("");
   const dispatch = useDispatch();
   const handleClose = () => {
     dispatch(clearCreateTopic());
     setError("");
+    setPayError("");
     dispatch(closeModal("modalTopicOpen"));
   };
   const myData = useSelector((state) => state.myData);
@@ -38,6 +40,10 @@ const TopicModal = () => {
   const handleCreateTopic = async (e) => {
     e.preventDefault();
     setError("");
+    if(topic.visibility==="paid" && topic.paywallPrice===0){
+      setPayError("Joining fee can't be 0");
+      return;
+    }
     const name = topic.name.trim();
     if (name !== "") {
       const formDataToSend = new FormData();
@@ -45,6 +51,8 @@ const TopicModal = () => {
       formDataToSend.append("editability", topic.editability);
       formDataToSend.append("channel", topic.channel);
       formDataToSend.append("visibility", topic.visibility);
+     
+      formDataToSend.append("paywallPrice", topic.paywallPrice);
       dispatch(createTopic(formDataToSend))
         .unwrap()
         .then((topic) => {
@@ -63,6 +71,10 @@ const TopicModal = () => {
   const handleEditTopic = async (e) => {
     e.preventDefault();
     setError("");
+    if(topic.visibility==="paid" && topic.paywallPrice===0){
+      setPayError("Joining fee can't be 0");
+      return;
+    }
     const name = topic.name.trim();
     if (name !== "") {
       const formDataToSend = new FormData();
@@ -70,6 +82,8 @@ const TopicModal = () => {
       formDataToSend.append("_id", topic._id);
       formDataToSend.append("editability", topic.editability);
       formDataToSend.append("visibility", topic.visibility);
+     
+      formDataToSend.append("paywallPrice", topic.paywallPrice);
       dispatch(updateTopic(formDataToSend))
         .unwrap()
         .then(() => {
@@ -92,6 +106,8 @@ const TopicModal = () => {
     : "bg-theme-secondaryText text-theme-primaryBackground";
 
   const isOpen = useSelector((state) => state.modals.modalTopicOpen);
+
+ 
 
   return (
     <Dialog.Root open={isOpen}>
@@ -141,8 +157,9 @@ const TopicModal = () => {
                   </p>
                 )}
               </div>
+              
 
-              <div className="mb-4 mt-1">
+              { <div className="mb-4 mt-1">
                 <p className="text-theme-secondaryText text-sm font-normal font-inter">
                   Who can view this topic?
                 </p>
@@ -156,7 +173,7 @@ const TopicModal = () => {
                       checked={topic.visibility === "anyone"}
                       onChange={handleChange}
                     />
-                    <span>Anyone in channel</span>
+                    <span>Anyone in channel (Anyone in channel can join)</span>
                   </label>
                   <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
@@ -167,21 +184,46 @@ const TopicModal = () => {
                       checked={topic.visibility === "invite"}
                       onChange={handleChange}
                     />
-                    <span>Invite only</span>
+                    <span>Invite only (Admin approval required)</span>
                   </label>
                   <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
                       type="radio"
                       name="visibility"
-                      value="me"
+                      value="paid"
                       className="mr-2 custom-radio"
-                      checked={topic.visibility === "me"}
+                      checked={topic.visibility === "paid"}
                       onChange={handleChange}
                     />
-                    <span>Only me</span>
+                    <span>Paid (Access with paid tickets)</span>
                   </label>
                 </div>
-              </div>
+              </div>}
+              {topic.visibility==="paid" && <div className="mb-4 mt-1">
+                <label className="text-theme-secondaryText text-sm font-light font-inter">
+                  Joining fee
+                </label>
+                <div className="flex flex-row items-center">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">₹</p>
+                <input
+                    id="topic-name"
+                    className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
+                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
+                    type="number"
+                    name="paywallPrice"
+                    value={topic.paywallPrice}
+                    onChange={handleChange}
+                    placeholder="Enter the joining fee for your topic."
+                  />
+                </div>
+              </div>}
+              {payError && (
+                  <p
+                    className={`text-theme-error font-light ml-1 font-inter text-xs`}
+                  >
+                    {payError}
+                  </p>
+                )}
               <div className="mb-4 mt-1">
                 <p className="text-theme-secondaryText text-sm font-normal font-inter">
                   Who can write in this topic?

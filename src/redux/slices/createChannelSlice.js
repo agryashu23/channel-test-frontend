@@ -11,7 +11,7 @@ const initialState = {
   members: [],
   cover_image: null,
   admins: [],
-  paywall: false,
+  paywallPrice: 0,
   topics: [],
   logo: null,
   description: "",
@@ -46,6 +46,7 @@ export const createChannelSlice = createSlice({
       state.admins = [];
       state.members = [];
       state.name = "";
+      state.paywallPrice = 0;
       state.description = "";
       state.channelstatus = "idle";
       state.channelNameError = false;

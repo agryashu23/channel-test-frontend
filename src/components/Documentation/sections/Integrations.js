@@ -35,7 +35,7 @@ export default function Integrations() {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-4">Embed Channels in Your Stack</h2>
+      <h2 className="text-xl sm:text-3xl font-bold mb-4">Embed Channels in Your Stack</h2>
       <p className="text-gray-700 mb-6">
         Use the examples below to integrate Channels embed in different frontend
         and backend environments. Each setup contains a trigger button, the open
@@ -43,12 +43,12 @@ export default function Integrations() {
       </p>
 
       {/* Tab Menu */}
-      <div className="flex space-x-4 mb-4 border-b">
+      <div className="flex space-x-4 mb-4 border-b w-full overflow-x-auto no-scrollbar">
         {Object.keys(labels).map((key) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`sm:px-4 px-2 py-2 font-medium ${
+            className={`sm:px-4 px-2 py-2 font-normal sm:font-medium ${
               tab === key
                 ? "border-b-2 border-blue-600 text-blue-600"
                 : "text-gray-600 hover:text-blue-600"

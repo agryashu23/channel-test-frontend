@@ -11,6 +11,7 @@ import {
   deleteChatEvent,
   editChatEvent,
 } from "./eventSlice";
+import { verifyPayment } from "./paymentSlice";
 
 
 export const fetchTopicEvents = createAsyncThunk(
@@ -86,16 +87,35 @@ export const joinEvent = createAsyncThunk(
   }
 );
 
+export const fetchEventData = createAsyncThunk(
+  "event/fetchEventData",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await postRequestUnAuthenticated("/fetch/event/data",data);
+      if (response.success) {
+        return response;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 
 export const eventItemsSlice = createSlice({
   name: "eventItemsSlice ",
   initialState: {
+    event:{},
+    membership:{},
     events:[],
     joinStatus:"idle",
     topicEventMembers:[],
     loading:false,
     error:null,
-    eventMembers:[]
+    eventMembers:[],
+    joinEventError:null
   },
   reducers: {
     setChatField: (state, action) => {
@@ -150,6 +170,18 @@ export const eventItemsSlice = createSlice({
         state.eventLoading = false;
         state.chatError = action.payload || action.error.message;
       })
+      .addCase(fetchEventData.pending, (state) => {
+        state.eventLoading = true;
+      })
+      .addCase(fetchEventData.fulfilled, (state, action) => {
+        state.eventLoading = false;
+        state.event = action.payload.event;
+        state.membership = action.payload.membership;
+      })
+      .addCase(fetchEventData.rejected, (state, action) => {
+        state.eventLoading = false;
+        state.chatError = action.payload || action.error.message;
+      })
       .addCase(fetchTopicEventMembers.pending, (state) => {
         state.eventLoading = true;
       })
@@ -180,29 +212,39 @@ export const eventItemsSlice = createSlice({
       .addCase(deleteChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const event = action.payload;
-        let index = state.chats.findIndex((chat) => chat._id === event.chat);
+        let index = state.events.findIndex((item) => item._id === event._id);
         if (index !== -1) {
-          state.chats.splice(index, 1);
+          state.events.splice(index, 1);
+        }
+        if(state.event._id === event._id){
+          state.event = {};
+          state.membership = {};
         }
       })
       .addCase(editChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const chat = action.payload;
-        let index = state.chats.findIndex((item) => item._id === chat._id);
+        let index = state.events.findIndex((item) => item._id === chat.event._id);
         if (index !== -1) {
-          state.chats[index] = chat;
+          state.events[index] = chat.event;
+        }
+        if(state.event._id === chat.event._id){
+          state.event = chat.event;
         }
       })
       .addCase(joinEvent.pending, (state) => {
         state.joinStatus = "loading";
+        state.joinEventError = null;
       })
       .addCase(joinEvent.rejected, (state, action) => {
         state.joinStatus = "idle";
+        state.joinEventError = action.payload;
       })
       .addCase(joinEvent.fulfilled, (state, action) => {
         state.joinStatus = "idle";
+        state.joinEventError = null;
         const response = action.payload;
-        if(response.membership){
+        if(response.success && response.membership){
           const index = state.topicEventMembers.findIndex((item) => item._id === response.membership._id);
           if(index===-1){
             state.topicEventMembers.push(response.membership);
@@ -210,6 +252,25 @@ export const eventItemsSlice = createSlice({
           else{
             state.topicEventMembers[index] = response.membership;
           }
+        }
+        if(state.event?._id === response.membership?.event){
+          state.membership = response.membership;
+        }
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.joinStatus = "idle";
+        const response = action.payload;
+        if(response.type==="event" && response.success && response.membership){
+          const index = state.topicEventMembers.findIndex((item) => item._id === response.membership._id);
+          if(index===-1){
+            state.topicEventMembers.push(response.membership);
+          }
+          else{
+            state.topicEventMembers[index] = response.membership;
+          }
+        }
+        if(response.type==="event" && response.success &&  state.event?._id === response.membership?.event){
+          state.membership = response.membership;
         }
       });
   },

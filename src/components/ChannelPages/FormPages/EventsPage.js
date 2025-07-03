@@ -12,7 +12,7 @@ import useModal from "./../../hooks/ModalHook";
 import { useParams } from "react-router-dom";
 import { fetchTopicEvents } from "../../../redux/slices/eventItemsSlice";
 
-const EventsPage = () => {
+const EventsPage = ({fetchedOnceEvents, setFetchedOnceEvents}) => {
   const today = new Date();
   const [selectedTab, setSelectedTab] = useState("Calendar");
   const [currentDate, setCurrentDate] = useState(
@@ -24,6 +24,7 @@ const EventsPage = () => {
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const EventItems = useSelector((state) => state.eventItems);
+  const myData = useSelector((state) => state.myData);
   const Events = EventItems.events;
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const dropdownContainerRef = useRef(null);
@@ -33,12 +34,15 @@ const EventsPage = () => {
   const { handleOpenModal } = useModal();
   const years = Array.from(
     new Array(6),
-    (val, index) => index + today.getFullYear() - 1
+    (val, index) => index + today.getFullYear() 
   );
 
   useEffect(() => {
-    dispatch(fetchTopicEvents(topicId));
-  }, []);
+    if(fetchedOnceEvents===false){
+      dispatch(fetchTopicEvents(topicId));
+      setFetchedOnceEvents(true);
+    }
+  }, [topicId,fetchedOnceEvents]);
 
   const getDaysArray = (year, month) => {
     const date = new Date(year, month, 1);
@@ -162,7 +166,7 @@ const EventsPage = () => {
   return (
     <div className="flex flex-col">
       <div className="flex flex-row justify-start space-x-4">
-        <div
+        {username===myData.username && <div
           className={`text-xs border font-light border-theme-sidebarDivider px-1.5 py-1 rounded-full cursor-pointer 
             text-theme-secondaryText flex flex-row items-center
           `}
@@ -179,7 +183,7 @@ const EventsPage = () => {
             className="dark:hidden w-4 h-4 mr-0.5"
           />
           Create
-        </div>
+        </div>}
         <div
           className={`rounded-full text-xs border font-light border-theme-sidebarDivider px-3.5 py-1.5 cursor-pointer ${
             selectedTab === "Calendar"
@@ -318,7 +322,7 @@ const EventsPage = () => {
                   btnFlex="flex-col"
                   btnPadding="px-1"
                   spacing="space-x-2"
-                  topSpacing="mt-3"
+                  topSpacing="mt-0"
                 />
               </div>
             ))

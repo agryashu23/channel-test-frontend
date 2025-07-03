@@ -2,6 +2,8 @@ import DropDown from "../../assets/icons/arrow_drop_down.svg";
 import DropDownLight from "../../assets/lightIcons/arrow_drop_down_light.svg";
 import ProfileIcon from "../../assets/icons/profile.svg";
 import { fetchMyTopics } from "../../redux/slices/reorderTopicSlice.js";
+import Pin from "../../assets/icons/Pin.svg";
+import PinLight from "../../assets/icons/pin_light.svg";
 import {
   setCreateTopicField,
   setCreateTopicItems,
@@ -49,6 +51,7 @@ const PageHeader = ({
   // isSidebarOpen,
   username,
   channelId,
+  setIsPinned,
 }) => {
   const dispatch = useDispatch();
   const { handleOpenModal } = useModal();
@@ -60,6 +63,8 @@ const PageHeader = ({
   const channelsData = useSelector((state) => state.channelItems.channels);
   const myData = useSelector((state) => state.myData);
   // const [channelsData, setChannelsData] = useState([]);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const hasFetched = useRef(false);
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(
@@ -111,7 +116,7 @@ const PageHeader = ({
 
   useEffect(() => {
     if (username && !hasFetched.current) {
-      dispatch(fetchChannels(username))
+      dispatch(fetchChannels({username:username, user_id:myUserId || null}))
         .unwrap()
         .then((channels) => {
           hasFetched.current = true;
@@ -192,14 +197,7 @@ const PageHeader = ({
           isEmbeddedOrExternal() ? "" : "py-3"
         }  justify-between items-center px-6 `}
       >
-        {/* <div
-            className="flex-row items-center w-max cursor-pointer sm:hidden flex"
-            // onClick={toggleBottomSheet}
-          >
-            <p className="text-theme-secondaryText text-2xl font-normal font-inter tracking-wide">
-              {topic.name.charAt(0).toUpperCase() + topic.name.slice(1)}
-            </p>
-          </div> */}
+       
         {!isEmbeddedOrExternal() && (
           <div className="flex-row items-center flex relative">
             <p className="sm:hidden flex text-theme-secondaryText xs:text-xl text-lg sm:text-2xl font-normal font-inter tracking-wide">
@@ -208,22 +206,6 @@ const PageHeader = ({
             <p className="sm:flex hidden text-theme-secondaryText text-2xl font-normal font-inter tracking-wide">
               {topic.name.charAt(0).toUpperCase() + topic.name.slice(1)}
             </p>
-
-            {isEmbeddedOrExternal() && (
-              <img
-                src={DropDown}
-                alt="arrow-right"
-                className="hidden dark:sm:hidden dark:inline-block  w-6 h-6 ml-1 cursor-pointer"
-              />
-            )}
-
-            {isEmbeddedOrExternal() && (
-              <img
-                src={DropDownLight}
-                alt="arrow-right"
-                className="dark:hidden sm:hidden block w-6 h-6 ml-1 cursor-pointer"
-              />
-            )}
 
             {isOwner && (
               <div className="relative flex items-center ml-2">
@@ -299,7 +281,7 @@ const PageHeader = ({
               </div>
             )}
 
-            {isDropdownOpen && (
+            {/* {isDropdownOpen && (
               <div
                 ref={dropdownRef}
                 className="absolute left-0 top-6 mt-2 w-max rounded-md shadow-lg border 
@@ -340,11 +322,17 @@ const PageHeader = ({
                   </p>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         )}
 
-        {/* {isEmbeddedOrExternal() && ( */}
+        <div className="flex flex-row items-center">
+          <div onClick={() => setIsPinned(true)}>
+            <img src={Pin} alt="pin" className="w-5 h-5 sm:mr-0 mr-3 dark:hidden block cursor-pointer"/>
+            <img src={PinLight} alt="pin" className="w-5 h-5 sm:mr-0 mr-3 dark:block hidden cursor-pointer"/>
+          </div>
+         
+
         {!isEmbeddedOrExternal() && (
           <div
             className="rounded-full h-7 w-7 sm:hidden flex"
@@ -352,11 +340,6 @@ const PageHeader = ({
               navigate(`${getAppPrefix()}/account/${myData.username}/profile`)
             }
           >
-            {/* <img
-            src={myData.logo ? myData.logo : ProfileIcon}
-            alt="profile"
-            className="w-full h-full object-cover cursor-pointer"
-          /> */}
             {myData.logo ? (
               <img
                 src={myData.logo}
@@ -383,10 +366,8 @@ const PageHeader = ({
             )}
           </div>
         )}
-        {/* )} */}
-        {/* <p className="text-xs text-theme-primaryText font-normal tracking-tight">
-            {topic.allowedVisibleUsers.length} members
-          </p> */}
+        </div>
+     
       </div>
       {reorderTopics.myTopics.length > 0 && <div className="sm:hidden flex flex-row space-x-3 w-full overflow-x-auto pl-6 pr-2 pt-0.5 mb-0.5 pb-3">
         {reorderTopics.myTopics.map((topic) => {
@@ -403,7 +384,7 @@ const PageHeader = ({
             >
               <p className="mr-1 text-xs">{topic.name}</p>
               {topic.unreadCount > 0 && (
-                <div className="w-5 h-5 flex items-center justify-center text-xs bg-theme-sidebarColor rounded-full text-theme-secondaryText">
+                <div className="w-4 h-4 flex items-center justify-center text-center text-xs bg-theme-sidebarColor rounded-full text-theme-secondaryText">
                   {topic.unreadCount}
                 </div>
               )}

@@ -5,10 +5,22 @@ import ArrowBackLight from "../../../assets/lightIcons/arrow_back_light.svg";
 import { format, parseISO, parse, isValid } from "date-fns";
 import Test from "../../../assets/images/test.png";
 import MapPin from "../../../assets/icons/map-pin.svg";
-import { joinEvent } from "../../../redux/slices/eventItemsSlice";
+import { joinEvent,fetchEventData } from "../../../redux/slices/eventItemsSlice";
 import { setModalModal } from "../../../redux/slices/modalSlice";
+import { ChannelImages } from "../../constants/images";
 import { postRequestUnAuthenticated } from "../../../services/rest";
+import Page404 from "../../Page404/Page404";
+import Edit from "../../../assets/icons/Edit.svg";
+import EditLight from "../../../assets/lightIcons/edit_light.svg";
+import Delete from "../../../assets/icons/Delete.svg";
+import DeleteLight from "../../../assets/lightIcons/delete_light.svg";
 import GoogleMapsEvent from "./GoogleMapsEvent";
+import Loading from "../../../widgets/Loading";
+import {
+  setEventItems,
+  setEventField,
+} from "../../../redux/slices/eventSlice";
+
 import {
   React,
   useState,
@@ -16,66 +28,84 @@ import {
   useRef,
   useNavigate,
   useDispatch,
-  useSearchParams,
   useSelector,
   useParams,
   useModal,
   useLocation,
 } from "../../../globals/imports";
 import { getAppPrefix } from "../../EmbedChannels/utility/embedHelper";
+import { usePaymentHandler } from "../../../utils/paymentPage";
+import PaymentLoading from "../../../widgets/paymentLoading";
 
 const EventFullPage = () => {
   const dispatch = useDispatch();
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const myUser = useSelector((state) => state.auth.user);
+  const {event,membership,eventLoading} = useSelector((state) => state.eventItems);
+  const paymentData = useSelector((state) => state.payment);
+  const myUserId = myUser?._id;
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [event, setEvent] = useState({});
-  const [loading, setLoading] = useState(false);
   const [formattedStartDate, setFormattedStartDate] = useState("");
   const [formattedEndDate, setFormattedEndDate] = useState("");
   const [formattedStartTime, setFormattedStartTime] = useState("");
   const [formattedEndTime, setFormattedEndTime] = useState("");
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(false);
+  const [pageExist, setPageExist] = useState(false);
   const dropdownRef = useRef(null);
+  const editDropdownRef = useRef(null);
   const location = useLocation();
   const fullPath = location.pathname;
   const { eventId } = useParams();
   const { handleOpenModal } = useModal();
+  const [message, setMessage] = useState("");
+  const { handlePayment } = usePaymentHandler();
 
   useEffect(() => {
-    const generateEventData = async () => {
-      setLoading(true);
-      const response = await postRequestUnAuthenticated(`/fetch/event/data`, {
-        eventId: eventId,
-      });
-      setLoading(false);
-      if (response.success) {
-        setEvent(response.event);
-      }
-    };
-    generateEventData();
-  }, []);
+    if(eventId!=="" ){
+      const formData = new FormData();
+      formData.append("eventId",eventId);
+      formData.append("user_id",myUserId);
+      dispatch(fetchEventData(formData));
+    }
+  }, [eventId]);
 
   const handleJoinEvent = () => {
     if (isLoggedIn) {
       dispatch(joinEvent(event._id))
         .unwrap()
-        .then(() => {})
+        .then((response) => {
+          if(response.success && response.paywall && response.paywallPrice>0){
+            const data = {
+              amount:response.paywallPrice,
+              currency:"INR",
+              event:response.event._id,
+              name:response.event.name,
+              type:"event",
+            }
+            handlePayment(data,"event");
+            return;
+          }
+        })
         .catch((error) => {
-          console.error("Issue in joining event. Please try again.");
+          setMessage(error);
         });
     } else {
       navigate(`${getAppPrefix()}/get-started?redirect=${fullPath}`);
     }
   };
 
+
   useEffect(() => {
     const handleClickOutsideDropdown = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsDropdownOpen(false); // Close dropdown
-      } else {
+        setIsDropdownOpen(false); 
+      } 
+      if (editDropdownRef.current && !editDropdownRef.current.contains(e.target)) {
+        setIsEditDropdownOpen(false); 
       }
     };
     document.addEventListener("mousedown", handleClickOutsideDropdown);
@@ -250,6 +280,23 @@ const EventFullPage = () => {
     }
   };
 
+  const handleDeleteEventModal = () => {
+    toggleEditDropdown();
+    setPageExist(true);
+    dispatch(setModalModal({ field: "eventId", value: event._id }));
+    handleOpenModal("modalEventDeleteOpen");
+  };
+  const handleEditEventModal = () => {
+    toggleEditDropdown();
+    dispatch(setEventItems(event));
+    dispatch(setEventField({ field: "type", value: "edit" }));
+    handleOpenModal("modalEventOpen");
+  };
+
+  const toggleEditDropdown = () => {
+    setIsEditDropdownOpen(!isEditDropdownOpen);
+  };
+
   useEffect(() => {
     if (event.name) {
       formatDateTime(
@@ -267,21 +314,56 @@ const EventFullPage = () => {
     event.name,
   ]);
 
+  const eventButtonState=()=>{
+    if(!isLoggedIn || !myData?._id){
+      return "Join event";
+    }
+    else if(event?.user?.toString()===myUserId?.toString()){
+      return "Add to calendar";
+    }
+    else if(membership?.user?.toString()===myUserId?.toString() && membership?.event?.toString()===event._id.toString() && membership?.addedToCalendar===true){
+      return "Event joined";
+    }
+    else if(membership?.user?.toString()===myUserId?.toString() && membership?.event?.toString()===event._id.toString() && membership?.status==="joined"){
+      return "Add to calendar";
+    }else if(membership?.user?.toString()===myUserId?.toString() && membership?.event?.toString()===event._id.toString() && membership?.status==="request"){
+      return "Requested";
+    }else{
+      return "Join event";
+    }
+  }
+
+  const buttonState = eventButtonState();
+  const isMember = buttonState === "Add to calendar" || buttonState === "Event joined";
+
+  const isEventPart =
+  event?.user?.toString() === myUserId.toString() ||
+    (membership?.user?.toString()===myUserId?.toString() && membership?.event?.toString()===event._id.toString() && membership?.status==="joined")
+
+  if(!eventLoading && !event._id && !pageExist){
+    return <Page404/>
+  }
+
   return (
-    <div className="flex flex-row bg-theme-primaryBackground mx-3 items-start">
+    <div className="h-screen flex xs:flex-row flex-col bg-theme-primaryBackground px-3 py-3 items-start">
+      {paymentData.loading && (
+      <div className="absolute inset-0 bg-[#202020] bg-opacity-80 z-50 flex items-center justify-center">
+        <PaymentLoading />
+      </div>
+    )}
       <img
         src={Logo}
         alt="logo"
-        className="dark:block hidden cursor-pointer  w-9 h-9 mt-3  rounded-sm object-contain"
+        className="dark:block hidden cursor-pointer  w-9 h-9   rounded-sm object-contain"
       />
       <img
         src={DarkLogo}
         alt="logo"
-        className="dark:hidden cursor-pointer  w-9 h-9 mt-3  rounded-sm object-contain"
+        className="dark:hidden cursor-pointer  w-9 h-9   rounded-sm object-contain"
       />
-      <div className="flex sm:flex-row flex-col items-start mx-auto space-x-3">
+      <div className="flex sm:flex-row flex-col items-start mx-auto xs:space-x-3 h-full">
         <div
-          className=" sm:mt-8 mt-4 sm:mb-0 mb-4  flex flex-row items-center space-x-1 ml-3"
+          className=" sm:mt-8 mt-4 sm:mb-0 mb-4  flex flex-row items-center space-x-1 xs:ml-3 ml-0"
           onClick={() => navigate(-1)}
         >
           <img
@@ -296,41 +378,120 @@ const EventFullPage = () => {
           />
           <p className="text-xs text-theme-secondaryText font-light">Back</p>
         </div>
-        <div className="flex flex-col bg-theme-tertiaryBackground p-4 h-full min-h-screen overflow-y-auto">
-          <div className="flex flex-col p-4 relative justify-start items-start space-y-2">
+        <div className="flex flex-col flex-1 flex-grow bg-theme-tertiaryBackground p-4 h-full overflow-y-auto  rounded-lg">
+          {eventLoading ? (
+            <div className="flex flex-col p-6 relative justify-start items-start mt-12">
+              <Loading text="Loading event data..." />
+            </div>
+          ) : (
+            <div className="flex flex-col h-full p-4 relative justify-start items-start space-y-2">
+            <div className="flex flex-row items-start  w-full">
             <img
               src={event.cover_image ? event.cover_image : Test}
               alt="event-image"
-              className="rounded-lg h-36 w-auto object-contain"
+              className="rounded-lg h-44 w-auto object-contain"
             />
+            <div className="items-center justify-end ml-2 relative flex">
+          {event?.user === myUserId && (
+            <div
+              className="flex space-x-1 cursor-pointer ml-4"
+              onClick={toggleEditDropdown}
+            >
+              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
+              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
+              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
+            </div>
+          )}
+          {isEditDropdownOpen && (
+            <div
+              ref={editDropdownRef}
+              className="absolute top-4 right-0 w-max rounded-md shadow-lg border border-theme-chatDivider bg-theme-tertiaryBackground  ring-1 ring-black ring-opacity-5 z-50"
+            >
+              <div
+                className="py-1"
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="options-menu"
+              >
+                <div
+                  className="flex flex-row px-4 items-center"
+                  onClick={handleEditEventModal}
+                >
+                  <img
+                    src={Edit}
+                    alt="edit"
+                    className="dark:block hidden w-4 h-4"
+                  />
+                  <img
+                    src={EditLight}
+                    alt="edit"
+                    className="dark:hidden w-4 h-4"
+                  />
+                  <p
+                    className="block ml-2 py-2 text-sm text-theme-secondaryText cursor-pointer"
+                    role="menuitem"
+                  >
+                    Edit
+                  </p>
+                </div>
+                <div
+                  className="flex flex-row px-4 items-center"
+                  onClick={handleDeleteEventModal}
+                >
+                  <img
+                    src={Delete}
+                    alt="edit"
+                    className="dark:block hidden w-4 h-4"
+                  />
+                  <img
+                    src={DeleteLight}
+                    alt="edit"
+                    className="dark:hidden w-4 h-4"
+                  />
+                  <p
+                    className="block  ml-2 py-2 text-sm text-theme-secondaryText cursor-pointer"
+                    role="menuitem"
+                  >
+                    Delete
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+            </div>
             <p className="text-theme-secondaryText text-2xl font-normal ">
               {event.name}
             </p>
             <p className="text-theme-sidebarColor font-light text-sm">
               {date} • {time}
             </p>
-            <div className="flex flex-row items-end space-x-4">
-              {event?.joined_users?.includes(myData._id) ||
-              event.user === myData._id ? (
-                <div className="">
-                  <button
-                    className="cursor-pointer text-xs w-full mt-3 bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center px-3 py-2.5"
-                    onClick={() => setIsDropdownOpen(true)}
-                  >
-                    Add to Calendar
-                  </button>
-                  {isDropdownOpen && (
-                    <div
-                      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center"
-                      onClick={(e) => e.stopPropagation()}
+            {!isEventPart &&  <div className="flex flex-row items-center mt-0.5">
+              <img className="mr-1 w-3 h-3 mt-0.5 dark:block hidden" loading="lazy" src={event.joining==="paid"?ChannelImages.Secure.default:event.joining==="public"?
+                ChannelImages.LockOpen.default:ChannelImages.Lock.default} alt="lock"  />
+                <img className="mr-1 w-3 h-3 mt-0.5 dark:hidden block" loading="lazy" src={event.joining==="paid"?ChannelImages.SecureLight.default:event.joining==="public"?
+                ChannelImages.LockOpenLight.default:ChannelImages.LockLight.default} alt="lock-light"  />
+              <p className="mt-1 text-xs font-light text-theme-emptyEvent">
+                {event.joining==="paid"
+                  ? `This event requires a ₹${event.paywallPrice} fee to join.`
+                  : event.joining === "public"
+                  ? "Public event — anyone can join."
+                  : "Invite-only — admin approval required."}
+              </p>
+            </div>}
+              <div className="flex flex-row items-end ">
+                      <div className="relative inline-block">
+                    {buttonState==="Add to calendar" && <button
+                      className="placeholder:cursor-pointer text-xs mr-3 bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center py-2.5 xs:px-3 px-1.5"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
+                      {buttonState}
+                    </button>}
+                    {isDropdownOpen && (
                       <div
-                        className="border rounded-lg border-theme--chatDivider bg-theme-tertiaryBackground"
                         ref={dropdownRef}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log("Clicked inside dropdown");
-                        }}
+                        className="absolute left-0 mt-2 z-10 border rounded-lg border-theme-chatDivider bg-theme-tertiaryBackground w-max"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <div
                           className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:bg-theme-primaryBackground hover:rounded-t-lg px-6 py-3"
@@ -338,14 +499,14 @@ const EventFullPage = () => {
                         >
                           <p>Google</p>
                         </div>
-                        <div className="border-t border-theme--t-chatDivider"></div>
+                        <div className="border-t border-t-theme-chatDivider"></div>
                         <div
                           className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:bg-theme-primaryBackground px-6 py-3"
                           onClick={handleDownloadICS}
                         >
                           <p>ICS/Apple</p>
                         </div>
-                        <div className="border-t border-theme--t-chatDivider"></div>
+                        <div className="border-t border-t-theme-chatDivider"></div>
                         <div
                           className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:rounded-b-lg hover:bg-theme-primaryBackground px-6 py-3"
                           onClick={handleOutlookCalendar}
@@ -353,21 +514,38 @@ const EventFullPage = () => {
                           <p>Outlook</p>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : event?.requested_users?.includes(myData._id) ? (
-                <div className="cursor-pointer text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center px-3 py-2">
-                  Requested
-                </div>
-              ) : (
-                <div
-                  className="cursor-pointer text-sm bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center px-3 py-2"
-                  onClick={handleJoinEvent}
-                >
-                  {event.joining === "public" ? "Join event" : "Request access"}
-                </div>
-              )}
+                    )}
+                  </div>
+
+
+                {buttonState === "Requested" && (
+                  <div
+                    className={`cursor-pointer text-sm mr-3 bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                      "px-4"
+                    } py-2`}
+                  >
+                    Requested
+                  </div>
+                )}
+
+                {buttonState === "Event joined" && (
+                  <div
+                    className={`cursor-default text-sm mr-3 bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                      "xs:px-3 px-1.5"
+                    } py-2`}
+                  >
+                    Event joined
+                  </div>
+                )}
+
+                {(buttonState === "Join event" || buttonState === "Request access") && (
+                  <div
+                    className="cursor-pointer text-sm mr-3 bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center xs:px-3 px-1.5 py-2"
+                    onClick={handleJoinEvent}
+                  >
+                   {buttonState}
+                  </div>
+                )}
               <div
                 className="px-4 py-2 text-sm font-light text-center text-theme-secondaryText
                border border-theme-secondaryText rounded-md cursor-pointer"
@@ -376,43 +554,56 @@ const EventFullPage = () => {
                 Share
               </div>
             </div>
+            {message && <div className="text-sm text-theme-error font-light pt-2">{message}</div>}
 
             <div className="pb-2 border-b border-theme-chatDivider w-full"></div>
-            {event.joining === "public" ? (
-              <div className="  text-theme-emptyEvent text-xs font-light font-inter italic">
-                This is a public event. Which means anyone can join.
-              </div>
-            ) : (
-              <div className="  text-theme-emptyEvent text-xs font-light font-inter italic">
-                This is a private event, so entry requires approval. You'll
-                receive an email once the admin reviews and approves your
-                request.
-              </div>
-            )}
-            <p className="text-theme-emptyEvent text-sm font-light">Location</p>
-            {event && event.location && event.locationText && (
+            {!isEventPart &&  <div className="flex flex-row items-center mt-0.5">
+              <img className="mr-1 w-3 h-3 mt-0.5 dark:block hidden" loading="lazy" src={event.joining==="paid"?ChannelImages.Secure.default:event.joining==="public"?
+                ChannelImages.LockOpen.default:ChannelImages.Lock.default} alt="lock"  />
+                <img className="mr-1 w-3 h-3 mt-0.5 dark:hidden block" loading="lazy" src={event.joining==="paid"?ChannelImages.SecureLight.default:event.joining==="public"?
+                ChannelImages.LockOpenLight.default:ChannelImages.LockLight.default} alt="lock-light"  />
+              <p className="mt-1 text-theme-emptyEvent text-xs font-light font-inter italic">
+                {event.joining==="paid"
+                  ? `This is a paywall event. Which means you need to pay ₹${event.paywallPrice} to join.`
+                  : event.joining === "public"
+                  ? "This is a public event. Which means anyone can join."
+                  : "This is a private event, so entry requires approval."}
+              </p>
+            </div>}
+           
+            {!isMember && <div className="text-theme-emptyEvent text-xs font-light font-inter italic">Join this event to see more details</div>}
+            {event.location&&isMember&&<p className="text-theme-emptyEvent text-sm font-light">Location</p>}
+            {event && event.location && event.locationText && isMember && (
               <GoogleMapsEvent url={event.location} text={event.locationText} />
             )}
 
-            <p className="text-theme-emptyEvent text-xs font-light pt-2">
+            {event.locationText&& isMember && <p className="text-theme-emptyEvent text-xs font-light pt-2">
               Address:
-            </p>
-            <div
+            </p>}
+          {isMember && event.locationText && <div
               className="flex flex-row items-center mt-2 w-full cursor-pointer "
               onClick={() => handleLocation(event.location)}
             >
               <div className=" text-theme-secondaryText text-sm font-light font-inter">
                 {event.locationText}
               </div>
+            </div>}
+            {event?.meet_url && event?.type==="online" && isMember && (
+            <div className="flex flex-row items-start mt-1 w-full cursor-pointer max-w-64">
+              <div className="ml-0.5  text-theme-emptyEvent text-xs font-light font-inter">
+                {event.meet_url}
+              </div>
             </div>
-            <div className="mt-3 text-theme-emptyEvent text-xs font-light font-inter pt-1">
+          )}
+            {event.description && <div className="mt-3 text-theme-emptyEvent text-xs font-light font-inter pt-1">
               About this event
-            </div>
+            </div>}
             <p className="text-theme-secondaryText text-sm font-light mt-1">
               {event.description}
             </p>
             {/* <div className="border-t border-t-theme-chatDivider w-full my-2"></div> */}
           </div>
+          )}
         </div>
       </div>
     </div>

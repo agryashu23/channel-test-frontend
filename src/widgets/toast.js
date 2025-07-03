@@ -5,6 +5,7 @@ export const showCustomToast = (message) => {
   const backgroundColor = isDark ? "#e8e8e8" : "#202020"; 
   const textColor = isDark ? "#32302c" : "#c4c4c4";       
   const progressColor = isDark ? "#4b4bf9" : "#8884ff";   
+  const isSmallScreen = window.innerWidth < 640;
 
   toast(message, {
     style: {
@@ -12,6 +13,8 @@ export const showCustomToast = (message) => {
       color: textColor,
       borderRadius: "8px",
       padding: "10px 10px",
+      fontSize: isSmallScreen ? "14px" : "16px", 
+      fontWeight: isSmallScreen ? 300 : 400,   
     },
     // progressStyle: {
     //   background: progressColor,
@@ -19,6 +22,6 @@ export const showCustomToast = (message) => {
     closeOnClick: true,
     pauseOnHover: false,
     draggable: false,
-    autoClose: 1500,
+    autoClose: 1000,
   });
 };

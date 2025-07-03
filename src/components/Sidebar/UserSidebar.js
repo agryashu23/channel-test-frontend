@@ -26,6 +26,8 @@ const UserSidebar = ({ closeSidebar }) => {
   const [expandedChannels, setExpandedChannels] = useState({});
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const isSubdomain = useSelector((state) => state.auth.isSubdomain);
   const [expandedCommunityChannel, setExpandedCommunityChannel] =
     useState(false);
@@ -121,7 +123,7 @@ const UserSidebar = ({ closeSidebar }) => {
 
   const handleAdminNavigation = () => {
     if (isDashboard) {
-      navigate(`/admin/${myData.username}/home`);
+      navigate(`/admin/${myData.username}`);
     } else {
       navigate(`/api/integration/channels`);
     }
@@ -210,7 +212,7 @@ const UserSidebar = ({ closeSidebar }) => {
             <Link
               to={`/account/${myData.username}/profile`}
               className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6 ${
-                location.pathname === `/account/${myData?.username}/profile`
+                location.pathname === `/account/${myUser?.username}/profile`
                   ? "text-theme-secondaryText bg-theme-sidebarHighlight rounded-lg mx-3"
                   : "text-theme-primaryText"
               }`}
@@ -263,15 +265,15 @@ const UserSidebar = ({ closeSidebar }) => {
                 />
               </div>
               {expandedChannels[channel._id] && (
-                <div className="">
+                <>
                   {channel.topics.map(
                     (topic, topicIndex) =>
                       (channel.visibility === "anyone" ||
-                        channel.members?.includes(myData._id) ||
-                        channel.user._id === myData._id) && (
-                        <div key={topic._id}>
+                        channel?.membership?.user?.toString()===myUserId.toString() ||
+                        channel.user._id === myUserId) && (
+                        <div key={`${topicIndex}-${topic._id}-sidebar`}>
                           <Link
-                            to={`/account/${channel.user.username}/channel/${channel._id}/c-id/topic/${topic._id}`}
+                            to={`/account/${channel?.user?.username}/channel/${channel._id}/c-id/topic/${topic._id}`}
                             className={`block ${
                               location.pathname ===
                               `/account/${channel.user.username}/channel/${channel._id}/c-id/topic/${topic._id}`
@@ -285,7 +287,7 @@ const UserSidebar = ({ closeSidebar }) => {
                         </div>
                       )
                   )}
-                  {channel.user._id === myData._id && (
+                  {channel?.user?._id === myUserId && (
                     <div
                       className="flex flex-row items-center w-max mx-6 my-1.5 cursor-pointer  "
                       onClick={() => handleTopicModal(channel._id)}
@@ -296,7 +298,7 @@ const UserSidebar = ({ closeSidebar }) => {
                       </p>
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           ))}

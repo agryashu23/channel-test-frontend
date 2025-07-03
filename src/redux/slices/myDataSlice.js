@@ -3,7 +3,6 @@ import {
   postRequestAuthenticated,
   postRequestAuthenticatedWithFile,
 } from "./../../services/rest";
-import { joinChannel } from "./channelSlice";
 
 export const updateProfile = createAsyncThunk(
   "myData/updateProfile",
@@ -62,6 +61,7 @@ export const saveWhatsAppNumber = createAsyncThunk(
 const initialState = {
   _id: "",
   name: "",
+  business:"",
   email: "",
   logo: "",
   username: "",

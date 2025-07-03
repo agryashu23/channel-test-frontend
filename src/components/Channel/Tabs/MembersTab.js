@@ -102,11 +102,9 @@ const MembersTab = ({ channelId, isOwner }) => {
                     />
                   )}
                   <div className="flex flex-col ml-2 justify-between">
-                    {member.user.name && (
                       <p className="text-theme-profileColor mt-1  text-[10px] font-normal">
-                        {member.user.name}
+                        {member.user?.name}
                       </p>
-                    )}
                     <p className="text-theme-secondaryText font-normal text-sm mr-2">
                       {member.user.username}
                     </p>

@@ -10,7 +10,7 @@ export const deleteChannel = createAsyncThunk(
         id: channelId,
       });
       if (response.success) {
-        return response.channel;
+        return response.channelId;
       } else {
         return rejectWithValue(response.message);
       }

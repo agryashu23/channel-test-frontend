@@ -48,7 +48,7 @@ export const fetchTopic = createAsyncThunk(
   "topic/fetch-topic",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await postRequestUnAuthenticated("/fetch/topic", {
+      const response = await postRequestAuthenticated("/fetch/topic", {
         id: id,
       });
       if (response.success) {
@@ -68,10 +68,10 @@ const initialState = {
   visibility: "anyone",
   channel: "",
   editability: "anyone",
-  allowedVisibleUsers: [],
   _id: "",
   topicstatus: "idle",
   topicNameError: false,
+  paywallPrice:0,
   isEdit: false,
 };
 
@@ -92,9 +92,9 @@ export const createTopicSlice = createSlice({
       state.channel = "";
       state.editability = "anyone";
       state._id = "";
+      state.paywallPrice=0;
       state.topicstatus = "idle";
       state.topicNameError = false;
-      state.allowedVisibleUsers = [];
       state.isEdit = false;
     },
   },

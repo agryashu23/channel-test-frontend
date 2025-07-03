@@ -1,14 +1,9 @@
 import ChannelCover from "../../assets/channel_images/channel_cover.svg";
-import ArrowBack from "../../assets/icons/arrow_back.svg";
 import Settings from "../../assets/icons/setting.svg";
-import Edit from "../../assets/icons/Edit.svg";
-import EditLight from "../../assets/lightIcons/edit_light.svg";
-import Stack from "../../assets/icons/stack.svg";
-import StackLight from "../../assets/lightIcons/curation_light.svg";
 import ChannelLogo from "../../assets/icons/default_channel_logo.svg";
 import { createGeneralTopic,setChannelOnce } from "./../../redux/slices/channelItemsSlice";
-import Dots from "../../assets/icons/three_dots.svg";
-import DotsLight from "../../assets/lightIcons/faqs_dots_light.svg";
+import { usePaymentHandler } from "../../utils/paymentPage";
+import { ChannelImages } from "../constants/images";
 import {
   clearCreateTopic,
   setCreateTopicField,
@@ -27,7 +22,6 @@ import {
   setCreateChannelItems,
 } from "../../redux/slices/createChannelSlice.js";
 import { setModalModal } from "../../redux/slices/modalSlice.js";
-
 import ChannelSkeleton from "./../skeleton/channelSkeleton";
 import InviteChannelPage from "./InviteChannelPage";
 import { domainUrl } from "./../../utils/globals";
@@ -72,13 +66,14 @@ const ChannelPage = () => {
   const dispatch = useDispatch();
   const channel = useSelector((state) => state.channel);
   const [joinLoading, setJoinLoading] = useState(false);
-
+  const myUser  = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const loading = useSelector((state) => state.channel.loading);
   const channelstatus = useSelector((state) => state.channel.channelstatus);
   const [file, setFile] = useState(null);
   const [isEditCover, setIsEditCover] = useState(null);
   const [isRemoveCover, setIsRemoveCover] = useState(null);
-
+  const { handlePayment } = usePaymentHandler();
 
   const location = useLocation();
   const fromGallery = location.state?.fromGallery;
@@ -156,10 +151,14 @@ const ChannelPage = () => {
 
   useEffect(() => {
     if (channelId) {
-      dispatch(fetchChannel(channelId));
+      const formData = new FormData();
+      formData.append("id",channelId);
+      formData.append("user_id",myUserId);
+      dispatch(fetchChannel(formData));
       dispatch(fetchTopics(channelId));
     }
   }, [channelId, dispatch]);
+
 
   const closeDropdown = (event) => {
     setIsDropdownOpen(false);
@@ -171,17 +170,20 @@ const ChannelPage = () => {
   };
   const handleOwnerShareChannel = (id) => {
     dispatch(setModalModal({ field: "shareUsername", value: username }));
-    dispatch(createChannelInvite(id))
-      .unwrap()
-      .then((invite) => {
-        dispatch(setChannelField({ field: "code", value: invite.code }));
-        setTimeout(() => {
-          handleOpenModal("modalShareChannelOpen", id);
-        }, 500);
-      })
-      .catch((error) => {
-        alert(error);
-      });
+    dispatch(setModalModal({ field: "type", value: "channel" }));
+    dispatch(setModalModal({ field: "channelId", value: id }));
+    handleOpenModal("modalInviteOpen");
+    // dispatch(createChannelInvite(id))
+    //   .unwrap()
+    //   .then((invite) => {
+    //     dispatch(setChannelField({ field: "code", value: invite.code }));
+    //     setTimeout(() => {
+    //       handleOpenModal("modalShareChannelOpen", id);
+    //     }, 500);
+    //   })
+    //   .catch((error) => {
+    //     alert(error);
+    //   });
   };
   const handleCreateTopic = () => {
     if (channel._id) {
@@ -301,7 +303,7 @@ const ChannelPage = () => {
   };
   const handleJoinChannel = (channel) => {
     if (isLoggedIn) {
-      const isMember = channel.members.find(member=>member.user.toString()===myData?._id.toString());
+      const isMember = channel.members?.find(member=>member?.user?.toString()===myData?._id?.toString());
       if(isMember && isMember.status==="request"){
         showCustomToast("You have already requested to join this channel");
         return;
@@ -311,7 +313,20 @@ const ChannelPage = () => {
         dispatch(joinChannel(channel._id))
           .unwrap()
           .then((response) => {
-            dispatch(setChannelOnce(false));
+            if(response.success && response.paywall && response.paywallPrice>0){
+              const data = {
+                amount:response.paywallPrice,
+                currency:"INR",
+                channel:response.channel._id,
+                name:response.channel.name,
+                type:"channel",
+                username:channel.user.username
+              }
+              setJoinLoading(false);
+              handlePayment(data,"channel");
+            }
+            else{
+              dispatch(setChannelOnce(false));
               setJoinLoading(false);
               if(response.success && response.joined && response.joinStatus==="already"){
                 navigate(
@@ -323,6 +338,8 @@ const ChannelPage = () => {
               else{
                 showCustomToast(response.message);
               }
+            }
+            
           })
           .catch((error) => {
             console.log(error);
@@ -346,15 +363,12 @@ const ChannelPage = () => {
 
   const handleLeaveChannel = () => {
     dispatch(setModalModal({ field: "channelId", value: channel._id }));
+    dispatch(setModalModal({ field: "shareUsername", value: username }));
+
     handleOpenModal("modalLeaveChannelOpen");
   };
 
-  if (loading) {
-    return <ChannelSkeleton />;
-  }
-
   if (inviteCode) {
-    dispatch(setChannelField({ field: "loading", value: false }));
     return (
       <InviteChannelPage
         code={inviteCode}
@@ -362,6 +376,10 @@ const ChannelPage = () => {
         username={username}
       />
     );
+  }
+
+  if (loading) {
+    return <ChannelSkeleton />;
   }
 
   const isOwner = myData?._id.toString() === channel?.user?._id?.toString();
@@ -373,9 +391,9 @@ const ChannelPage = () => {
     else if(channel.user?._id.toString()===myData?._id.toString()){
       return "";
     }
-    else if(channel.members?.find(member=>member.user.toString()===myData?._id.toString() && member.status==="joined")){
+    else if(channel.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined")){
       return "Exit channel";
-    }else if(channel.members?.find(request=>request.user.toString()===myData?._id.toString() && request.status==="request")){
+    }else if(channel.members?.find(request=>request?.user?.toString()===myUserId.toString() && request.status==="request")){
       return "Requested";
     }else{
       return "Join channel";
@@ -383,8 +401,11 @@ const ChannelPage = () => {
   }
   const buttonState = channelButtonState();
 
-  const isChannelPart = channel.members?.find(member=>member.user.toString()===myData?._id.toString());
-
+  const isChannelPart = !!channel.members?.find(
+    member =>
+      member?.user?.toString() === myUserId?.toString() &&
+      member?.status === "joined"
+  );
   // if(joinLoading){
   //   return <div className="w-full h-full bg-[#202020] bg-opacity-10 z-50 flex items-center justify-center">
   //     <Loading text="Joining channel..."/>
@@ -410,7 +431,7 @@ const ChannelPage = () => {
         {!isEmbeddedOrExternal() && (
           <div className="sm:hidden absolute left-6 top-3 text-theme-secondaryText">
             <img
-              src={ArrowBack}
+              src={ChannelImages.ArrowBack.default}
               alt="arrow-back"
               className="text-theme-secondaryText w-5 h-5 cursor-pointer"
               onClick={() => navigate(-1)}
@@ -469,8 +490,8 @@ const ChannelPage = () => {
               className="relative flex flex-row px-4 items-center"
               // onClick={handleOpenCover}
             >
-              <img src={Edit} alt="edit" className="dark:block hidden " />
-              <img src={EditLight} alt="edit" className="dark:hidden" />
+              <img src={ChannelImages.Edit.default} alt="edit" className="dark:block hidden " />
+              <img src={ChannelImages.EditLight.default} alt="edit" className="dark:hidden" />
               <p
                 className="block ml-2 py-2 text-sm text-theme-primaryText cursor-pointer"
                 role="menuitem"
@@ -489,13 +510,13 @@ const ChannelPage = () => {
               onClick={toggleRemoveCover}
             >
               <img
-                src={Stack}
-                alt="edit"
+                src={Delete}
+                alt="delete"
                 className="dark:block hidden w-4 h-4"
               />
               <img
-                src={StackLight}
-                alt="edit"
+                src={DeleteLight}
+                alt="delete-light"
                 className="dark:hidden w-4 h-4"
               />
               <p
@@ -532,7 +553,7 @@ const ChannelPage = () => {
             {/* <img src={SettingIcon} alt="setting-icon" className=" w-5 h-5" /> */}
           </div>
           <p className="text-xs text-theme-emptyEvent font-light">
-            {channel.members.length} members
+            {channel.memberCount} members
           </p>
           <p
             className="mt-0.5 text-sm font-light text-theme-primaryText mb-1"
@@ -540,7 +561,17 @@ const ChannelPage = () => {
           >
             {channel.description}
           </p>
-          <div className="flex flex-row xs:space-x-4 space-x-3 mt-2">
+          {(!isOwner && !isChannelPart) &&  <div className="flex flex-row items-center">
+              <img className="mr-1 w-3 h-3 mt-0.5 dark:block hidden" loading="lazy" src={channel.visibility==="paid"?ChannelImages.Secure.default:channel.visibility==="anyone"?
+                ChannelImages.LockOpen.default:ChannelImages.Lock.default} alt="lock"  />
+                <img className="mr-1 w-3 h-3 mt-0.5 dark:hidden block" loading="lazy" src={channel.visibility==="paid"?ChannelImages.SecureLight.default:channel.visibility==="anyone"?
+                ChannelImages.LockOpenLight.default:ChannelImages.LockLight.default} alt="lock-light"  />
+              <p className="mt-1 text-xs font-ligh text-theme-emptyEvent">{channel.visibility==="paid"?`This channel is paywalled. Youll be able to access 
+              it once you pay the price of ₹${channel.paywallPrice}/-`:channel.visibility==="anyone"?"This is a public channel. Anyone can join."
+              :"This channel is invite-only. You'll be able to access it once the admin approves your request."}</p>
+          </div>}
+          
+          <div className="flex flex-row xs:space-x-4 space-x-3 pt-2">
           {isOwner ? (
             <div
               className="py-2 xs:px-3 px-2 cursor-pointer text-theme-primaryBackground bg-theme-secondaryText rounded-lg text-sm font-inter"
@@ -570,13 +601,13 @@ const ChannelPage = () => {
             {isOwner ? (  
               <div className="relative flex items-center">
                 <img
-                  src={Dots}
+                  src={ChannelImages.Dots.default}
                   alt="dots"
                   className="dark:block hidden w-6 h-6 mr-2 cursor-pointer"
                   onClick={() => toggleEditDropdown(channel._id)}
                 />
                 <img
-                  src={DotsLight}
+                  src={ChannelImages.DotsLight.default}
                   alt="dots"
                   className="dark:hidden w-6 h-6 mr-2 cursor-pointer"
                   onClick={() => toggleEditDropdown(channel._id)}
@@ -595,12 +626,12 @@ const ChannelPage = () => {
                     >
                       <div className="flex flex-row px-3 items-center">
                         <img
-                          src={Edit}
+                          src={ChannelImages.Edit.default}
                           alt="edit"
                           className="dark:block hidden w-4 h-4"
                         />
                         <img
-                          src={EditLight}
+                          src={ChannelImages.EditLight.default}
                           alt="edit"
                           className="dark:hidden w-4 h-4"
                         />
@@ -644,9 +675,7 @@ const ChannelPage = () => {
             ) : (
               <div
                 className={`py-2 px-3 rounded-lg cursor-pointer ${
-                  channel.members?.includes(myData?._id)
-                    ? "bg-theme-secondaryText text-theme-primaryBackground text-sm"
-                    : "border border-theme-primaryText text-theme-secondaryText text-sm font-inter"
+                  "border border-theme-primaryText text-theme-secondaryText text-sm font-inter"
                 } `}
                 onClick={() => handleShareChannel(channel._id)}
               >
@@ -702,13 +731,13 @@ const ChannelPage = () => {
           </div>
           <div
             className={`${
-              isOwner ? "w-80" : "w-28"
+              isOwner ? "xxs:w-80 w-72" : "w-28"
             } mx-auto border border-theme-chatDivider`}
             style={{ height: "0.1px" }}
           ></div>
           <div className="mt-4 mb-6 h-full">
             {activeTab === "topics" ? (
-              <TopicsTab channelId={channelId} isOwner={isOwner} />
+              <TopicsTab channelId={channelId} isOwner={isOwner} username={username}/>
             ) : (
               <MembersTab channelId={channelId} isOwner={isOwner} />
             )}

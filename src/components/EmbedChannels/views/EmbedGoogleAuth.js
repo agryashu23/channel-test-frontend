@@ -4,7 +4,7 @@ import axios from "axios";
 const GoogleAuthPopup = () => {
   console.log("work2");
 
-  const redirectToGoogleAuth = (redirectDomain, hostDomain, channel) => {
+  const redirectToGoogleAuth = (redirectDomain, hostDomain, channel,originalEmail,originalChannel,originalTopic) => {
     const clientId =
       "391369792833-72medeq5g0o5sklosb58k7c98ps72foj.apps.googleusercontent.com";
     const redirectUri = encodeURIComponent(
@@ -15,6 +15,9 @@ const GoogleAuthPopup = () => {
       redirectDomain,
       hostDomain,
       channel,
+      originalEmail,
+      originalChannel,
+      originalTopic,
     };
     const state = encodeURIComponent(JSON.stringify(stateObject));
 
@@ -28,9 +31,12 @@ const GoogleAuthPopup = () => {
     const redirectDomain = urlParams.get("domain");
     const hostDomain = urlParams.get("hostDomain");
     const channel = urlParams.get("channel");
+    const originalEmail = urlParams.get("originalEmail");
+    const originalChannel = urlParams.get("originalChannel");
+    const originalTopic = urlParams.get("originalTopic");
 
     setTimeout(() => {
-      redirectToGoogleAuth(redirectDomain, hostDomain, channel);
+      redirectToGoogleAuth(redirectDomain, hostDomain, channel,originalEmail,originalChannel,originalTopic);
     }, 100); // delay allows console.log to flush
   }, []);
 

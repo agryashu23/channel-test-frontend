@@ -7,11 +7,13 @@ import {
   clearEventIdToDelete,
 } from "../../../redux/slices/modalSlice";
 import { deleteChatEvent } from "../../../redux/slices/eventSlice";
+import { useNavigate } from "react-router-dom";
 
 const DeleteEventModal = () => {
   const dispatch = useDispatch();
   const isOpen = useSelector((state) => state.modals.modalEventDeleteOpen);
   const eventIdToDelete = useSelector((state) => state.modals.eventId);
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -26,6 +28,7 @@ const DeleteEventModal = () => {
       .then(() => {
         dispatch(closeModal("modalEventDeleteOpen"));
         dispatch(clearEventIdToDelete());
+        navigate(-1);
       })
       .catch((error) => {
         console.error("Failed to delete event:", error);

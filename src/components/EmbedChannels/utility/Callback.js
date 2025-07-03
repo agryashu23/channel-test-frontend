@@ -5,6 +5,7 @@ import { hostUrl } from "./../../../utils/globals";
 
 const GoogleAuthCallback = () => {
   const [searchParams] = useSearchParams();
+  
   useEffect(() => {
     const fullHash = window.location.hash;
     console.log("🌐 Callback hash:", fullHash);
@@ -15,18 +16,24 @@ const GoogleAuthCallback = () => {
     let redirectDomain = null;
     let hostDomain = null;
     let channel = null;
+    let originalEmail = null;
+    let originalChannel = null;
+    let originalTopic = null;
 
     try {
       const decoded = JSON.parse(decodeURIComponent(stateRaw));
       redirectDomain = decoded.redirectDomain;
       hostDomain = decoded.hostDomain;
       channel = decoded.channel;
+      originalEmail = decoded.originalEmail;
+      originalChannel = decoded.originalChannel;
+      originalTopic = decoded.originalTopic;
     } catch (err) {
       console.error("❌ Failed to decode state:", err);
     }
 
     if (accessToken && redirectDomain) {
-      fetchUserDetails(accessToken, redirectDomain, hostDomain, channel);
+      fetchUserDetails(accessToken, redirectDomain, hostDomain, channel,originalEmail,originalChannel,originalTopic);
     } else {
       console.log("No access token or redirect domain received");
       window.close(); // Close popup if invalid
@@ -37,7 +44,10 @@ const GoogleAuthCallback = () => {
     accessToken,
     redirectDomain,
     hostDomain,
-    channel
+    channel,
+    originalEmail,
+    originalChannel,
+    originalTopic
   ) => {
     try {
       // Get user info
@@ -59,9 +69,11 @@ const GoogleAuthCallback = () => {
           email: userData.email,
           domain: hostDomain,
           channel: channel,
+          originalEmail: originalEmail,
+          originalChannel: originalChannel,
+          originalTopic: originalTopic,
         }
       );
-      console.log(registerResponse);
 
       if (registerResponse.data.success) {
         const { user, token } = registerResponse.data;

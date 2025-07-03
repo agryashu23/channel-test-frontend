@@ -7,6 +7,7 @@ import {
   useDispatch,
   useSelector,
 } from "../../globals/imports";
+import { setChannelOnce } from "../../redux/slices/channelItemsSlice.js";
 
 const InviteChannelPage = ({ code, channelId, username }) => {
   const dispatch = useDispatch();
@@ -24,11 +25,14 @@ const InviteChannelPage = ({ code, channelId, username }) => {
         formDataToSend.append("code", code);
         dispatch(joinChannelInvite(formDataToSend))
           .unwrap()
-          .then((channel) => {
+          .then((response) => {
             setLoading(false);
-            navigate(`c-id/topic/${channel.topics[0]}`);
+            navigate(`/account/${username}/channel/${channelId}`, {
+              replace: true,
+            });
           })
           .catch((error) => {
+            console.log(error);
             setLoading(false);
             setError(
               "Invalid Code or Channel. Redirecting back to channel...."

@@ -179,17 +179,18 @@ const FaqsTab = ({ username, isOwner }) => {
     updatestatus,
   } = useSelector((state) => state.faqs);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(initialFaqs);
 
   useEffect(() => {
-    if (initialFaqs.length === 0) {
+    if (initialFaqs.length === 0 && Faq.fetchedOnce===false) {
       dispatch(fetchFaqs(username));
+      dispatch(setFaqData({field:"fetchedOnce",value:true}))
     }
   }, [username, initialFaqs.length]);
 
-  useEffect(() => {
-    setItems(initialFaqs);
-  }, [initialFaqs]);
+   useEffect(() => {
+     setItems(initialFaqs);
+   }, [initialFaqs]);
 
   const handleClickOutside = (event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

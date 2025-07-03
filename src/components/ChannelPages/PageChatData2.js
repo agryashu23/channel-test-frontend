@@ -492,11 +492,7 @@ const PageChatData2 = ({
                     isMyMessage ? "flex-row-reverse" : ""
                   } w-max sm:max-w-[60%] max-w-[80%] items-start`}
                 >
-                  {/* <img
-                    src={chat.sender?.logo || Profile}
-                    alt="logo"
-                    className="rounded-full w-8 h-8 object-cover mx-2"
-                  /> */}
+                  
                   {chat.sender?.logo ? (
                     <img
                       src={chat.sender?.logo}

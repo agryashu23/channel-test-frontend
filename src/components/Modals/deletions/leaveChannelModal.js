@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Close from "../../../assets/icons/Close.svg";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,7 +14,8 @@ const LeaveChannelModal = () => {
   const isOpen = useSelector((state) => state.modals.modalLeaveChannelOpen);
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-
+  const shareUsername = useSelector((state) => state.modals.shareUsername);
+  const [loading, setLoading] = useState(false);
   const channelId = useSelector((state) => state.modals.channelId);
   const isTabChannel = useSelector((state) => state.modals.isTabChannel);
 
@@ -27,18 +28,21 @@ const LeaveChannelModal = () => {
 
   const handleLeave = () => {
     if (isLoggedIn) {
+      setLoading(true);
       dispatch(leaveChannel(channelId))
         .unwrap()
         .then(() => {
+          setLoading(false);
           handleClose();
-          if (!isTabChannel) {
-            navigate(`${getAppPrefix()}/account/${myData.username}/profile`, {
-              replace: true,
-            });
-          }
+          // if (!isTabChannel) {
+          //   navigate(`${getAppPrefix()}/account/${shareUsername}/channel/${channelId}`, {
+          //     replace: true,
+          //   });
+          // }
           dispatch(setModalModal({ field: "isTabChannel", value: false }));
         })
         .catch((error) => {
+          setLoading(false);
           alert(error);
         });
     }
@@ -71,16 +75,16 @@ const LeaveChannelModal = () => {
               </div>
               <div className="flex flex-row mt-5 space-x-8">
                 <button
-                  className="w-full py-2.5 rounded-full text-theme-secondaryText bg-transparent border border-theme-secondaryText font-normal"
+                  className="w-full py-2.5 rounded-full focus:outline-none text-theme-secondaryText bg-transparent border border-theme-secondaryText font-normal"
                   onClick={handleClose}
                 >
                   Cancel
                 </button>
                 <button
-                  className="w-full py-2.5 rounded-full text-theme-primaryBackground bg-theme-secondaryText font-normal"
+                  className="w-full py-2.5 rounded-full focus:outline-none text-theme-primaryBackground bg-theme-secondaryText font-normal"
                   onClick={handleLeave}
                 >
-                  Confirm
+                   {loading ? "Leaving..." : "Confirm"}
                 </button>
               </div>
             </div>

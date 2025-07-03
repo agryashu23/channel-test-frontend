@@ -53,6 +53,7 @@ module.exports = {
         extrabold: 800,
       },
       screens: {
+        xxs:"380px",
         xs: "470px",
         xl: "1150px",
         xxl: "1400px",

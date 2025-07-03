@@ -11,7 +11,7 @@ export const fetchTopic = createAsyncThunk(
   "topic/fetch-topic",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await postRequestUnAuthenticated("/fetch/topic", {
+      const response = await postRequestAuthenticated("/fetch/topic", {
         id: id,
       });
       if (response.success) {
@@ -53,7 +53,7 @@ export const joinTopicInvite = createAsyncThunk(
         data
       );
       if (response.success) {
-        return response.topic;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -106,10 +106,11 @@ const initialState = {
   user: {},
   visibility: "anyone",
   channel: {},
-  editability: "me",
+  description:"",
+  pinnedChat:"",
+  editability: "anyone",
   topicstatus: "idle",
   members:[],
-  paywall:false,
   paywallPrice:"",
   whatsappEnabled:false,
   summaryEnabled:false,
@@ -138,8 +139,9 @@ export const topicSlice = createSlice({
       state.topicstatus = "idle";
       state.topicNameError = false;
       state.members = [];
-      state.paywall = false;
       state.user={};
+      state.description="";
+      state.pinnedChat="";
       state.paywallPrice = "";
       state.whatsappEnabled = false;
       state.summaryEnabled = false;
@@ -164,6 +166,19 @@ export const topicSlice = createSlice({
       .addCase(fetchTopic.rejected, (state, action) => {
         state.topicstatus = "idle";
         state.topicNameError = action.payload || action.error.message;
+      })
+      .addCase(joinTopicInvite.fulfilled, (state, action) => {
+        state.topicstatus = "idle";
+        const response = action.payload;
+        if(response.success && state._id===response.topic._id && response.membership){
+          let index = state.members.findIndex(m=>m?._id===response.membership._id);
+          if(index!==-1){
+            state.members[index] = response.membership;
+          }
+          else{
+            state.members.push(response.membership);
+          }
+        }
       })
       .addCase(visitTopic.fulfilled, (state, action) => {
         Object.assign(state, initialState, action.payload);

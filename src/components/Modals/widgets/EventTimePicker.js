@@ -20,15 +20,12 @@ const EventTimePicker = ({
     }
   };
   const [startTime, setStartTime] = useState(
-    chipData?.date?.start_time
-      ? parseTimeString(chipData.date.start_time)
-      : new Date()
+    chipData?.date?.start_time ? parseTimeString(chipData.date.start_time) : null
   );
   const [endTime, setEndTime] = useState(
-    chipData?.date?.end_time
-      ? parseTimeString(chipData.date.end_time)
-      : new Date()
+    chipData?.date?.end_time ? parseTimeString(chipData.date.end_time) : null
   );
+  
 
   const handleStartTime = (date) => {
     setStartTime(date);
@@ -68,7 +65,10 @@ const EventTimePicker = ({
       <div className="relative  w-[45%]">
         <DatePicker
           selected={startTime}
-          onChange={handleStartTime}
+          onChange={(date) => {
+            setStartTime(date);
+            handleStartTimeChange(date); 
+          }}
           showTimeSelect
           showTimeSelectOnly
           timeIntervals={30}
@@ -87,11 +87,25 @@ const EventTimePicker = ({
           alt="Time"
           className="dark:hidden absolute right-0 top-1/2 transform -translate-y-1/2 text-theme-primaryText"
         />
+        {startTime && (
+          <button
+            onClick={() => {
+              setStartTime(null);
+              handleStartTimeChange(null);
+            }}
+            className="absolute right-6 top-1/2 transform -translate-y-1/2 text-xs text-gray-400"
+          >
+            ×
+          </button>
+        )}
       </div>
       <div className="relative  w-[45%]">
         <DatePicker
           selected={endTime}
-          onChange={handleEndTime}
+          onChange={(date) => {
+            setEndTime(date);
+            handleEndTimeChange(date); 
+          }}
           showTimeSelect
           showTimeSelectOnly
           timeIntervals={30}
@@ -110,6 +124,17 @@ const EventTimePicker = ({
           alt="Time"
           className="dark:hidden absolute right-0 top-1/2 transform -translate-y-1/2 text-theme-primaryText"
         />
+        {endTime && (
+          <button
+            onClick={() => {
+              setEndTime(null);
+              handleEndTimeChange(null);
+            }}
+            className="absolute right-6 top-1/2 transform -translate-y-1/2 text-xs text-gray-400"
+          >
+            ×
+          </button>
+        )}
       </div>
     </div>
   );

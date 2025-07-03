@@ -31,7 +31,7 @@ import EventModal from "./../components/Modals/Event/EventModal";
 import RemoveMemberModal from "./../components/Modals/deletions/removeMemberModal";
 import DeleteCategoryModal from "./../components/Modals/deletions/DeleteCategoryModal";
 import EventUnsplashModal from "./../components/Modals/Unsplash/EventUnsplashModal";
-import EventCardModal from "./../components/Modals/Event/EventCardModal";
+// import EventCardModal from "./../components/Modals/Event/EventCardModal";
 import DeleteEventModal from "./../components/Modals/deletions/eventDeletionModal";
 import EmbedLogoutModal from "./../components/Modals/EmbedLogoutModal";
 import DeleteDMModal from "./../components/Modals/deletions/dmDeleteModal";
@@ -41,6 +41,10 @@ import DeleteChannelModal from "../components/Modals/deletions/channelDeleteModa
 import DeleteTopicModal from "../components/Modals/deletions/topicDeleteModal";
 import LeaveChannelModal from "../components/Modals/deletions/leaveChannelModal";
 import LeaveTopicModal from "../components/Modals/deletions/leaveTopicModal";
+import InviteModal from "../components/Modals/Channel/InviteModal";
+import PaymentSuccessModal from "../components/Modals/payment/paymentSuccessModal";
+import PaymentModal from "../components/Modals/payment/paymentModal";
+import RemoveTopicMemberModal from "../components/Modals/deletions/removeTopicMemberModal";
 
 const Modals = () => (
   <>
@@ -74,9 +78,10 @@ const Modals = () => (
     <TopicReorderModal />
     <EventModal />
     <RemoveMemberModal />
+    <RemoveTopicMemberModal />
     <DeleteCategoryModal />
     <EventUnsplashModal />
-    <EventCardModal />
+    {/* <EventCardModal /> */}
     <DeleteEventModal />
     <EmbedLogoutModal />
     <DeleteDMModal />
@@ -86,6 +91,9 @@ const Modals = () => (
     <DeleteTopicModal />
     <LeaveChannelModal />
     <LeaveTopicModal/>
+    <InviteModal/>
+    <PaymentSuccessModal/>
+    <PaymentModal/>
   </>
 );
 

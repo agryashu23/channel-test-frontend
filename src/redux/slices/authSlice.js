@@ -1,8 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getUserData, getAuthToken } from "./../../services/cookies";
+import Cookies from "js-cookie";
 
 const initialState = {
-  user: null,
+  user:Cookies.get("user")?JSON.parse(Cookies.get("user")):null,
   token: null,
   isLoggedIn: false,
   isOnboarding: false,

@@ -53,7 +53,9 @@ const PageHome = () => {
   }, [isLoggedIn,username]);
 
   useEffect(() => {
-    dispatch(fetchTopic(topicId));
+    if(isLoggedIn && myUserId){
+      dispatch(fetchTopic(topicId));
+    }
   }, [topicId, channelId]);
 
   useEffect(() => {
@@ -82,12 +84,11 @@ const PageHome = () => {
 
   const loading = topicStatus === "loading";
 
-  const isMember = topic?.members?.find(member=>member.user.toString()===myUserId.toString() && member.status==="joined");
-  const isRequested = topic?.members?.find(member=>member.user.toString()===myUserId.toString() && member.status==="request");
-  const isTopicOwner = topic?.user._id ===myUserId;
+  const isMember = topic?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined");
+  const isRequested = topic?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="request");
+  const isTopicOwner = topic?.user?._id ===myUserId;
 
   if (inviteCode) {
-    dispatch(setTopicField({ field: "loadingStatus", value: "idle" }));
     return (
       <InviteTopicPage
         code={inviteCode}
@@ -104,7 +105,7 @@ const PageHome = () => {
 
   if (isLoggedIn &&  myUserId && !isTopicOwner && !isMember && isRequested) {
     return (
-      <div className="w-full h-screen bg-theme-secondaryBackground text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
+      <div className="w-full h-screen bg-theme-secondaryBackground px-4 text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
         <p>You have already requested to join this topic. Waiting for approval...</p>
         <div
           className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
@@ -120,7 +121,7 @@ const PageHome = () => {
   }
   if (isLoggedIn &&  myUserId && !isTopicOwner &&  !isMember && !isRequested) {
     return (
-      <div className="w-full h-screen bg-theme-secondaryBackground text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
+      <div className="w-full h-screen bg-theme-secondaryBackground px-4 text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
         <p>You have not joined this topic. Please join the Topic from Channel Page.</p>
         <div
           className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto

@@ -2,15 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Test from "../../../assets/images/test.png";
 
 import { format, parseISO, parse, isValid } from "date-fns";
-import Edit from "../../../assets/icons/Edit.svg";
-import EditLight from "../../../assets/lightIcons/edit_light.svg";
+
 import { ReactComponent as LocationIcon } from "../../../assets/icons/location.svg";
 
-import Delete from "../../../assets/icons/Delete.svg";
-import DeleteLight from "../../../assets/lightIcons/delete_light.svg";
 import useModal from "./../../hooks/ModalHook";
 import { useDispatch, useSelector } from "react-redux";
 import { setModalModal } from "../../../redux/slices/modalSlice";
+import { ChannelImages } from "../../constants/images";
 import {
   setEventItems,
   setEventField,
@@ -19,6 +17,7 @@ import { joinEvent } from "../../../redux/slices/eventItemsSlice";
 import { AddToCalendarButton } from "add-to-calendar-button-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getAppPrefix } from "../../EmbedChannels/utility/embedHelper";
+import { usePaymentHandler } from "../../../utils/paymentPage";
 
 const EventCard = ({
   width,
@@ -30,7 +29,7 @@ const EventCard = ({
   btnPadding,
   btnFlex,
   spacing,
-  topSpacing = "mt-4",
+  topSpacing = "mt-2",
 }) => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -49,7 +48,11 @@ const EventCard = ({
   const dropdownRef = useRef(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fullPath = location.pathname;
+  const errorValue = useSelector((state) => state.eventItems.joinEventError);
   const dispatch = useDispatch();
+  const [message, setMessage] = useState("");
+  const { handlePayment } = usePaymentHandler();
+
 
   const handleEventModal = () => {
     navigate(`/event/${event._id}`);
@@ -85,12 +88,25 @@ const EventCard = ({
   }, [isDropdownOpen]);
 
   const handleJoinEvent = () => {
+    setMessage("");
     if (isLoggedIn) {
       dispatch(joinEvent(event._id))
         .unwrap()
-        .then(() => {})
+        .then((response) => {
+          if(response.success && response.paywall &&  response.paywallPrice>0){
+            const data = {
+              amount:response.paywallPrice,
+              currency:"INR",
+              event:response.event._id,
+              name:response.event.name,
+              type:"event",
+            }
+            handlePayment(data,"event");
+            return;
+          }
+        })
         .catch((error) => {
-          console.log(error);
+          setMessage(error?.message || errorValue);
         });
     } else {
       navigate(`${getAppPrefix()}/get-started?redirect=${fullPath}`);
@@ -278,23 +294,32 @@ const EventCard = ({
   };
 
   const eventButtonState=()=>{
-    if(!isLoggedIn || !myData?._id){
+    if(!isLoggedIn || !myUserId){
       return "Join event";
     }
     else if(event?.user?.toString()===myUserId.toString()){
       return "Add to calendar";
     }
-    else if(eventMembers?.find(member=>member.user.toString()===myUserId.toString() && member.event.toString()===event._id.toString() && member.addedToCalendar===true)){
+    else if(eventMembers?.find(member=>member?.user?.toString()===myUserId?.toString() && member?.event?.toString()===event._id.toString() && member?.addedToCalendar===true)){
       return "Event joined";
     }
-    else if(eventMembers?.find(member=>member.user.toString()===myUserId.toString() && member.event.toString()===event._id.toString() && member.status==="joined")){
+    else if(eventMembers?.find(member=>member?.user?.toString()===myUserId?.toString() && member?.event?.toString()===event._id.toString() && member?.status==="joined")){
       return "Add to calendar";
-    }else if(eventMembers?.find(request=>request.user.toString()===myUserId.toString() && request.event.toString()===event._id.toString() && request.status==="request")){
+    }else if(eventMembers?.find(request=>request?.user?.toString()===myUserId?.toString() && request?.event?.toString()===event._id.toString() && request?.status==="request")){
       return "Requested";
     }else{
       return "Join event";
     }
   }
+
+  const isEventPart =
+  event?.user?.toString() === myUserId.toString() ||
+  !!eventMembers?.find(member =>
+    member?.user?.toString() === myUserId?.toString() &&
+    member?.event?.toString() === event._id.toString() &&
+    member?.status === "joined"
+  );
+
 
   const buttonState = eventButtonState();
 
@@ -311,75 +336,7 @@ const EventCard = ({
             className={`rounded-lg object-cover flex-shrink-0 ${imageHeight}`}
           />
         </div>
-
-        <div className="items-center justify-end ml-2 relative xs:hidden flex">
-          {event?.user === myUserId && (
-            <div
-              className="flex space-x-1 cursor-pointer"
-              onClick={toggleDropdown}
-            >
-              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-              <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
-            </div>
-          )}
-          {isDropdownOpen && (
-            <div
-              ref={dropdownRef}
-              className="absolute top-4 right-0 w-max rounded-md shadow-lg border border-theme-chatDivider bg-theme-tertiaryBackground  ring-1 ring-black ring-opacity-5 z-50"
-            >
-              <div
-                className="py-1"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="options-menu"
-              >
-                <div
-                  className="flex flex-row px-4 items-center"
-                  onClick={handleEditEventModal}
-                >
-                  <img
-                    src={Edit}
-                    alt="edit"
-                    className="dark:block hidden w-4 h-4"
-                  />
-                  <img
-                    src={EditLight}
-                    alt="edit"
-                    className="dark:hidden w-4 h-4"
-                  />
-                  <p
-                    className="block ml-2 py-2 text-sm text-theme-secondaryText cursor-pointer"
-                    role="menuitem"
-                  >
-                    Edit
-                  </p>
-                </div>
-                <div
-                  className="flex flex-row px-4 items-center"
-                  onClick={handleDeleteEventModal}
-                >
-                  <img
-                    src={Delete}
-                    alt="edit"
-                    className="dark:block hidden w-4 h-4"
-                  />
-                  <img
-                    src={DeleteLight}
-                    alt="edit"
-                    className="dark:hidden w-4 h-4"
-                  />
-                  <p
-                    className="block  ml-2 py-2 text-sm text-theme-secondaryText cursor-pointer"
-                    role="menuitem"
-                  >
-                    Delete
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        
       </div>
       <div className="xs:ml-3 flex flex-col justify-between items-start ">
         <div className="text-left">
@@ -389,7 +346,7 @@ const EventCard = ({
           <p className="text-theme-secondaryText text-sm font-normal font-inter mt-1 max-w-72">
             {event?.name}
           </p>
-          {event?.locationText && event?.type==="offline" && (
+          {event?.locationText && event?.type==="offline" && (buttonState === "Add to calendar" || buttonState === "Event joined") && (
             <div
               className="flex flex-row items-start mt-1 w-full cursor-pointer max-w-64"
               onClick={() => handleLocation(event?.location)}
@@ -403,7 +360,7 @@ const EventCard = ({
               </div>
             </div>
           )}
-          {event?.meet_url && event?.type==="online" && (
+          {event?.meet_url && event?.type==="online" && (buttonState === "Add to calendar" || buttonState === "Event joined") && (
             <div className="flex flex-row items-start mt-1 w-full cursor-pointer max-w-64">
               <div className="ml-0.5  text-theme-emptyEvent text-xs font-light font-inter">
                 {event.meet_url}
@@ -411,56 +368,67 @@ const EventCard = ({
             </div>
           )}
         </div>
-
+        <div>
+        {!isEventPart &&  <div className="flex flex-row items-center mt-0.5">
+              <img className="mr-1 w-3 h-3 mt-0.5 dark:block hidden" loading="lazy" src={event.joining==="paid"?ChannelImages.Secure.default:event.joining==="public"?
+                ChannelImages.LockOpen.default:ChannelImages.Lock.default} alt="lock"  />
+                <img className="mr-1 w-3 h-3 mt-0.5 dark:hidden block" loading="lazy" src={event.joining==="paid"?ChannelImages.SecureLight.default:event.joining==="public"?
+                ChannelImages.LockOpenLight.default:ChannelImages.LockLight.default} alt="lock-light"  />
+              <p className="mt-1 text-xs font-light text-theme-emptyEvent">
+                {event.joining==="paid"
+                  ? `This event requires a ₹${event.paywallPrice} fee to join.`
+                  : event.joining === "public"
+                  ? "Public event — anyone can join."
+                  : "Invite-only — admin approval required."}
+              </p>
+            </div>}
         <div
           className={`flex ${
             btnFlex
               ? `${btnFlex} space-y-2 justify-start items-start`
               : `flex flex-row ${spacing} items-center`
-          }  xs:${topSpacing} mt-3  `}
+          }  xs:${topSpacing} mt-2  `}
         >
-                {buttonState === "Add to calendar" && (
-                  <>
-                    <button
-                      className={`cursor-pointer text-xs bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center py-2.5 xs:px-3 px-1.5`}
-                      onClick={() => handleToggleDropdown(event._id)}
+                <div className="relative inline-block">
+                {buttonState==="Add to calendar" && <button
+                  className={`placeholder:cursor-pointer ${spacing==="" ? "mr-3" : ""} text-xs bg-theme-secondaryText text-theme-primaryBackground rounded-md 
+                    font-normal text-center py-2.5 xs:px-3 px-1.5`}
+                  onClick={() => handleToggleDropdown(event._id)}
+                >
+                  {buttonState}
+                </button>}
+                {openDropdownId === event?._id && (
+                  <div
+                    className="absolute left-0 mt-1 z-10 border rounded-lg border-theme-chatDivider bg-theme-tertiaryBackground w-max"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div
+                      className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:bg-theme-primaryBackground hover:rounded-t-lg px-6 py-3"
+                      onClick={handleGoogleCalendar}
                     >
-                      {buttonState}
-                    </button>
-                    {openDropdownId === event?._id && (
-                      <div
-                        className="absolute z-10 border rounded-lg border-theme-chatDivider bg-theme-tertiaryBackground mt-1 w-max"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div
-                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText
-                          hover:bg-theme-primaryBackground hover:rounded-t-lg px-6 py-3"
-                          onClick={handleGoogleCalendar}
-                        >
-                          <p>Google</p>
-                        </div>
-                        <div className="border-t border-t-theme-chatDivider"></div>
-                        <div
-                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText  hover:bg-theme-primaryBackground px-6 py-3"
-                          onClick={handleDownloadICS}
-                        >
-                          <p>ICS/Apple</p>
-                        </div>
-                        <div className="border-t border-t-theme-chatDivider"></div>
-                        <div
-                          className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:rounded-b-lg hover:bg-theme-primaryBackground px-6 py-3"
-                          onClick={handleOutlookCalendar}
-                        >
-                          <p>Outlook</p>
-                        </div>
-                      </div>
-                    )}
-                  </>
+                      <p>Google</p>
+                    </div>
+                    <div className="border-t border-t-theme-chatDivider"></div>
+                    <div
+                      className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:bg-theme-primaryBackground px-6 py-3"
+                      onClick={handleDownloadICS}
+                    >
+                      <p>ICS/Apple</p>
+                    </div>
+                    <div className="border-t border-t-theme-chatDivider"></div>
+                    <div
+                      className="flex flex-col cursor-pointer text-sm font-light text-theme-secondaryText hover:rounded-b-lg hover:bg-theme-primaryBackground px-6 py-3"
+                      onClick={handleOutlookCalendar}
+                    >
+                      <p>Outlook</p>
+                    </div>
+                  </div>
                 )}
+              </div>
 
                 {buttonState === "Requested" && (
                   <div
-                    className={`cursor-pointer text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                    className={`cursor-pointer ${spacing==="" ? "mr-3" : ""} text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
                       btnFlex ? "px-4" : btnPadding
                     } py-2`}
                   >
@@ -470,7 +438,7 @@ const EventCard = ({
 
                 {buttonState === "Event joined" && (
                   <div
-                    className={`cursor-default text-sm bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
+                    className={`cursor-default text-sm ${spacing==="" ? "mr-3" : ""} bg-theme-emptyEvent text-theme-primaryBackground rounded-md font-normal text-center ${
                       btnFlex ? "px-4" : "xs:px-3 px-1.5"
                     } py-2`}
                   >
@@ -480,22 +448,25 @@ const EventCard = ({
 
                 {(buttonState === "Join event" || buttonState === "Request access") && (
                   <div
-                    className="cursor-pointer text-sm bg-theme-secondaryText text-theme-primaryBackground rounded-md font-normal text-center xs:px-3 px-1.5 py-2"
+                    className={`cursor-pointer text-sm ${spacing==="" ? "mr-3" : ""} bg-theme-secondaryText text-theme-primaryBackground 
+                    rounded-md font-normal text-center xs:px-3 px-1.5 py-2`}
                     onClick={handleJoinEvent}
                   >
-                    {event?.joining === "public" ? "Join event" : "Request access"}
+                    {buttonState}
                   </div>
                 )}
           <div
             className={`cursor-pointer text-xs border  border-theme-secondaryText text-theme-secondaryText 
             rounded-md font-normal text-center ${
               btnFlex ? "px-4" : "xs:px-3 px-1.5"
-            }  py-2.5`}
+            }  py-2`}
             onClick={handleEventModal}
           >
             View details
           </div>
         </div>
+        </div>
+        {message && <div className="text-xs text-theme-emptyEvent font-light pt-2">{message}</div>}
       </div>
     </div>
   );

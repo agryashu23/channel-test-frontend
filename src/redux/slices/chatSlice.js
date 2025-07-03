@@ -36,6 +36,7 @@ export const fetchTopicChats = createAsyncThunk(
   }
 );
 
+
 export const fetchBrandChats = createAsyncThunk(
   "channelChat/fetchBrandChats",
   async (user_id, { rejectWithValue }) => {
@@ -228,6 +229,62 @@ export const markAsRead = createAsyncThunk(
   }
 );
 
+export const fetchPinnedChats = createAsyncThunk(
+  "channelChat/fetchPinnedChats",
+  async (topicId , { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated("/fetch/pinned/chats", {
+        topicId,
+      });
+      if (response.success) {
+        return response.chats;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const pinChat = createAsyncThunk(
+  "channelChat/pin-chat",
+  async (chatId, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated("/pin/chat", {
+        chatId,
+      });
+      console.log(response);
+      if (response.success) {
+        return response.chat;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const unpinChat = createAsyncThunk(
+  "channelChat/unpin-chat",
+  async (chatId, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated("/unpin/chat", {
+        chatId,
+      });
+      console.log(response);
+      if (response.success) {
+        return response.chatId;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 
 export const chatSlice = createSlice({
   name: "chatSlice ",
@@ -235,6 +292,8 @@ export const chatSlice = createSlice({
     chats: [],
     resourceChats: [],
     brandChats: [],
+    pinnedChats: [],
+    pinnedLoading: false,
     chatStatus: "idle",
     chatError: null,
     isScroll: true,
@@ -270,8 +329,16 @@ export const chatSlice = createSlice({
     addMessage: (state, action) => {
       state.chats.push(action.payload);
     },
+    reactionMessage: (state, action) => {
+      const chat = action.payload;
+      const index = state.chats.findIndex((item) => item._id === chat._id);
+      if (index !== -1) {
+        state.chats[index].reactions = chat.reactions;
+      }
+    },  
     deleteMessage: (state, action) => {
       let index = state.chats.findIndex((item) => item._id === action.payload);
+      console.log(index);
       if (index !== -1) {
         state.chats.splice(index, 1);
       }
@@ -382,17 +449,9 @@ export const chatSlice = createSlice({
       .addCase(createChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const chat = action.payload;
-        console.log(chat);
         state.chats.push(chat);
       })
-      .addCase(deleteChatEvent.fulfilled, (state, action) => {
-        state.chatStatus = "idle";
-        const event = action.payload;
-        let index = state.chats.findIndex((chat) => chat._id === event.chat);
-        if (index !== -1) {
-          state.chats.splice(index, 1);
-        }
-      })
+     
       .addCase(editChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
         const chat = action.payload;
@@ -470,8 +529,59 @@ export const chatSlice = createSlice({
           state.chats.splice(index, 1);
         }
       })
-      
+      .addCase(deleteChatEvent.fulfilled, (state, action) => {
+        state.chatStatus = "idle";
+        const event = action.payload;
+        let index = state.chats.findIndex((chat) => chat._id === event.chat);
+        if (index !== -1) {
+          state.chats.splice(index, 1);
+        }
+      })
+      .addCase(pinChat.fulfilled, (state, action) => {
+        const chat = action.payload;
+        let index = state.pinnedChats.findIndex((item) => item._id === chat._id);
+        let index2 = state.chats.findIndex((item) => item._id === chat._id);
+        if (index === -1) {
+          state.pinnedChats.push(chat);
+        }
+        if(index2!==-1){
+          state.chats[index2].pinned = chat.pinned;
+        }
+        else if(index!==-1){
+          state.pinnedChats.splice(index, 1);
+        }
 
+      })
+      .addCase(pinChat.rejected, (state, action) => {
+        state.chatError = action.payload || action.error.message;
+      })
+      .addCase(unpinChat.fulfilled, (state, action) => {
+        const chatId = action.payload;
+        let index = state.pinnedChats.findIndex((item) => item._id === chatId);
+        let index2 = state.chats.findIndex((item) => item._id === chatId);
+        if (index !== -1) {
+          state.pinnedChats.splice(index, 1);
+        }
+        if(index2!==-1){
+          state.chats[index2].pinned = false;
+        }
+      })
+      .addCase(unpinChat.rejected, (state, action) => {
+        state.chatError = action.payload || action.error.message;
+      })
+      .addCase(fetchPinnedChats.fulfilled, (state, action) => {
+        state.pinnedLoading = false;
+        state.pinnedChats = action.payload;
+
+      })
+      .addCase(fetchPinnedChats.rejected, (state, action) => {
+        state.pinnedLoading = false;
+        state.chatError = action.payload || action.error.message;
+      })
+      .addCase(fetchPinnedChats.pending, (state, action) => {
+        state.pinnedLoading = true;
+
+      })
       .addCase(deleteTopicChat.rejected, (state, action) => {
         state.chatStatus = "idle";
         state.chatError = action.payload || action.error.message;
@@ -489,6 +599,7 @@ export const {
   clearMedia,
   deleteMessage,
   setEventField,
+  reactionMessage,
   addBrandMessage,
 } = chatSlice.actions;
 

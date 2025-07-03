@@ -51,6 +51,7 @@ import {
   useModal,
   isEmbeddedOrExternal,
 } from "../../globals/imports";
+import PinnedChat from "./PinnedChat";
 
 const PageChat = ({
   topicId,
@@ -70,10 +71,12 @@ const PageChat = ({
   const [notificationDropdown, setNotificationDropdown] = useState(false);
   const business = useSelector((state) => state.business.business);
   const [isBrandTalk, setIsBrandTalk] = useState(false);
+  const [isMemberClick, setIsMemberClick] = useState(false);
   const [fileObjects, setFileObjects] = useState([]);
   const inputRef = useRef(null);
   const addMenuRef = useRef(null);
   const addMenuButtonRef = useRef(null);
+  const [isPinned, setIsPinned] = useState(false);
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
@@ -83,6 +86,7 @@ const PageChat = ({
   const { handleOpenModal } = useModal();
   const myUser = useSelector((state) => state.auth.user);
   const myUserId = myUser?._id;
+  const pageChatDataRef = useRef(null);
   
   // useEffect(() => {
   //   if (!channel.members?.includes(myData._id)) {
@@ -310,8 +314,7 @@ const PageChat = ({
     if (!isBrandTalk) {
       return;
     }
-    const storedEmbedData = StorageManager.getItem("embedData");
-    const { domain } = JSON.parse(storedEmbedData);
+   
     const extractLinks = (text) => {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       return text.match(urlRegex) || [];
@@ -324,7 +327,7 @@ const PageChat = ({
     formDataToSend.append("media", JSON.stringify(channelChat.media));
     formDataToSend.append("replyTo", channelChat.replyTo || null);
     formDataToSend.append("links", JSON.stringify(links));
-    formDataToSend.append("domain", domain);
+    formDataToSend.append("username", username);
     fileObjects.forEach((file) => {
       formDataToSend.append("files", file);
     });
@@ -376,13 +379,15 @@ const PageChat = ({
     field.style.height = `${field.scrollHeight}px`;
   };
 
-  const handleBrandTalk = () => {
-    setIsBrandTalk(!isBrandTalk);
-  };
-  const isTopicOwner = topic?.user._id ===myUserId;
-  const isEditor = isTopicOwner || (topic?.members?.find(member=>member.user.toString()===myUserId.toString()
-   && member.status==="joined" && (member.role==="editor" || member.role==="admin"))) || topic.editability==="anyone";
-
+    const handleBrandTalk = () => {
+      setIsBrandTalk(!isBrandTalk);
+    };
+    const handleMembersClick = () => {
+      setIsMemberClick(!isMemberClick);
+    };
+    const isTopicOwner = topic?.user._id ===myUserId;
+    const isEditor = isTopicOwner || (topic?.members?.find(member=>member?.user?.toString()===myUserId?.toString()
+    && member.status==="joined" && (member.role==="editor" || member.role==="admin"))) || topic.editability==="anyone";
 
   return (
     <div
@@ -390,32 +395,37 @@ const PageChat = ({
         isEmbeddedOrExternal() ? "h-full" : "sm:h-full h-full-height-36"
       }`}
     >
-      {!isBrandTalk && (
+      {!isBrandTalk && !isMemberClick && 
         <PageHeader
           channelName={channelName}
           topic={topic}
           topicId={topicId}
+          setIsPinned={setIsPinned}
           toggleBottomSheet={toggleBottomSheet}
           isOpen={isOpen}
           username={username}
           channelId={channelId}
         />
-      )}
+      }
 
-      {isBrandTalk && (
+      {(isBrandTalk || isMemberClick) && (
         <div className="relative h-8 sm:h-10 bg-theme-secondaryBackground w-full shrink-0">
           <div
             className="absolute flex flex-row items-center space-x-1 top-2 sm:top-8 left-[40%] sm:left-[45%] border-theme-emptyEvent border rounded-full 
           bg-theme-tertiaryBackground z-20 text-theme-emptyEvent py-1 px-2 font-light text-xs sm:text-sm cursor-pointer"
-            onClick={() => setIsBrandTalk(false)}
+            onClick={() => {
+              setIsMemberClick(false)
+              setIsBrandTalk(false)
+            }}
           >
             <img src={Close} alt="close" className="w-3 h-3" />
-            <p> Close Chat</p>
+            <p> Close {isBrandTalk ? "Chat" : ""}</p>
           </div>
         </div>
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
-        {isBrandTalk ? (
+        {/* {
+        isBrandTalk ? (
           <div className="bg-theme-primaryBackground w-full h-full overflow-y-auto">
             <PageChatData2
               topicId={topicId}
@@ -426,18 +436,26 @@ const PageChat = ({
               channelName={channelName}
             />
           </div>
-        ) : (
+        ) : ( */}
           <div className="bg-theme-secondaryBackground w-full h-full overflow-y-auto pt-1">
             <PageChatData
+              ref={pageChatDataRef}
               topicId={topicId}
+              isPinned={isPinned}
+              setIsPinned={setIsPinned} 
+              channelName={channelName}
+              isBrandTalk={isBrandTalk}
+              isMemberClick={isMemberClick}
+              // onJumpToChat={(id) => pageChatDataRef.current?.scrollToChat(id)}
               isLoggedIn={isLoggedIn}
               business={business}
               topic={topic}
+              channelId={channelId}
               myData={myData}
               onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
             />
           </div>
-        )}
+        {/* )} */}
 
         {channelChat.media.length > 0 && (
           <div className="w-full bg-theme-chatDivider flex flex-row space-x-5 overflow-x-auto custom-scrollbar flex-shrink-0 z-50 pl-4 pr-2 pt-4 pb-2">
@@ -494,7 +512,7 @@ const PageChat = ({
             </div>
           </div>
         )}
-        {isEditor && (
+        {isEditor && !isPinned && !isMemberClick && (
           <div className="flex flex-col items-center px-2 pt-2 pb-3 space-x-2 bg-theme-secondaryBackground border-t border-t-theme-chatDivider">
             <div className="relative flex flex-row items-center w-full">
               <img
@@ -582,7 +600,7 @@ const PageChat = ({
                 {showAddMenu && (
                   <div
                     className="absolute bottom-12 left-2 mb-2 bg-theme-tertiaryBackground border 
-                    border-theme-modalBorder shadow-lg rounded-lg z-10 px-3 space-y-3 py-3"
+                    border-theme-modalBorder shadow-lg rounded-lg z-50 px-3 space-y-3 py-3"
                     onClick={(e) => e.stopPropagation()}
                     ref={addMenuRef}
                   >
@@ -648,7 +666,7 @@ const PageChat = ({
                     )}
                   </div>
                 )}
-                {topic.user._id !== myData._id && business?.parameters?.talkToBrand && (
+                {(!business?.parameters ||  business?.parameters?.talkToBrand ) &&  topic?.user._id !==myUserId && (
                   <div
                     className={`${
                       isBrandTalk
@@ -673,6 +691,7 @@ const PageChat = ({
                     </p>
                   </div>
                 )}
+              
                 <div
                   className={`xl:hidden flex text-center ml-4 rounded-full px-3 py-1.5 flex-row cursor-pointer ${
                     isOpen
@@ -691,8 +710,28 @@ const PageChat = ({
                     Resource
                   </p>
                 </div>
+                {topic?.user._id ===myUserId && (
+                  <div
+                    className={`${
+                      isMemberClick
+                        ? "bg-theme-secondaryText text-theme-primaryBackground"
+                        : "dark:bg-theme-tertiaryBackground bg-theme-buttonDisable text-theme-buttonDisableText"
+                    } ml-4 rounded-full px-3 py-1.5 flex flex-row cursor-pointer`}
+                    onClick={handleMembersClick}
+                  >
+                    <p
+                      className={`text-sm font-light ${
+                        isMemberClick
+                          ? "text-theme-primaryBackground"
+                          : "text-theme-emptyEvent"
+                      }`}
+                    >
+                      Members
+                    </p>
+                  </div>
+                )}
               </div>
-
+              
               {(data.length > 0 ||
                 channelChat.content ||
                 channelChat.media.length > 0) && (

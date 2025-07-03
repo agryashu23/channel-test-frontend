@@ -50,6 +50,8 @@ const Profile = () => {
   const dispatch = useDispatch();
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const { handleOpenModal } = useModal();
   const navigate = useNavigate();
   const { username } = useParams();
@@ -121,7 +123,10 @@ const Profile = () => {
         });
         if (response.success) {
           dispatch(fetchProfile(username));
-          dispatch(fetchChannels(username));
+          // const formData = new FormData();
+          // formData.append("user_id", myUserId || null);
+          // formData.append("username",username);
+          dispatch(fetchChannels({user_id:myUserId,username:username}));
         } else {
           setIsDomainExist(false);
         }

@@ -15,6 +15,10 @@ const PageForm = ({ isOpen, onClose, topic }) => {
   const [activeTab, setActiveTab] = useState("resources");
   const [forceOpen, setForceOpen] = useState(window.innerWidth >= 1150);
   const myData = useSelector((state) => state.myData);
+  const [fetchedOnce, setFetchedOnce] = useState(false);
+  const [fetchedOnceEvents, setFetchedOnceEvents] = useState(false);
+
+  
 
   useEffect(() => {
     const handleResize = () => {
@@ -46,9 +50,9 @@ const PageForm = ({ isOpen, onClose, topic }) => {
       case "summary":
         return <SummaryPage topic={topic} />;
       case "resources":
-        return <ResourcePage />;
+        return <ResourcePage fetchedOnce={fetchedOnce} setFetchedOnce={setFetchedOnce} />;
       case "events":
-        return <EventsPage topicId={topic._id} />;
+        return <EventsPage fetchedOnceEvents={fetchedOnceEvents} setFetchedOnceEvents={setFetchedOnceEvents} />;
       default:
         return null;
     }

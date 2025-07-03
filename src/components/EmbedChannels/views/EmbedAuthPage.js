@@ -12,15 +12,17 @@ import DateTimeCard from "./../../chips/widgets/DateTime";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchMyData } from "../../../redux/slices/myDataSlice";
 
-const EmbedAuthPage = ({ initialEmail = "" }) => {
+const EmbedAuthPage = ({  }) => {
   const [isLogin, setIsLogin] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState(initialEmail);
+  const [email, setEmail] = useState("");
   const [otpBackend, setOtpBackend] = useState("");
   const [otp, setOtp] = useState("");
   const [newError, setNewError] = useState("");
   const [channelId, setChannelId] = useState("");
   const [showOtp, setShowOtp] = useState("");
+  const [embedData, setEmbedData] = useState(null);
+  const [embedData2, setEmbedData2] = useState(null);
   const dispatch = useDispatch();
   const csrfToken = getCsrfToken();
   const [currentDomain, setCurrentDomain] = useState("");
@@ -33,9 +35,16 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
 
   useEffect(() => {
     const data = localStorage.getItem("embedData");
+    const data2 = localStorage.getItem("embedFetchedData");
     if (data) {
-      const dataId = JSON.parse(data);
+      const dataId = JSON.parse(data); 
+      setEmail(dataId?.email|| "");
       setCurrentDomain(dataId.domain);
+      setEmbedData(dataId);
+    }
+    if(data2){
+      const dataId = JSON.parse(data2);
+      setEmbedData2(dataId);
     }
   }, []);
 
@@ -96,6 +105,7 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
 
   const handleChangeOtp = async (value) => {
     setOtp(value);
+    
     if (value.length === 6 && value === otpBackend) {
       setNewError("");
       const userData = {
@@ -103,6 +113,9 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
         email: email.trim(),
         domain: currentDomain,
         channel: channelId,
+        originalEmail:embedData?.email || null,
+        originalChannel:embedData2?.selectedChannel || null,
+        originalTopic:embedData2?.selectedTopic || null,
       };
       try {
         await axios
@@ -131,18 +144,17 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
                   token: response.data.token,
                 })
               );
-              clearData();
+              clearData(); 
+
               dispatch(fetchMyData());
               if (redirectUrl !== "") {
                 navigate(`${redirectUrl}`, {
                   replace: true,
                 });
               } else {
-                const data = localStorage.getItem("embedFetchedData");
-                if (data) {
-                  const dataId = JSON.parse(data);
+                if (embedData2) {
                   navigate(
-                    `/embed/channels/account/${dataId.username}/channel/${dataId.selectedChannel}`,
+                    `/embed/channels/account/${embedData2.username}/channel/${embedData2.selectedChannel}`,
                     {
                       replace: true,
                     }
@@ -162,12 +174,10 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
   };
 
   const handleGoogleAuthPopup = () => {
-    const data = StorageManager.getItem("embedData");
-    const embedData = JSON.parse(data);
     const originalDomain = embedData.domain;
 
     setNewError("");
-    const authUrl = `https://channels.social/embed/google-auth/login?domain=${window.location.origin}&hostDomain=${originalDomain}&channel=${channelId}`;
+    const authUrl = `https://channels.social/embed/google-auth/login?domain=${window.location.origin}&hostDomain=${originalDomain}&channel=${channelId}&originalEmail=${embedData?.email || null}&originalChannel=${embedData2?.selectedChannel || null}&originalTopic=${embedData2?.selectedTopic || null}`;
     const popup = window.open(
       authUrl,
       "_blank",
@@ -203,11 +213,9 @@ const EmbedAuthPage = ({ initialEmail = "" }) => {
             replace: true,
           });
         } else {
-          const data = localStorage.getItem("embedFetchedData");
-          if (data) {
-            const dataId = JSON.parse(data);
+          if (embedData2) {
             navigate(
-              `/embed/channels/account/${dataId.username}/channel/${dataId.selectedChannel}`,
+              `/embed/channels/account/${embedData2.username}/channel/${embedData2.selectedChannel}`,
               {
                 replace: true,
               }

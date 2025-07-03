@@ -57,6 +57,16 @@ import CancellationPolicy from "./components/Footer/Modals/Cancellation";
 import EventFullPage from "./components/ChannelPages/widgets/EventFullPage";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import AdminAnalytics from "./components/Admin/Tabs/AdminAnalytics";
+import AdminAccountBilling from "./components/Admin/Account/AdminAccountBilling";
+import AdminRoleMembers from "./components/Admin/Account/AdminRoleMembers";
+import AdminPayments from "./components/Admin/Account/AdminPayments";
+import AdminCustomizations from "./components/Admin/Account/AdminCustomizations";
+import ChannelRequests from "./components/Admin/Requests/ChannelRequests";
+import TopicRequests from "./components/Admin/Requests/TopicRequests";
+import EventRequests from "./components/Admin/Requests/EventRequests";
+import ApiPanel from "./components/Admin/Panel/ApiPanel";
+import SettingsPanel from "./components/Admin/Panel/SettingsPanel";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -190,7 +200,7 @@ const App = () => {
                 path="/auth/google/callback"
                 element={<GoogleAuthCallback />}
               />
-              <Route path="/admin/:username/home" element={<AdminHome />} />
+              {/* <Route path="/admin/:username/home" element={<AdminHome />} /> */}
 
               <Route path="/" element={<HomePage />} />
               <Route path="/pricing" element={<HomePage />} />
@@ -224,6 +234,21 @@ const App = () => {
                   path="channel/:channelId/c-id/topic/:topicId"
                   element={<PageHome />}
                 />
+              </Route>
+
+              <Route path="/admin/:username" element={<AdminHome />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<Profile/>} />
+                <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="account/billing"  element={<AdminAccountBilling />} />
+                <Route path="account/members/roles" element={<AdminRoleMembers />} />
+                <Route path="account/payments" element={<AdminPayments />} />
+                <Route path="account/customizations" element={<AdminCustomizations />} />
+                <Route path="requests/channels" element={<ChannelRequests />} />
+                <Route path="requests/topics" element={<TopicRequests />} />
+                <Route path="requests/events" element={<EventRequests />} />
+                <Route path="panel/api" element={<ApiPanel />} />
+                <Route path="panel/settings" element={<SettingsPanel />} />
               </Route>
 
               <Route path="/api/integration" element={<Landing />}>

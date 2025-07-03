@@ -40,6 +40,7 @@ import adminReducer from "./../slices/adminSlice";
 import businessReducer from "./../slices/businessSlice";
 import pollReducer from "./../slices/pollSlice";
 import eventItemsReducer from "./../slices/eventItemsSlice";
+import paymentReducer from "./../slices/paymentSlice";
 
 export const appReducer = {
   auth: authReducer,
@@ -83,6 +84,7 @@ export const appReducer = {
   business: businessReducer,
   poll: pollReducer,
   eventItems: eventItemsReducer,
+  payment:paymentReducer
 };
 
 const combinedReducer = combineReducers(appReducer);

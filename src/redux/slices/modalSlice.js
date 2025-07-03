@@ -26,12 +26,14 @@ const initialState = {
   modalCurationDeleteOpen: false,
   modalChatDeleteOpen: false,
   modalRemoveMemberOpen: false,
+  modalRemoveTopicMemberOpen: false,
   modalShareOpen: false,
   modalEventOpen: false,
   modalPollOpen: false,
   modalEventCardOpen: false,
   modalShareChipOpen: false,
   modalShareChannelOpen: false,
+  modalInviteOpen: false,
   modalDeleteChannelOpen: false,
   modalShareTopicOpen: false,
   modalDeleteTopicOpen: false,
@@ -40,6 +42,8 @@ const initialState = {
   modalTokenExpiryOpen: false,
   modalUnsubscriptionOpen: false,
   modalCreateCategoryOpen: false,
+  modalPaymentSuccessOpen:false,
+  modalPaymentOpen:false,
   modalCategoryDeleteOpen: false,
   modalPushtoCategoryOpen: false,
   modalPushtoCurationOpen: false,
@@ -55,6 +59,7 @@ const initialState = {
   profileId: "",
   channelId: "",
   isTabChannel: false,
+  type:"",
   channelName: "",
   topicId: "",
   topicName: "",
@@ -93,9 +98,9 @@ const modalSlice = createSlice({
         state.shareUsername = link;
       }
 
-      if (modalName === "modalShareChannelOpen") {
-        state.channelId = link;
-      }
+       if (modalName === "modalShareChannelOpen") {
+         state.channelId = link;
+       }
       if (modalName === "modalShareTopicOpen") {
         state.topicId = link;
       }
@@ -122,6 +127,11 @@ const modalSlice = createSlice({
       if (modalName === "modalUnsubscriptionOpen") {
         state.shareUsername = "";
       }
+      if(modalName==="modalInviteOpen"){
+        state.type="";
+        state.channelId="";
+        state.topicId="";
+      }
       if (modalName === "modalDocumentOpen") {
         state.document = null;
       }
@@ -129,9 +139,9 @@ const modalSlice = createSlice({
         state.channelId = "";
       }
 
-      if (modalName === "modalShareChannelOpen") {
-        state.channelId = "";
-      }
+       if (modalName === "modalShareChannelOpen") {
+         state.channelId = "";
+       }
       if (modalName === "modalShareTopicOpen") {
         state.topicId = "";
         state.channelId = "";

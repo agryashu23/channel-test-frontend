@@ -69,6 +69,7 @@ export const checkAutoLogin = createAsyncThunk(
         const data = {
           token: response.token,
           user: response.user,
+          allowInTopic:response.allowInTopic
         };
         dispatch(setEmbedCredentials(data));
         return data;

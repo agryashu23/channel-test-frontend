@@ -7,6 +7,9 @@ import {
 import { updateChannel } from "./channelItemsSlice";
 import { createGeneralTopic } from "./channelItemsSlice";
 import { removeMember } from "./reorderTopicSlice";
+import { deleteChannel } from "./deleteChannelSlice";
+import { verifyPayment } from "./paymentSlice";
+
 
 export const removeCover = createAsyncThunk(
   "channel/remove-cover",
@@ -45,11 +48,9 @@ export const saveCover = createAsyncThunk(
 );
 export const fetchChannel = createAsyncThunk(
   "channel/fetch-channel",
-  async (channelId, { rejectWithValue }) => {
+  async (data, { rejectWithValue }) => {
     try {
-      const response = await postRequestUnAuthenticated("/fetch/channel", {
-        id: channelId,
-      });
+      const response = await postRequestUnAuthenticated("/fetch/channel", data);
       if (response.success) {
         return response.channel;
       } else {
@@ -89,7 +90,6 @@ export const joinChannel = createAsyncThunk(
       const response = await postRequestAuthenticated("/join/channel", {
         channelId: id,
       });
-      console.log(response)
       if (response.success) {
         return response;
       } else {
@@ -107,6 +107,7 @@ export const leaveChannel = createAsyncThunk(
       const response = await postRequestAuthenticated("/leave/channel", {
         channelId: id,
       });
+      console.log(response);
       if (response.success) {
         return response;
       } else {
@@ -126,7 +127,7 @@ export const joinChannelInvite = createAsyncThunk(
         data
       );
       if (response.success) {
-        return response.channel;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -143,8 +144,8 @@ const initialState = {
   business:"",
   editability: "me",
   members: [],
-  paywall:false,
-  paywallPrice:"",
+  memberCount:0,
+  paywallPrice:0,
   cover_image: null,
   admins: [],
   topics: [],
@@ -189,6 +190,8 @@ export const channelSlice = createSlice({
       state.name = "";
       state.description = "";
       state.channelstatus = "idle";
+      state.memberCount = 0;
+      state.paywallPrice = 0;
       state.channelNameError = false;
       state.isEdit = false;
     },
@@ -239,9 +242,9 @@ export const channelSlice = createSlice({
       .addCase(joinChannel.fulfilled, (state, action) => {
         state.channelstatus = "idle";
         const response = action.payload;
-        if(response.success && state._id===response.channel._id){
+        if(response.success && response.membership && state._id===response.channel._id){
           const membership = response.membership;
-          let index = state.members.findIndex(m=>m._id===membership._id);
+          let index = state.members.findIndex(m=>m?._id===membership._id);
           if(index===-1){
             state.members.push(membership);
           }
@@ -250,6 +253,41 @@ export const channelSlice = createSlice({
           }
         }
       })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.channelstatus = "idle";
+        const response = action.payload;
+        if(response.type==="channel" &&  response.success && response.membership && state._id===response.channel._id){
+          const membership = response.membership;
+          let index = state.members.findIndex(m=>m?._id===membership._id);
+          if(index===-1){
+            state.members.push(membership);
+          }
+          else{
+            state.members[index]=membership;
+          }
+        }
+      })
+       .addCase(joinChannelInvite.fulfilled, (state, action) => {
+        state.channelstatus = "idle";
+        const response = action.payload;
+        if(response.success && state._id===response.channel._id){
+          const membership = response.membership;
+          let index = state.members.findIndex(m=>m?._id===membership._id);
+          if(index===-1){
+            state.members.push(membership);
+          }
+          else{
+            state.members[index]=membership;
+          }
+        }
+      })
+      .addCase(deleteChannel.fulfilled, (state, action) => {
+        const channelId = action.payload;
+        if(state._id===channelId){
+          Object.assign(state, initialState);
+        }
+      })
+    
       .addCase(joinChannel.rejected, (state, action) => {
         state.channelstatus = "idle";
       })
@@ -261,7 +299,7 @@ export const channelSlice = createSlice({
         const response = action.payload;
         if(response.success && state._id===response.channel._id){
           const membership = response.membership;
-          let index = state.members.findIndex(m=>m._id===membership._id);
+          let index = state.members.findIndex(m=>m?._id===membership._id);
           if(index!==-1){
             state.members.splice(index, 1);
           }
@@ -282,6 +320,19 @@ export const channelSlice = createSlice({
           }
         }
       })
+      // .addCase(joinChannelInvite.fulfilled, (state, action) => {
+      //   const response = action.payload;
+      //   if(response.success && state._id===response.channel._id){
+      //     const membership = response.membership;
+      //     let index = state.members.findIndex(m=>m?._id===membership._id);
+      //     if(index===-1){
+      //       state.members.push(membership);
+      //     }
+      //     else{
+      //       state.members[index]=membership;
+      //     }
+      //   }
+      // })
       .addCase(updateChannel.fulfilled, (state, action) => {
         if (action.payload._id === state._id) {
           Object.assign(state, initialState, action.payload);

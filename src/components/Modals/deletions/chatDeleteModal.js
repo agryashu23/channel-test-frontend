@@ -30,7 +30,6 @@ const DeleteChatModal = () => {
           chatId: chatIdToDelete,
           topicId: topicIdToDelete,
         };
-        console.log(messageData);
         socket.emit("delete_message", messageData);
         dispatch(closeModal("modalChatDeleteOpen"));
         dispatch(clearChatIdToDelete());

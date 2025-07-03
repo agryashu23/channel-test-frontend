@@ -13,6 +13,9 @@ import ArrowForward from "../../../assets/icons/arrow_forward.svg";
 import Dots from "../../../assets/icons/three_dots.svg";
 import DotsLight from "../../../assets/lightIcons/faqs_dots_light.svg";
 import Edit from "../../../assets/icons/Edit.svg";
+import Invite from "../../../assets/icons/invite.svg";
+import InviteLight from "../../../assets/lightIcons/invite_light.svg";
+
 import EditLight from "../../../assets/lightIcons/edit_light.svg";
 import Delete from "../../../assets/icons/Delete.svg";
 import DeleteLight from "../../../assets/lightIcons/delete_light.svg";
@@ -34,7 +37,7 @@ import {
   setTopicChannelToDelete,
 } from "../../../redux/slices/deleteTopicSlice.js";
 
-const TopicsTab = ({ channelId, isOwner }) => {
+const TopicsTab = ({ channelId, isOwner,username }) => {
   const { handleOpenModal } = useModal();
   const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(null);
   const dropdownEditRef = useRef(null);
@@ -243,6 +246,34 @@ const TopicsTab = ({ channelId, isOwner }) => {
                               role="menuitem"
                             >
                               Delete
+                            </p>
+                          </div>
+                          <div
+                            className="flex flex-row px-3 items-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              dispatch(setModalModal({ field: "shareUsername", value: username }));
+                              dispatch(setModalModal({ field: "type", value: "topic" }));
+                              dispatch(setModalModal({ field: "topicId", value: topic._id }));
+                              dispatch(setModalModal({ field: "channelId", value: topic.channel }));
+                              handleOpenModal("modalInviteOpen");
+                            }}
+                          >
+                            <img
+                              src={Invite}
+                              alt="invite"
+                              className="dark:block hidden w-4 h-4"
+                            />
+                            <img
+                              src={InviteLight}
+                              alt="edit"
+                              className="dark:hidden w-4 h-4"
+                            />
+                            <p
+                              className="block px-2 py-2 font-light text-sm   text-theme-secondaryText cursor-pointer"
+                              role="menuitem"
+                            >
+                              Invite
                             </p>
                           </div>
                         </div>

@@ -4,13 +4,15 @@ import { axios } from "axios";
 import Modal from "./PricingModal";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { handlePayment } from "../../../utils/paymentPage";
+import { usePaymentHandler } from "../../../utils/paymentPage";
+
 const PricingCard = ({ plan, type }) => {
   const [openInfoIndex, setOpenInfoIndex] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const myData = useSelector((state) => state.myData);
   const navigate = useNavigate();
+  const { handlePayment } = usePaymentHandler();
 
   const handleInfoOpen = (index) => setOpenInfoIndex(index);
   const handleInfoClose = () => setOpenInfoIndex(null);
@@ -81,22 +83,24 @@ const PricingCard = ({ plan, type }) => {
   const featureList = extractFeatures();
 
   const handleStartClick = (price, planId, type) => {
-    if (plan.buttonText === "Get started for free") {
-      if (!isLoggedIn) {
+    if (!isLoggedIn) {
         navigate("/get-started");
-      } else {
-        navigate(`/account/${myData.username}/profile`);
-      }
-    } else if (plan.buttonText !== "Talk to sales") {
-      setIsModalOpen(true);
-      // const data = {
-      //   amount: price,
-      //   currency: "INR",
-      //   planId: planId,
-      //   billingCycle: type,
-      // };
-      // handlePayment(myData, data);
     }
+    else{
+      if (plan.buttonText === "Get started for free") {
+        navigate(`/account/${myData.username}/profile`);
+      } else if (plan.buttonText !== "Talk to Sales") {
+      // setIsModalOpen(true);
+        const data = {
+          amount: price,
+          currency: "INR",
+          planId: planId,
+          billingCycle: type,
+        };
+        handlePayment(data,"subscription");
+      }
+    }
+    
   };
 
   return (
@@ -138,6 +142,7 @@ const PricingCard = ({ plan, type }) => {
               </span>
             )}
           </span>
+          {plan._id!=="basic" &&  <p className="text-xs text-theme-secondaryText font-extralight">+ GST/-</p>}
         </div>
       )}
       {plan._id === "enterprise" && (
@@ -149,7 +154,7 @@ const PricingCard = ({ plan, type }) => {
         <p className="text-xs text-white font-extralight">{plan.description}</p>
       )}
 
-      {plan.buttonText !== "Talk to sales" && (
+      {plan.buttonText !== "Talk to Sales" && (
         <button
           className={`${
             plan.buttonText === "Get started for free"
@@ -169,7 +174,7 @@ const PricingCard = ({ plan, type }) => {
           {plan.buttonText}
         </button>
       )}
-      {plan.buttonText === "Talk to sales" && (
+      {plan.buttonText === "Talk to Sales" && (
         <a
           href="https://calendly.com/channels_social/talk-to-us"
           target="_blank"
@@ -181,7 +186,7 @@ const PricingCard = ({ plan, type }) => {
       )}
 
       {plan.buttonText !== "Get started for free" &&
-        plan.buttonText !== "Talk to sales" && (
+        plan.buttonText !== "Talk to Sales" && (
           <a
             href="https://calendly.com/channels_social/talk-to-us"
             target="_blank"
@@ -195,7 +200,7 @@ const PricingCard = ({ plan, type }) => {
         <p className="text-[#898989] text-sm font-light">
           {plan.buttonText === "Get started for free"
             ? "Features:"
-            : plan.buttonText === "Talk to sales"
+            : plan.buttonText === "Talk to Sales"
             ? ""
             : "Core Features:"}
         </p>

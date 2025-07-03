@@ -43,5 +43,11 @@ export class ChannelImages{
     static DotsLight = require("../../assets/lightIcons/faqs_dots_light.svg");
     static ShareIcon = require("../../assets/icons/share_icon.svg");
     static ShareIconLight = require("../../assets/lightIcons/share_icon_light.svg");
+    static Lock = require("../../assets/icons/padlock.svg");
+    static LockLight = require("../../assets/lightIcons/padlock_light.svg");
+    static LockOpen = require("../../assets/icons/unlock.svg");
+    static LockOpenLight = require("../../assets/lightIcons/unlock_light.svg");
+    static Secure = require("../../assets/icons/secure.svg");
+    static SecureLight = require("../../assets/lightIcons/secure_light.svg");
  
 }

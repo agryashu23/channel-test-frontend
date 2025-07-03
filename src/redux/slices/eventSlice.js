@@ -65,6 +65,7 @@ const initialState = {
   description: "",
   startDate: "",
   type: "offline",
+  paywallPrice:0,
   meet_url: "",
   endDate: "",
   startTime: "",

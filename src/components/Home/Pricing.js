@@ -5,12 +5,17 @@ import {
   useEffect,
   hostUrl,
   postRequestUnAuthenticated,
+  postRequestAuthenticated,
+  useSelector,
 } from "../../globals/imports";
 import PricingCard from "./widgets.js/PricingCard";
 import { ChannelImages } from "../constants/images";
 import Loading from "../../widgets/Loading";
+import AdminPricingCard from "../Admin/Account/widgets/AdminPricingCard";
 
 const Pricing = () => {
+  const myData = useSelector((state) => state.myData);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const [activeTabPricing, setActiveTabPricing] = useState("monthly");
   const [plans, setPlans] = useState([]);
   const [loading,setLoading] = useState(false);
@@ -18,12 +23,18 @@ const Pricing = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       setLoading(true);
-      const response = await postRequestUnAuthenticated(`/get/plans`);
-      setPlans(response.plans);
+      if(isLoggedIn && myData._id && myData.business){
+        const response = await postRequestAuthenticated(`/fetch/business/plans`);
+        setPlans(response.plans);
+      }
+      else{
+        const response = await postRequestUnAuthenticated(`/get/plans`);
+        setPlans(response.plans);
+      }
       setLoading(false);
     };
     fetchPlans();
-  }, []);
+  }, [myData._id , isLoggedIn]);
   return (
     <div className="flex flex-col mt-20 items-center z-10 px-8 bg-[#202020] h-full ">
       <p className="text-white text-2xl font-normal">
@@ -33,7 +44,7 @@ const Pricing = () => {
         No credit card required. You can cancel at any time.
       </p>
 
-      <div className="flex space-x-6 mt-12 border-b-2 border-[#3c3c3c] ">
+      {/* <div className="flex space-x-6 mt-12 border-b-2 border-[#3c3c3c] ">
         <button
           onClick={() => setActiveTabPricing("monthly")}
           className={`text-sm font-light tracking-wider ${
@@ -54,10 +65,11 @@ const Pricing = () => {
         >
           Annualy (~15% off)
         </button>
-      </div>
+      </div> */}
       {loading?<div className="mt-12 flex justify-center items-center"><Loading text={"Loading..."}  /></div>:<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6  w-full max-w-7xl mt-12">
         {plans?.map((plan, index) => (
-          <PricingCard key={index} plan={plan} type={activeTabPricing} />
+         isLoggedIn && myData._id && myData.business ? 
+         <AdminPricingCard key={index} plan={plan} index={index} type={activeTabPricing}/>:<PricingCard key={index} plan={plan}  type={activeTabPricing} />
         ))}
       </div>}
       <div className="border border-theme-chatDivider rounded-lg flex sm:flex-row flex-col justify-start mt-20 w-full xl:w-4/5 p-0">

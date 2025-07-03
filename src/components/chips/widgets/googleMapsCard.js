@@ -2,6 +2,7 @@
 import { React, useState, useEffect } from "react";
 import { GoogleMap, useLoadScript, Marker } from "@react-google-maps/api";
 import Maps from "../../../assets/images/maps.png";
+import { Keys } from "../../constants/keys";
 
 const containerStyle = {
   width: "100%",
@@ -34,7 +35,7 @@ const GoogleMapsCard = ({ item }) => {
   const [showMap, setShowMap] = useState(false);
   const [center, setCenter] = useState({ lat: 14.5995, lng: 120.9842 });
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyA4giJjY94Cl2MJegYyp0NZYIUEOUTq9I0",
+    googleMapsApiKey: Keys.GoogleMapsApiKey,
   });
 
   const handleMarkerClick = () => {

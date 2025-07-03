@@ -59,7 +59,8 @@ const Gallery = () => {
   const isOwner = galleryData?.username === myData?.username;
   const [scrollPosition, setScrollPosition] = useState(0);
   const [activeTab, setActiveTab] = useState("channels");
-
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const tabs = [
     { id: 1, name: "Channels", href: "channels" },
     { id: 2, name: "Curations", href: "curations" },
@@ -120,7 +121,7 @@ const Gallery = () => {
         });
         if (response.success) {
           dispatch(fetchGallery(galleryData.username));
-          dispatch(fetchChannels(galleryData.username));
+          dispatch(fetchChannels({username:galleryData.username, user_id:myUserId || null}));
           setIsLoading(false);
         } else {
           setIsDomainExist(false);

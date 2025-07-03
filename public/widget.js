@@ -2,7 +2,7 @@
   if (window.ChannelsWidgetLoaded) return;
   window.ChannelsWidgetLoaded = true;
 
-  const production = true;
+  const production = false;
 
   const breakpoints = {
     sm: 500,
@@ -31,6 +31,47 @@
     }
     return null;
   }
+
+  function mountInCustomContainer(containerSelector, width, height, embedData) {
+    const container =
+      typeof containerSelector === "string"
+        ? document.querySelector(containerSelector)
+        : containerSelector;
+  
+    if (!container) {
+      console.error("❌ Container not found for:", containerSelector);
+      return;
+    }
+  
+    container.innerHTML = ""; // clear previous embeds
+  
+    const iframe = document.createElement("iframe");
+    iframe.src = `${
+      production ? "https://channels.social" : "http://localhost:3001"
+    }/embed/channels`;
+    iframe.className = "channels-frame";
+    iframe.style.cssText = `
+      width: ${width};
+      height: ${height};
+      border: none;
+      border-radius: 14px;
+      background-color: #252525;
+    `;
+  
+    container.appendChild(iframe);
+  
+    iframe.addEventListener("load", () => {
+      iframe.contentWindow.postMessage(
+        {
+          type: "embedData",
+          source: "channels-widget",
+          payload: embedData,
+        },
+        production ? "https://channels.social" : "http://localhost:3001"
+      );
+    });
+  }
+  
 
   function resolveResponsiveValue(valueObj) {
     if (!valueObj) return "100%";
@@ -196,11 +237,12 @@
             sanitizedEmail = sanitizedEmail.replace(/\s+/g, "");
             const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
             if (!emailRegex.test(sanitizedEmail)) {
-              alert("❌ Invalid email address.");
-              console.error(
-                "❌ Invalid email address provided:",
-                sanitizedEmail
-              );
+              // alert("❌ Invalid email address.");
+               console.log(
+                 "❌ Invalid email address provided:",
+                 sanitizedEmail
+               );
+              sanitizedEmail=null;
               return;
             }
           }
@@ -224,9 +266,12 @@
           );
           const position = params.position || "right";
 
-          createModal({ width, height, position });
-
-          setTimeout(() => sendEmbedMessage(embedData), 100);
+          if (params.container) {
+            mountInCustomContainer(params.container, width, height, embedData);
+          } else {
+            createModal({ width, height, position });
+            setTimeout(() => sendEmbedMessage(embedData), 100);
+          }
         };
       })
       .catch((error) => console.log("❌ Error verifying API key:", error));

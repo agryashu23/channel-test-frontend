@@ -94,6 +94,7 @@ export const FaqsSlice = createSlice({
     answer: "",
     status: "idle",
     updatestatus: "idle",
+    fetchedOnce:false,
     error: null,
     reorderItems: [],
     faq_id: "",

@@ -22,9 +22,10 @@ const InviteTopicPage = ({ code, topicId, username, channelId }) => {
         const formDataToSend = new FormData();
         formDataToSend.append("topicId", topicId);
         formDataToSend.append("code", code);
+        formDataToSend.append("channelId", channelId);
         dispatch(joinTopicInvite(formDataToSend))
           .unwrap()
-          .then(() => {
+          .then((response) => {
             setLoading(false);
             navigate(
               `/account/${username}/channel/${channelId}/c-id/topic/${topicId}`,
@@ -33,14 +34,14 @@ const InviteTopicPage = ({ code, topicId, username, channelId }) => {
           })
           .catch((error) => {
             setLoading(false);
-            setError("Invalid Code or Topic. Redirecting back to channel....");
+            setError(error);
             setTimeout(() => {
               navigate(`/account/${username}/channel/${channelId}`);
             }, 1000);
           });
       } else {
         navigate(
-          `/get-started?redirect=//account/${username}channel/${channelId}/c-id/topic/${topicId}?code=${code}`
+          `/get-started?redirect=/account/${username}channel/${channelId}/c-id/topic/${topicId}?code=${code}`
         );
       }
     }, 1000);

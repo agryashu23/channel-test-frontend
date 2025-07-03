@@ -34,9 +34,11 @@ const EmbedHeaderPage = () => {
 
   const channel = useSelector((state) => state.channel);
   const myData = useSelector((state) => state.myData);
+  const business = useSelector((state) => state.business);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const channelsData = useSelector((state) => state.channelItems.channels);
-
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const channelName = channel.name;
 
   useEffect(() => {
@@ -61,13 +63,16 @@ const EmbedHeaderPage = () => {
 
   useEffect(() => {
     if (channelId) {
-      dispatch(fetchChannel(channelId));
+      const formData = new FormData();
+      formData.append("id",channelId);
+      formData.append("user_id",myUserId);
+      dispatch(fetchChannel(formData));
     }
   }, [channelId]);
 
   useEffect(() => {
     if (username && !hasFetched.current) {
-      dispatch(fetchChannels(username))
+      dispatch(fetchChannels({username:username, user_id:myUserId || null}))
         .unwrap()
         .then((channels) => {
           hasFetched.current = true;
@@ -161,6 +166,8 @@ const EmbedHeaderPage = () => {
   };
   if (isProfilePage) return null;
 
+  const parameters = business?.parameters; 
+
   return (
     <div className="flex flex-row py-3 justify-between items-center px-6 w-full bg-theme-secondaryBackground h-14">
       <div className="flex-row items-center flex relative " ref={dropdownRef}>
@@ -210,7 +217,7 @@ const EmbedHeaderPage = () => {
                   <div
                     key={channel._id}
                     className={`flex border-b border-theme-chatDivider px-3 items-center sm:py-2 py-2 text-center
-                     text-theme-primaryText font-light cursor-pointer hover:bg-theme-sidebarHighlight `}
+                     text-theme-primaryText font-normal cursor-pointer hover:bg-theme-sidebarHighlight `}
                     onClick={() => toggleChannel(channel)}
                   >
                     <p className="mr-1 text-sm">{channel.name}</p>
@@ -219,28 +226,28 @@ const EmbedHeaderPage = () => {
               })}
               <p
                 className="flex px-3 items-center text-sm sm:py-2 py-2 text-center text-theme-primaryText 
-                font-light cursor-pointer hover:bg-theme-sidebarHighlight"
+                font-normal cursor-pointer hover:bg-theme-sidebarHighlight"
                 onClick={handleBrandProfile}
               >
                 Brand Profile
               </p>
               <div className="border-t border-t-theme-chatDivider"></div>
-              <p
+             {(!parameters || parameters?.allowDM)  && <p
                 className="flex px-3 items-center text-sm sm:py-2 py-2 text-center
-                 text-theme-primaryText font-light cursor-pointer hover:bg-theme-sidebarHighlight"
+                 text-theme-primaryText font-normal cursor-pointer hover:bg-theme-sidebarHighlight"
                 onClick={handleMessagePage}
               >
                 Messages
-              </p>
+              </p>}
               <div className="border-t border-t-theme-chatDivider"></div>
-              <ThemeToggleButton />
+              {/* <ThemeToggleButton /> */}
 
               <div className="border-t border-t-theme-chatDivider"></div>
 
               {isLoggedIn && (
                 <p
                   className="flex px-3 items-center text-sm sm:py-2 py-1.5 text-center text-theme-primaryText
-                   font-light cursor-pointer hover:bg-theme-sidebarHighlight"
+                   font-normal  cursor-pointer hover:bg-theme-sidebarHighlight"
                   onClick={handleLogout}
                 >
                   Logout
@@ -249,7 +256,7 @@ const EmbedHeaderPage = () => {
               {!isLoggedIn && (
                 <p
                   onClick={handleLogin}
-                  className={`block text-sm font-light font-inter cursor-pointer py-2 px-6  text-theme-primaryText`}
+                  className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6  text-theme-primaryText`}
                 >
                   Login
                 </p>

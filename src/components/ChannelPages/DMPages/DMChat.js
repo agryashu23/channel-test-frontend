@@ -518,7 +518,7 @@ const DMChat = () => {
 
               {showAddMenu && (
                 <div
-                  className="absolute bottom-12 left-2 mb-2 bg-theme-tertiaryBackground border border-theme-modalBorder shadow-lg rounded-lg p-3 z-10"
+                  className="absolute bottom-12 left-2 mb-2 bg-theme-tertiaryBackground border border-theme-modalBorder shadow-lg rounded-lg p-3 z-50"
                   onClick={(e) => e.stopPropagation()}
                   ref={addMenuRef}
                 >

@@ -31,7 +31,6 @@ const RemoveMemberModal = () => {
       .unwrap()
       .then(() => {
         handleClose();
-        handleClose();
       })
       .catch((error) => {
         console.log(error);

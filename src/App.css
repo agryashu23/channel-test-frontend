@@ -32,6 +32,10 @@
   background: none !important;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .custom-side-scrollbar::-webkit-scrollbar {
   width: 6px;
   scroll-behavior: smooth;
@@ -57,6 +61,28 @@
   height: 0 !important;
   background: none !important;
 }
+/* horizontal scrollbar */
+.custom-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--theme-primaryBackground);
+  border-radius: 10px;
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primaryBackground);
+}
+
+.custom-horizontal-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 6px !important;
+  background: none !important;
+}
+
 
 
 input:-webkit-autofill,

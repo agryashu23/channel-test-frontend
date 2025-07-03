@@ -5,18 +5,22 @@ import { postRequestAuthenticated } from "./../../services/rest";
 import DNSTable from "./widget";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import CopyIcon from "../../assets/icons/copy_icon.png";
+import Loading from "../../widgets/Loading";
+import { showCustomToast } from "../../widgets/toast";
 
 const Integration = () => {
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const navigate = useNavigate();
 
-  const [domain, setDomain] = useState(null);
+  const [domain, setDomain] = useState("");
   const [page, setPage] = useState(0);
   const [activeTab, setActiveTab] = useState("dns");
   const [apiKey, setApiKey] = useState();
+  const [pageLoading, setPageLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingVerify, setLoadingVerify] = useState(false);
+  const [fetchedOnce, setFetchedOnce] = useState(false);
   const [error, setError] = useState();
   const [successMessage, setSuccessMessage] = useState();
   const [verificationToken, setVerificationToken] = useState(null);
@@ -37,9 +41,11 @@ const Integration = () => {
     const checkInitialKey = async () => {
       try {
         setError("");
+        setPageLoading(true);
         const response = await postRequestAuthenticated(
           "/check/initial/api/key"
         );
+        setPageLoading(false);
         if (response.success) {
           setVerificationToken(response.verificationToken);
           setActiveTab(response.verificationMethod || "dns");
@@ -55,8 +61,9 @@ const Integration = () => {
         setError(error);
       }
     };
-    if (isLoggedIn) {
+    if (isLoggedIn && fetchedOnce===false) {
       checkInitialKey();
+      setFetchedOnce(true);
     }
   }, []);
 
@@ -128,7 +135,7 @@ const Integration = () => {
       );
       setLoadingVerify(false);
       if (response.success) {
-        setSuccessMessage(response.message);
+        showCustomToast(response.message);
         setApiKey(response.apiKey);
         setPage(2);
       } else {
@@ -139,6 +146,12 @@ const Integration = () => {
       setLoadingVerify(false);
     }
   };
+
+  if(pageLoading){
+    return <div className="flex flex-col mt-12 justify-center text-md text-theme-secondaryText items-center h-full">
+      <Loading text="Loading domain verification details..." />
+    </div>
+  }
 
   const metaData = `<meta name="channels-verification" content="${verificationToken}"/>`;
 
@@ -153,8 +166,7 @@ const Integration = () => {
       <div className="border-t border-t-theme-chatDivider my-4 "></div>
       {loading && (
         <div className="text-theme-secondaryText text-sm font-normal mt-8 ml-4">
-          Verification in progress.
-          <br /> Please Wait...
+          <Loading text="Verification in progress. Please Wait..." />
         </div>
       )}
       {error && (
@@ -253,7 +265,7 @@ const Integration = () => {
                     className="text-theme-secondaryText cursor-pointer bg-theme-buttonEnable rounded-lg text-center px-12 py-2 mb-4"
                     onClick={handleVerify}
                   >
-                    Verify
+                    {loadingVerify ? "Verifying...": "Verify"}
                   </div>
                   {/* <div className="text-theme-secondaryText border border-theme-secondaryText rounded-lg text-center px-12 py-2 text-xs font-light">
                     Cancel
@@ -297,7 +309,7 @@ const Integration = () => {
                     className="text-theme-secondaryText cursor-pointer bg-theme-buttonEnable rounded-lg text-center px-12 py-2 mb-4"
                     onClick={handleVerify}
                   >
-                    Verify
+                     {loadingVerify ? "Verifying...": "Verify"}
                   </div>
                   {/* <div className="text-theme-secondaryText border border-theme-secondaryText rounded-lg text-center px-12 py-2 text-xs font-light">
                     Cancel
@@ -341,11 +353,9 @@ const Integration = () => {
                     className="cursor-pointer text-theme-secondaryText bg-theme-buttonEnable rounded-lg text-center px-12 py-2 mb-4"
                     onClick={handleVerify}
                   >
-                    Verify
+                     {loadingVerify ? "Verifying...": "Verify"}
                   </div>
-                  {/* <div className="text-theme-secondaryText border border-theme-secondaryText rounded-lg text-center px-12 py-2 text-xs font-light">
-                    Cancel
-                  </div> */}
+                  
                 </div>
               </div>
             )}

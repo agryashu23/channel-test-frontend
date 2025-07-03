@@ -7,7 +7,6 @@ import useModal from "./../../hooks/ModalHook";
 import { closeModal } from "../../../redux/slices/modalSlice";
 import Unsplash from "../../../assets/icons/Unsplash.svg";
 import UnsplashLight from "../../../assets/lightIcons/unsplash_light.svg";
-
 import "react-datepicker/dist/react-datepicker.css";
 import LocationIcon from "../../../assets/icons/location-marker.svg";
 
@@ -36,15 +35,21 @@ const EventModal = () => {
   const chat = useSelector((state) => state.chat);
   const event = useSelector((state) => state.event);
   const [suggestions, setSuggestions] = useState([]);
+  const [payError,setPayError] = useState("");
   const [file, setFile] = useState(null);
   const [locationFocus, setLocationFocus] = useState(false);
   const locationRef = useRef(null);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
   const [timeZone, setTimeZone] = useState(moment.tz.guess());
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleClose = () => {
     dispatch(closeModal("modalEventOpen"));
+    setPayError("");
+    setErrorMessage("");
+    setFile(null);
+    dispatch(clearEvent());
   };
 
   useEffect(() => {
@@ -84,6 +89,9 @@ const EventModal = () => {
     } else if (name === "description") {
       setDescCount(value.length);
     }
+    else if(name==="joining" && value==="paid"){
+        dispatch(setEventField({ field: "paywallPrice", value: 0 }));
+    }
   };
 
   const handleStartDateChange = (date) => {
@@ -103,6 +111,8 @@ const EventModal = () => {
     const timePart = date ? date.toISOString().split("T")[1].replace("Z", "") : "";
     dispatch(setEventField({ field: "endTime", value: timePart }));
   };
+
+  
   
 
   const fetchSuggestions = async (input) => {
@@ -223,8 +233,35 @@ const EventModal = () => {
     console.log(e.target.value);
   };
 
+  const isValidDateTimeRange = (event) => {
+    const { startDate, endDate, startTime, endTime } = event;
+    if (!startDate){
+      setErrorMessage("Start date is required.");
+      return false;
+    };
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : null;
+    if (end && start > end) {
+      setErrorMessage("Start date cannot be after end date.");
+      return false;
+    }
+    if (end && start.toISOString().split("T")[0] === end.toISOString().split("T")[0]) {
+      if (startTime && endTime && startTime > endTime) {
+        setErrorMessage("End time cannot be earlier than start time on the same day.");
+        return false;
+      }
+    }
+    return true;
+  };
+  
+
   const handleCreateEvent = async (e) => {
     e.preventDefault();
+    if (!isValidDateTimeRange(event))return;
+    if(event.joining==="paid" && event.paywallPrice===0){
+      setPayError("Joining fee can't be 0");
+      return;
+    }
     if (event.name.trim !== "" && event.startDate !== "") {
       const formDataToSend = new FormData();
       formDataToSend.append("name", event.name.trim());
@@ -240,6 +277,7 @@ const EventModal = () => {
       formDataToSend.append("endTime", event.endTime);
       formDataToSend.append("locationText", event.locationText);
       formDataToSend.append("location", event.location);
+      formDataToSend.append("paywallPrice", event.paywallPrice);
       if (file && event.cover_image_source === "upload") {
         formDataToSend.append("file", file);
       } else if (event.cover_image && event.cover_image_source === "unsplash") {
@@ -261,6 +299,11 @@ const EventModal = () => {
 
   const handleEditEvent = async (e) => {
     e.preventDefault();
+    if (!isValidDateTimeRange(event))return;
+    if(event.joining==="paid" && event.paywallPrice===0){
+      setPayError("Joining fee can't be 0");
+      return;
+    }
     if (event.name.trim !== "" && event.startDate !== "") {
       const formDataToSend = new FormData();
       formDataToSend.append("name", event.name.trim());
@@ -277,6 +320,7 @@ const EventModal = () => {
       formDataToSend.append("endTime", event.endTime);
       formDataToSend.append("locationText", event.locationText);
       formDataToSend.append("location", event.location);
+      formDataToSend.append("paywallPrice", event.paywallPrice);
       if (file && event.cover_image_source === "upload") {
         formDataToSend.append("file", file);
       } else if (event.cover_image && event.cover_image_source === "unsplash") {
@@ -291,7 +335,7 @@ const EventModal = () => {
           handleClose();
         })
         .catch((error) => {
-          alert(error);
+          console.log(error);
         });
     }
   };
@@ -424,15 +468,25 @@ const EventModal = () => {
                     <img
                       src={Event}
                       alt="event"
-                      style={{ position: "absolute", top: "0", right: "0" }}
+                      style={{ position: "absolute", top: "2px", right: "0" }}
                       className="dark:block hidden w-5 h-5 "
                     />
                     <img
                       src={EventLight}
                       alt="event"
-                      style={{ position: "absolute", top: "0", right: "0" }}
+                      style={{ position: "absolute", top: "2px", right: "0" }}
                       className="dark:hidden w-5 h-5 "
                     />
+                    {event.endDate && (
+                      <button
+                        onClick={() => {
+                          handleEndDateChange(null);
+                        }}
+                        className="absolute right-6 top-1/2 transform -translate-y-1/2 text-xs text-gray-400"
+                      >
+                        ×
+                      </button>
+                    )}    
                   </div>
                 </div>
               </div>
@@ -568,17 +622,17 @@ const EventModal = () => {
                   placeholder="Add a Description (optional)"
                 />
               </div>
-              <div className="mb-4 mt-1">
-                <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
+              {<div className="mb-4 mt-1">
+                <p className="text-theme-secondaryText text-sm font-light font-inter mb-2">
                   Who can join this event?
                 </p>
-                <div className="flex mt-3 items-center space-x-12">
+                <div className="flex flex-col mt-3 items-start space-y-3">
                   <label
                     className={`${
                       event.joining === "public"
                         ? "text-theme-secondaryText"
                         : "text-theme-primaryText"
-                    } text-sm font-light flex items-center`}
+                    } text-sm font-light flex flex-row items-center`}
                   >
                     <input
                       type="radio"
@@ -588,14 +642,14 @@ const EventModal = () => {
                       checked={event.joining === "public"}
                       onChange={handleChange}
                     />
-                    <span>Public</span>
+                    <span>Public (anyone can join)</span>
                   </label>
                   <label
                     className={`${
                       event.joining === "private"
                         ? "text-theme-secondaryText"
                         : "text-theme-primaryText"
-                    } text-sm font-light flex items-center`}
+                    } text-sm font-light flex flex-row items-center`}
                   >
                     <input
                       type="radio"
@@ -605,10 +659,52 @@ const EventModal = () => {
                       checked={event.joining === "private"}
                       onChange={handleChange}
                     />
-                    <span>Private</span>
+                    <span>Private (access with invited tickets)</span>
+                  </label>
+                  <label
+                    className={`${
+                      event.joining === "paid"
+                        ? "text-theme-secondaryText"
+                        : "text-theme-primaryText"
+                    } text-sm font-light flex flex-row items-center`}
+                  >
+                    <input
+                      type="radio"
+                      name="joining"
+                      value="paid"
+                      className="mr-2 custom-radio"
+                      checked={event.joining === "paid"}
+                      onChange={handleChange}
+                    />
+                    <span>Paid (access with paid tickets)</span>
                   </label>
                 </div>
-              </div>
+              </div>}
+              {event.joining==="paid" && <div className="mb-4 mt-1">
+                <label className="text-theme-secondaryText text-sm font-light font-inter">
+                Access ticket amount inclusive of tax.
+                </label>
+                <div className="flex flex-row items-center">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">₹</p>
+                <input
+                    id="event-name"
+                    className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
+                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
+                    type="number"
+                    name="paywallPrice"
+                    value={event.paywallPrice}
+                    onChange={handleChange}
+                    placeholder="Enter amount in INR ₹"
+                  />
+                </div>
+              </div>}
+              {payError && (
+                  <p
+                    className={`text-theme-error font-light ml-1 font-inter text-xs`}
+                  >
+                    {payError}
+                  </p>
+                )}
 
               <div className="mb-4">
                 <p className="text-theme-secondaryText text-sm font-light font-inter">
@@ -679,7 +775,8 @@ const EventModal = () => {
                   </div>
                 )}
               </div>
-
+              {errorMessage && <div className="text-xs text-theme-error font-light pt-2">{errorMessage}</div>}
+              
               <button
                 className={`w-full mt-3 py-2.5 font-normal text-sm rounded-lg ${buttonClass}`}
                 disabled={isEventEmpty}

@@ -6,10 +6,12 @@ import {
 } from "./../../services/rest";
 import { createTopic, updateTopic } from "./createTopicSlice";
 import { deleteTopic } from "./deleteTopicSlice";
-import { leaveChannel,joinChannel } from "./channelSlice";
+import { leaveChannel,joinChannel,joinChannelInvite } from "./channelSlice";
+import { joinTopicInvite } from "./topicSlice";
+import { verifyPayment } from "./paymentSlice";
 
 export const fetchTopics = createAsyncThunk(
-  "reorderTopics/fetchChannelTopics",
+  "reorderTopics/fetchChannelTopics", 
   async (channelId, { rejectWithValue }) => {
     try {
       const response = await postRequestAuthenticated("/fetch/channel/topics", {
@@ -53,6 +55,24 @@ export const fetchChannelMembers = createAsyncThunk(
         {
           channelId,
         }
+      );
+      if (response.success) {
+        return response.members;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+export const fetchTopicMembers = createAsyncThunk(
+  "reorderTopics/fetchTopicMembers",
+  async (topicId, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        "/fetch/topic/members",
+        {topicId:topicId}
       );
       if (response.success) {
         return response.members;
@@ -145,12 +165,32 @@ export const leaveTopic = createAsyncThunk(
   }
 );
 
+export const removeTopicMember = createAsyncThunk(
+  "reorderTopics/removeTopicMember",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        "/remove/topic/member",
+        data
+      );
+      if (response.success) {
+        return response.membership;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   topics: [],
   members: [],
   topicMembers:[],
   channelMembers:[],
   removeChannelId: "",
+  removeTopicId: "",
   removeUser: {},
   status: "idle",
   memberStatus: "idle",
@@ -174,6 +214,7 @@ export const reorderTopicSlice = createSlice({
     clearRemovalDelete: (state) => {
       state.removeUser = {};
       state.removeChannelId = "";
+      state.removeTopicId = "";
     },
   },
   extraReducers: (builder) => {
@@ -203,6 +244,13 @@ export const reorderTopicSlice = createSlice({
         state.memberStatus = "idle";
         state.channelMembers = action.payload;
       })
+      .addCase(fetchTopicMembers.pending, (state) => {
+        state.memberStatus = "loading";
+      })
+      .addCase(fetchTopicMembers.fulfilled, (state, action) => {
+        state.memberStatus = "idle";
+        state.topicMembers = action.payload;
+      })
       .addCase(removeMember.pending, (state) => {
         state.status = "loading";
       })
@@ -210,7 +258,7 @@ export const reorderTopicSlice = createSlice({
         state.status = "idle";
         const removeData = action.payload;
         let memberIndex = state.channelMembers.findIndex(
-          (member) => member._id === removeData._id
+          (member) => member?._id === removeData._id
         );
         if (memberIndex !== -1) {
           state.channelMembers.splice(memberIndex, 1);
@@ -224,7 +272,7 @@ export const reorderTopicSlice = createSlice({
         state.topicstatus = "idle";
         const topic = action.payload;
         let topicIndex = state.topics.findIndex(
-          (item) => item._id === topic._id
+          (item) => item?._id === topic._id
         );
         state.topics[topicIndex] = topic;
       })
@@ -232,7 +280,7 @@ export const reorderTopicSlice = createSlice({
         state.topicstatus = "idle";
         const topic = action.payload;
         let topicIndex = state.topics.findIndex(
-          (item) => item._id === topic._id
+          (item) => item?._id === topic._id
         );
         state.topics.splice(topicIndex, 1);
       })
@@ -250,13 +298,13 @@ export const reorderTopicSlice = createSlice({
       .addCase(joinTopic.fulfilled, (state, action) => {
         state.reorderStatus = "idle";
         const response = action.payload;
-        if(response.success){
+        if(response.success && response.membership){
           const index = state.topics.findIndex(
-            (topic) => topic._id === response.membership.topic
+            (topic) => topic?._id === response.membership.topic
           );
           if(index!==-1){
             const memInd = state.topics[index].members.findIndex(
-              (member) => member._id === response.membership._id
+              (member) => member?._id === response.membership._id
             );
             if(memInd===-1){
               state.topics[index].members.push(response.membership);
@@ -264,6 +312,65 @@ export const reorderTopicSlice = createSlice({
             else{
               state.topics[index].members[memInd] = response.membership;
             }
+          }
+        }
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.reorderStatus = "idle";
+        const response = action.payload;
+        if(response.type==="topic" && response.success && response.membership){
+          const index = state.topics.findIndex(
+            (topic) => topic?._id === response.membership.topic
+          );
+          if(index!==-1){
+            const memInd = state.topics[index].members.findIndex(
+              (member) => member?._id === response.membership._id
+            );
+            if(memInd===-1){
+              state.topics[index].members.push(response.membership);
+            }
+            else{
+              state.topics[index].members[memInd] = response.membership;
+            }
+          }
+        }
+        if (response.type==="channel" && response.success  && response.membership){
+          const topicIdsSet = new Set(response.topics);
+          const membership = response.membership;
+          state.topics.forEach(topic => {
+            if (topicIdsSet.has(topic?._id)) {
+              const index = topic.members.findIndex(member => member?._id === membership._id);
+              if (index === -1) {
+                topic.members.push(membership);
+              } else {
+                topic.members[index] = membership;
+              }
+            }
+          });
+        }
+      })
+      .addCase(joinTopicInvite.fulfilled, (state, action) => {
+        state.topicstatus = "idle";
+        const response = action.payload;
+        if(response.success){
+          let index = state.topics.findIndex(m=>m?._id===response.topic._id);
+          if(index!==-1){
+            const memInd = state.topics[index].members.findIndex(
+              (member) => member?._id === response.membership._id
+            );
+            if(memInd===-1){
+              state.topics[index].members.push(response.membership);
+            }
+            else{
+              state.topics[index].members[memInd] = response.membership;
+            }
+          }
+          else{
+            const topicData={
+              ...response.topic,
+              members:[response.membership]
+            }
+            state.topics.push(topicData);
           }
         }
       })
@@ -281,10 +388,10 @@ export const reorderTopicSlice = createSlice({
           });
 
           state.topics.forEach((topic) => {
-            const topicId = String(topic._id);
+            const topicId = String(topic?._id);
             if (topicToMembershipMap[topicId]) {
               topic.members = topic.members.filter(
-                (member) => !topicToMembershipMap[topicId].has(member._id)
+                (member) => !topicToMembershipMap[topicId].has(member?._id)
               );
             }
           });
@@ -293,12 +400,30 @@ export const reorderTopicSlice = createSlice({
       .addCase(joinChannel.fulfilled, (state, action) => {
         state.reorderStatus = "idle";
         const response = action.payload;
+        if (!response.success || !response.membership) return;
+        const topicIdsSet = new Set(response.topics);
+        const membership = response.membership;
+        state.topics.forEach(topic => {
+          if (topicIdsSet.has(topic?._id)) {
+            const index = topic.members.findIndex(member => member?._id === membership._id);
+            if (index === -1) {
+              topic.members.push(membership);
+            } else {
+              topic.members[index] = membership;
+            }
+          }
+        });
+      })
+      
+      .addCase(joinChannelInvite.fulfilled, (state, action) => {
+        state.reorderStatus = "idle";
+        const response = action.payload;
         if (!response.success) return;
         const topicIdsSet = new Set(response.topics);
         const membership = response.membership;
         state.topics.forEach(topic => {
-          if (topicIdsSet.has(topic._id)) {
-            const index = topic.members.findIndex(member => member._id === membership._id);
+          if (topicIdsSet.has(topic?._id)) {
+            const index = topic.members.findIndex(member => member?._id === membership._id);
             if (index === -1) {
               topic.members.push(membership);
             } else {
@@ -319,11 +444,11 @@ export const reorderTopicSlice = createSlice({
         const response = action.payload;
         if(response.success){
           const index = state.topics.findIndex(
-            (topic) => topic._id === response.topic._id
+            (topic) => topic?._id === response.topic?._id
           );
           if(index!==-1){
             const memInd = state.topics[index].members.findIndex(
-              (member) => member._id === response.membership._id
+              (member) => member?._id === response.membership._id
             );
             if(memInd!==-1){
               state.topics[index].members.splice(memInd, 1);
@@ -333,6 +458,23 @@ export const reorderTopicSlice = createSlice({
       })
       .addCase(leaveTopic.rejected, (state, action) => {
         state.reorderStatus = "idle";
+        state.error = action.payload;
+      })
+      .addCase(removeTopicMember.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(removeTopicMember.fulfilled, (state, action) => {
+        state.status = "idle";
+        const removeData = action.payload;
+        let memberIndex = state.topicMembers.findIndex(
+          (member) => member?._id === removeData._id
+        );
+        if (memberIndex !== -1) {
+          state.topicMembers.splice(memberIndex, 1);
+        }
+      })
+      .addCase(removeTopicMember.rejected, (state, action) => {
+        state.status = "idle";
         state.error = action.payload;
       });
   },

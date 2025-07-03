@@ -209,15 +209,6 @@ export const dmSlice = createSlice({
         state.chatError = action.payload || action.error.message;
       })
 
-      .addCase(editChatEvent.fulfilled, (state, action) => {
-        state.chatStatus = "idle";
-        const chat = action.payload;
-        let index = state.chats.findIndex((item) => item._id === chat._id);
-        if (index !== -1) {
-          state.chats[index] = chat;
-        }
-      })
-
       .addCase(createDMChat.pending, (state) => {
         state.chatStatus = "loading";
       })

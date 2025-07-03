@@ -5,10 +5,13 @@ import UserSidebar from "./../Sidebar/UserSidebar";
 import { fetchBusinessCredentials } from "../../redux/slices/businessSlice";
 import { useSelector ,useDispatch} from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Loading from "../../widgets/Loading";
+import PaymentLoading from "../../widgets/paymentLoading";
 
 const Landing = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const business = useSelector((state) => state.business);
+  const payment = useSelector((state) => state.payment);
   const auth = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -18,7 +21,6 @@ const Landing = () => {
   const closeSidebar = () => setIsSidebarOpen(false);
   const {username} = useParams();
 
- 
 
   useEffect(() => {
     const isMobile = window.innerWidth < 640;
@@ -58,6 +60,13 @@ const Landing = () => {
             onClick={closeSidebar}
           ></div>
         )}
+          {payment.loading && (
+            <div className="fixed inset-0 bg-[#202020] bg-opacity-80 z-50">
+              <div className="flex justify-center items-center h-full text-center w-full text-theme-secondaryText text-lg z-60 px-6">
+                <PaymentLoading />
+              </div>
+            </div>
+          )}
 
         <div className="lg:w-full-minus-250 md:w-3/4 sm:w-[70%] w-full h-full">
           <Outlet />

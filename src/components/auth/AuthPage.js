@@ -565,7 +565,7 @@ const AuthPage = ({ isSubdomain }) => {
             w-full h-full flex flex-col justify-center items-center"
             >
     <div className="border border-theme-chatDivider bg-theme-tertiaryBackground rounded-md px-8 py-8 flex flex-col">
-      <p className="text-theme-secondaryText font-normal text-md ">Redirection to Profile Page...</p>
+      <p className="text-theme-secondaryText font-normal text-md ">Redirecting to Profile Page...</p>
       <div className="mt-10">
         <div className="flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-theme-primaryText"></div>

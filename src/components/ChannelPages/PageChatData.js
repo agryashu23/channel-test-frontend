@@ -1,3 +1,4 @@
+import React, { forwardRef, useImperativeHandle } from "react";
 import Smiley from "../../assets/icons/smiley.svg";
 import ArrowDropDown from "../../assets/icons/arrow_drop_down.svg";
 import ArrowDropDownLight from "../../assets/lightIcons/chat_drop_light.svg";
@@ -15,7 +16,9 @@ import {
   pushToResource,
   toggleReaction,
   addMessage,
+  reactionMessage,
   deleteMessage,
+  pinChat,
 } from "./../../redux/slices/chatSlice";
 import { fetchTopicEventMembers } from "./../../redux/slices/eventItemsSlice";
 import { pdfjs } from "react-pdf";
@@ -25,6 +28,7 @@ import {
   deleteTopicChat,
   clearChatIdToDelete,
 } from "../../redux/slices/chatSlice";
+import { showCustomToast } from "../../widgets/toast";
 
 import Linkify from "react-linkify";
 import socket from "../../utils/socket";
@@ -34,7 +38,6 @@ import { getAppPrefix } from "./../EmbedChannels/utility/embedHelper";
 import { formatChatDate } from "./../../utils/methods";
 
 import {
-  React,
   useState,
   useEffect,
   useRef,
@@ -45,10 +48,14 @@ import {
   useModal,
 } from "../../globals/imports";
 import ImageFullscreenModal from "../chips/widgets/FullScreenModal";
+import PinnedChat from "./PinnedChat";
+import PageChatData2 from "./PageChatData2";
+import TopicMembersTab from "./TopicMembersTab";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
-const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business, topic }) => {
+const PageChatData = forwardRef(({ topicId, isLoggedIn, myData, onNewMessageSent, business, topic ,
+  isPinned, setIsPinned,channelName,isBrandTalk,isMemberClick,channelId}, ref) => {
   const { handleOpenModal } = useModal();
   const { username } = useParams();
 
@@ -148,6 +155,11 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
     }
   };
 
+  useImperativeHandle(ref, () => {
+    return { scrollToChat };
+  });
+  
+
   const isUserNearBottom = () => {
     if (!chatContainerRef.current) return false;
     const threshold = 100;
@@ -232,6 +244,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
   }, []);
 
   useEffect(() => {
+   
     setSkip(0);
     setHasMore(true);
     setShouldScrollToBottom(true);
@@ -317,12 +330,24 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
   useEffect(() => {
     const handleChatDeleted = (message) => {
       if (message?.topicId === topicId) {
+        console.log(message);
         dispatch(deleteMessage(message.chatId));
       }
     };
 
     socket.on("chat_deleted", handleChatDeleted);
     return () => socket.off("chat_deleted", handleChatDeleted);
+  }, [dispatch, topicId]);
+
+  useEffect(() => {
+    const handleReaction = (message) => {
+      if (message?.topic === topicId) {
+        dispatch(reactionMessage(message));
+      }
+    };
+
+    socket.on("receive_reaction", handleReaction);
+    return () => socket.off("receive_reaction", handleReaction);
   }, [dispatch, topicId]);
 
   useEffect(() => {
@@ -373,7 +398,6 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
   const handleReactionClick = (reaction, chatId) => {
     setShowReactionPicker(false);
     setShowEmojiPicker(false);
-
     const formDataToSend = new FormData();
     formDataToSend.append("reaction", reaction);
     formDataToSend.append("chatId", chatId);
@@ -383,6 +407,14 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
   const handleReplyClick = (id, username) => {
     dispatch(setChatField({ field: "replyTo", value: id }));
     dispatch(setChatField({ field: "replyUsername", value: username }));
+  };
+
+  const handlePinChat = (id,pinned) => {
+    dispatch(pinChat(id)).unwrap().then(() => {
+      showCustomToast(`Chat ${pinned ? "unpinned" : "pinned"} successfully`);
+    }).catch((error) => {
+      console.log(error);
+    });
   };
 
   const handleDeleteChat = (id) => {
@@ -458,7 +490,25 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
 
   return (
     <>
-    <div
+    {isMemberClick?<div className="bg-theme-secondaryBackground w-full h-full overflow-y-auto">
+      <TopicMembersTab channelId={channelId} isOwner={isOwner} topicId={topicId}/>
+    </div>:
+    isBrandTalk ? (
+      <div className="bg-theme-primaryBackground w-full h-full overflow-y-auto">
+        <PageChatData2
+          topicId={topicId}
+          isLoggedIn={isLoggedIn}
+          myData={myData}
+          user_id={topic.user._id}
+          onNewMessageSent={onNewMessageSent}
+          channelName={channelName}
+        />
+      </div>
+    ):
+    isPinned ? (
+      <PinnedChat setIsPinned={setIsPinned} topicId={topicId} onJumpToChat={(id) => scrollToChat(id)}/>
+    ) : (
+      <div
       className="w-full h-full max-w-full overflow-x-hidden bg-theme-secondaryBackground pt-2 relative"
       ref={chatContainerRef}
     >
@@ -496,9 +546,9 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
         return (
           <div key={chat._id}>
             {showDateSeparator && (
-              <div className="flex items-center justify-center my-4 px-4 w-full text-theme-secondaryText">
+              <div className="flex items-center justify-center my-2 px-2 w-full text-theme-secondaryText">
                 <div className="flex-grow border-t border-theme-chatDivider"></div>
-                <span className="mx-4 text-sm font-light whitespace-nowrap text-theme-primaryText">
+                <span className="mx-4 text-xs font-light whitespace-nowrap text-theme-emptyEvent">
                   {format(new Date(currentDate), "dd MMMM yyyy")}
                 </span>
                 <div className="flex-grow border-t border-theme-chatDivider"></div>
@@ -554,7 +604,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                    shadow-lg rounded-lg z-10`}
                       >
                         <div
-                          className="py-1"
+                          className="py-1 hover:bg-theme-primaryBackground"
                           role="menu"
                           aria-orientation="vertical"
                           aria-labelledby="options-menu"
@@ -565,14 +615,14 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                               handleReplyClick(chat?._id, chat.user?.username)
                             }
                           >
-                            <p className="block ml-2 py-2 font-normal text-sm text-theme-primaryText cursor-pointer">
+                            <p className="block ml-2 py-1 font-normal text-sm text-theme-primaryText cursor-pointer">
                               Reply
                             </p>
                           </div>
                         </div>
-                        {chat.user?._id === myData?._id && (
+                        {(chat.user?._id === myData?._id || isOwner) && (
                           <div
-                            className="py-1"
+                            className="py-1 hover:bg-theme-primaryBackground"
                             role="menu"
                             aria-orientation="vertical"
                           >
@@ -580,8 +630,24 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                               className="relative flex flex-row px-4 items-center"
                               onClick={() => handleDeleteChat(chat?._id)}
                             >
-                              <p className="block ml-2 font-normal py-2 text-sm text-theme-primaryText cursor-pointer">
+                              <p className="block ml-2 font-normal py-1 text-sm text-theme-primaryText cursor-pointer">
                                 Delete
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                         {isOwner && (
+                          <div
+                            className="py-1 hover:bg-theme-primaryBackground"
+                            role="menu"
+                            aria-orientation="vertical"
+                          >
+                            <div
+                              className="relative flex flex-row px-4 items-center"
+                              onClick={() => handlePinChat(chat?._id,chat.pinned)}
+                            >
+                              <p className="block ml-2 font-normal py-1 text-sm text-theme-primaryText cursor-pointer">
+                                {chat.pinned ? "Unpin" : "Pin"}
                               </p>
                             </div>
                           </div>
@@ -676,17 +742,11 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                   isMyMessage ? "justify-end" : "justify-start"
                 }`}
               >
-                {/* bg-theme-chatDivider rounded-lg pl-1 pr-2 pt-2 pb-1 */}
                 <div
                   className={`flex  ${
                     isMyMessage ? "flex-row-reverse" : ""
                   } w-max md:max-w-[75%] max-w-[90%] items-start`}
                 >
-                  {/* <img
-                  src={chat.user?.logo || Profile}
-                  alt="logo"
-                  className="rounded-full w-8 h-8 object-cover mx-2"
-                /> */}
                   {chat.user?.logo ? (
                     <img
                       src={chat.user?.logo}
@@ -729,7 +789,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                             : "text-theme-emptyEvent"
                         }  cursor-pointer`}
                         onClick={()=>{
-                          if(business.parameters.allowDm || topic?.user._id ===myUserId){
+                          if(!business?.parameters ||  business?.parameters?.allowDM || topic?.user._id ===myUserId){
                             navigate(
                               `${getAppPrefix()}/account/${
                                 chat.user?.username
@@ -746,16 +806,15 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                       </span>
                     </p>
 
-                    <Linkify componentDecorator={componentDecorator}>
+                   {chat.content &&  <Linkify componentDecorator={componentDecorator}>
                       <p
                         className={`text-theme-secondaryText text-sm font-light my-1  text-left
                           whitespace-pre-wrap break-words break-all w-full max-w-full`}
                       >
                         {chat.content}
                       </p>
-                    </Linkify>
-
-                    {chat.event && (
+                    </Linkify>}
+                    {chat.event && ( <div className="mt-2">
                       <EventCard
                         width="w-max"
                         imageHeight="h-32"
@@ -764,13 +823,16 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                         openDropdownId={openDropdownId}
                         handleToggleDropdown={handleToggleDropdown}
                         btnPadding="xs:px-2 px-1"
-                        spacing="space-x-4"
+                        spacing=""
                       />
+                      </div>
                     )}
+
+                    
 
                     <div
                       className={`flex flex-row overflow-x-auto w-[100%] custom-scrollbar ${
-                        isMyMessage ? "justify-end" : "justify-start"
+                       "justify-start"
                       }`}
                     >
                       {chat.media.map((media, index) => {
@@ -778,7 +840,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
 
                         return (
                           <div
-                            className="relative"
+                            className="relative my-1"
                             key={`${chat._id}-${media._id}-${index}-${media.type}`}
                             onMouseEnter={() =>
                               handleMouseEnterMedia(chat._id, index)
@@ -878,7 +940,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                                         handlePushResource(chat._id, media._id)
                                       }
                                     >
-                                      <p className="block ml-2 py-2 font-normal text-sm text-theme-primaryText cursor-pointer">
+                                      <p className="block ml-2 py-1 font-normal text-sm text-theme-primaryText cursor-pointer">
                                         Push to Resource
                                       </p>
                                     </div>
@@ -891,15 +953,15 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                     </div>
 
                     <div
-                      className={`flex flex-row overflow-x-auto w-[100%] custom-scrollbar ${
-                        isMyMessage ? "justify-end" : "justify-start"
+                      className={`flex flex-row overflow-x-auto w-[100%] custom-scrollbar  ${
+                       "justify-start"
                       }`}
                     >
                       {chat.media.map(
                         (media, index) =>
                           media.type === "document" && (
                             <div
-                              className="w-max rounded-lg bg-theme-tertiaryBackground mt-1.5 relative mr-2 cursor-pointer"
+                              className="w-max rounded-lg bg-theme-tertiaryBackground mt-1 relative mr-2 mb-1 cursor-pointer"
                               key={`${chat._id}-${media._id}-${index}-${media.type}`}
                               onClick={() => handleClick(media)}
                               onMouseEnter={() =>
@@ -911,7 +973,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                                 <img
                                   src={documentImage}
                                   alt="Document Icon"
-                                  className="h-14 w-15 object-fill  pr-3"
+                                  className="h-16 w-15 object-fill  pr-3"
                                 />
                                 <div className="flex flex-col my-1 w-full-minus-68">
                                   <p className="text-theme-secondaryText text-xs overflow-hidden text-ellipsis whitespace-nowrap font-normal">
@@ -920,7 +982,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                                       : media.name}
                                   </p>
                                   <p className="text-theme-primaryText mt-1 text-[10px] xs:text-xs font-light font-inter">
-                                    {media.size} Kb
+                                  {parseInt(parseInt(media.size || "0")/1000)} Kb 
                                   </p>
                                 </div>
                               </div>
@@ -929,9 +991,10 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                                 hoveredDocument.mediaIndex === index && (
                                   <div
                                     className="absolute top-0 right-1 cursor-pointer"
-                                    onClick={() =>
-                                      handleShowDocumentMenu(chat._id, index)
-                                    }
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleShowDocumentMenu(chat._id, index);
+                                    }}
                                   >
                                     <img
                                       src={ArrowDropDown}
@@ -959,14 +1022,12 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                                     >
                                       <div
                                         className="relative flex flex-row px-3 items-center"
-                                        onClick={() =>
-                                          handlePushResource(
-                                            chat._id,
-                                            media._id
-                                          )
-                                        }
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handlePushResource(chat._id, media._id);
+                                        }}
                                       >
-                                        <p className="block ml-2 py-1 text-xs text-theme-primaryText cursor-pointer">
+                                        <p className="block ml-2 py-1 text-sm text-theme-primaryText cursor-pointer">
                                           Push to Resource
                                         </p>
                                       </div>
@@ -983,16 +1044,15 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
 
               <div
                 className={`flex flex-row space-x-2 mb-2 ${
-                  isMyMessage ? "ml-auto mr-4 justify-end" : "ml-10"
+                  "ml-14"
                 }`}
               >
                 {chat.reactions?.map((reaction, index) => (
                   <div
-                    key={`${reaction._id}-${index}`}
+                    key={`${reaction._id}-${index}-1`}
                     className="flex items-center bg-theme-primaryBackground rounded-full px-1 py-0.5 space-x-1 cursor-pointer"
                     onClick={() => handleReactionClick(reaction.type, chat._id)}
                   >
-                    {/* <span className="">{reaction.type}</span> */}
                     {reaction.type === "❤️" ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1029,7 +1089,7 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
                 >
                   {reactionsData.map((reaction, index) =>
                     index === reactionsData.length - 1 ? (
-                      <div className="flex flex-row items-center relative" key={`${reaction}-${index}`}>
+                      <div className="flex flex-row items-center relative" key={`${reaction}-${reaction.createdAt}-1-${index}`}>
                         <div
                           onClick={() =>
                             handleReactionClick(reaction, chat._id)
@@ -1130,6 +1190,8 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
       })}
       
     </div>
+    )}
+    
      <ImageFullscreenModal
      images={modalImages}
      isOpen={modalOpen}
@@ -1138,6 +1200,6 @@ const PageChatData = ({ topicId, isLoggedIn, myData, onNewMessageSent, business,
    />
     </>
   );
-};
+});
 
 export default PageChatData;
