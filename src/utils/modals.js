@@ -45,6 +45,8 @@ import InviteModal from "../components/Modals/Channel/InviteModal";
 import PaymentSuccessModal from "../components/Modals/payment/paymentSuccessModal";
 import PaymentModal from "../components/Modals/payment/paymentModal";
 import RemoveTopicMemberModal from "../components/Modals/deletions/removeTopicMemberModal";
+import AdminNotificationModal from "../components/Modals/Notification/adminNotificationModal";
+import DeletePollModal from "../components/Modals/deletions/pollDeleteOpen";
 
 const Modals = () => (
   <>
@@ -83,6 +85,7 @@ const Modals = () => (
     <EventUnsplashModal />
     {/* <EventCardModal /> */}
     <DeleteEventModal />
+    <DeletePollModal/>
     <EmbedLogoutModal />
     <DeleteDMModal />
     <EventShareModal />
@@ -90,10 +93,11 @@ const Modals = () => (
     <DeleteChannelModal />
     <DeleteTopicModal />
     <LeaveChannelModal />
-    <LeaveTopicModal/>
-    <InviteModal/>
-    <PaymentSuccessModal/>
-    <PaymentModal/>
+    <LeaveTopicModal />
+    <InviteModal />
+    <PaymentSuccessModal />
+    <PaymentModal />
+    <AdminNotificationModal />
   </>
 );
 

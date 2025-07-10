@@ -1,6 +1,6 @@
 import React, { useEffect,useState,useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { acceptChannelRequest, declineChannelRequest, fetchChannelRequests } from '../../../redux/slices/businessSlice';
+import { acceptChannelRequest, declineChannelRequest, fetchBusinessChannelRequests } from '../../../redux/slices/businessSlice';
 import {ChannelImages} from '../../constants/images';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +13,7 @@ const ChannelRequests = () => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    dispatch(fetchChannelRequests());
+    dispatch(fetchBusinessChannelRequests());
   }, []);
 
   const handleAcceptChannelRequest = (channelId, userId,email) => {

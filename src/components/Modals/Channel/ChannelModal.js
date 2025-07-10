@@ -7,7 +7,6 @@ import Unsplash from "../../../assets/icons/Unsplash.svg";
 import UnsplashLight from "../../../assets/lightIcons/unsplash_light.svg";
 import { postRequestAuthenticated } from "./../../../services/rest";
 import { useSelector, useDispatch } from "react-redux";
-import useModal from "./../../hooks/ModalHook";
 import { closeModal } from "../../../redux/slices/modalSlice";
 import {
   updateChannel,
@@ -19,6 +18,8 @@ import {
 } from "../../../redux/slices/createChannelSlice.js";
 import { useNavigate } from "react-router-dom";
 import Compressor from "compressorjs";
+import { setAdminNotification } from "../../../redux/slices/notificationSlice";
+import useModal from "./../../hooks/ModalHook";
 
 const ChannelModal = () => {
   const { handleOpenModal } = useModal();
@@ -159,8 +160,7 @@ const ChannelModal = () => {
     }
     if (name === "description") {
       setDescCount(value.length);
-    }
-    else if(name==="visibility" && value==="paid"){
+    } else if (name === "visibility" && value === "paid") {
       dispatch(setCreateChannelField({ field: "paywallPrice", value: 0 }));
     }
     dispatch(setCreateChannelField({ field: name, value }));
@@ -202,7 +202,7 @@ const ChannelModal = () => {
       return;
     }
 
-    if(channel.visibility==="paid" && channel.paywallPrice===0){
+    if (channel.visibility === "paid" && channel.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -224,12 +224,19 @@ const ChannelModal = () => {
       formDataToSend.append("imageSource", channel.imageSource);
       dispatch(createChannel(formDataToSend))
         .unwrap()
-        .then((channel) => {
-          handleClose();
+        .then((response) => {
           dispatch(createClearChannel());
           setFile(null);
           setError("");
-          navigate(`/account/${myData.username}/channel/${channel._id}`);
+          handleClose();
+          if (response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          } else {
+            navigate(
+              `/account/${myData.username}/channel/${response.channel._id}`
+            );
+          }
         })
         .catch((error) => {
           setError(error.message || String(error));
@@ -240,7 +247,7 @@ const ChannelModal = () => {
   const handleEditChannel = async (e) => {
     e.preventDefault();
     setError("");
-    if(channel.visibility==="paid" && channel.paywallPrice===0){
+    if (channel.visibility === "paid" && channel.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -270,11 +277,19 @@ const ChannelModal = () => {
       formDataToSend.append("imageSource", channel.imageSource);
       dispatch(updateChannel(formDataToSend))
         .unwrap()
-        .then(() => {
+        .then((response) => {
           handleClose();
           dispatch(createClearChannel());
           setFile(null);
           setError("");
+          if (response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          } else {
+            navigate(
+              `/account/${myData.username}/channel/${response.channel._id}`
+            );
+          }
         })
         .catch((error) => {
           setError(error.message || String(error));
@@ -294,8 +309,6 @@ const ChannelModal = () => {
     dispatch(setCreateChannelField({ field: "logo", value: null }));
     setLogoFile(null);
   };
-
-
 
   const [charCount, setCharCount] = useState(0);
   const [descCount, setDescCount] = useState(0);
@@ -377,90 +390,97 @@ const ChannelModal = () => {
                   {descCount}/{maxDesc}
                 </div>
               </div>
-              
-              {<div className="mb-4 mt-1">
-                <p className="text-theme-secondaryText text-sm font-light font-inter">
-                  Who can access this channel?
-                </p>
-                <div className="flex flex-col mt-3 items-start space-y-3">
-                  <label
-                    className={`${
-                      channel.visibility === "anyone"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="anyone"
-                      className="mr-2 custom-radio"
-                      checked={channel.visibility === "anyone"}
-                      onChange={handleChange}
-                    />
-                    <span>Anyone (anyone can join)</span>
-                  </label>
-                  <label
-                    className={`${
-                      channel.visibility === "invite"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="invite"
-                      className="mr-2 custom-radio"
-                      checked={channel.visibility === "invite"}
-                      onChange={handleChange}
-                    />
-                    <span>Invite only (access with invited tickets)</span>
-                  </label>
-                  <label
-                    className={`${
-                      channel.visibility === "paid"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="paid"
-                      className="mr-2 custom-radio"
-                      checked={channel.visibility === "paid"}
-                      onChange={handleChange}
-                    />
-                    <span>Paid (access with paid tickets)</span>
-                  </label>
-                </div>
-              </div>}
-              {channel.visibility==="paid" && <div className="mb-4 mt-1">
-                <label className="text-theme-secondaryText text-sm font-light font-inter">
-                  Access ticket amount inclusive of tax.
-                </label>
-                <div className="flex flex-row items-center">
-                  <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">₹</p>
-                <input
-                    id="channel-name"
-                    className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
-                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
-                    type="number"
-                    name="paywallPrice"
-                    value={channel.paywallPrice}
-                    onChange={handleChange}
-                    placeholder="Enter the joining fee for your channel."
-                  />
-                </div>
-              </div>}
-              {payError && (
-                  <p
-                    className={`text-theme-error font-light ml-1 font-inter text-xs`}
-                  >
-                    {payError}
+
+              {
+                <div className="mb-4 mt-1">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter">
+                    Who can access this channel?
                   </p>
-                )}
+                  <div className="flex flex-col mt-3 items-start space-y-3">
+                    <label
+                      className={`${
+                        channel.visibility === "anyone"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="anyone"
+                        className="mr-2 custom-radio"
+                        checked={channel.visibility === "anyone"}
+                        onChange={handleChange}
+                      />
+                      <span>Anyone (anyone can join)</span>
+                    </label>
+                    <label
+                      className={`${
+                        channel.visibility === "invite"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="invite"
+                        className="mr-2 custom-radio"
+                        checked={channel.visibility === "invite"}
+                        onChange={handleChange}
+                      />
+                      <span>Invite only (access with invited tickets)</span>
+                    </label>
+                    <label
+                      className={`${
+                        channel.visibility === "paid"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="paid"
+                        className="mr-2 custom-radio"
+                        checked={channel.visibility === "paid"}
+                        onChange={handleChange}
+                      />
+                      <span>Paid (access with paid tickets)</span>
+                    </label>
+                  </div>
+                </div>
+              }
+              {channel.visibility === "paid" && (
+                <div className="mb-4 mt-1">
+                  <label className="text-theme-secondaryText text-sm font-light font-inter">
+                    Access ticket amount inclusive of tax.
+                  </label>
+                  <div className="flex flex-row items-center">
+                    <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">
+                      ₹
+                    </p>
+                    <input
+                      id="channel-name"
+                      className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
+                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
+                      type="number"
+                      name="paywallPrice"
+                      value={channel.paywallPrice}
+                      onChange={handleChange}
+                      onWheel={(e) => e.target.blur()}
+                      placeholder="Enter the joining fee for your channel."
+                    />
+                  </div>
+                </div>
+              )}
+              {payError && (
+                <p
+                  className={`text-theme-error font-light ml-1 font-inter text-xs`}
+                >
+                  {payError}
+                </p>
+              )}
               <div className="mb-4">
                 <p className="text-theme-secondaryText text-sm font-light font-inter">
                   Add your community's logo{" "}

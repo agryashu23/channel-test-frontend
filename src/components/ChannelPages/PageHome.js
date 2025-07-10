@@ -46,14 +46,14 @@ const PageHome = () => {
 
   useEffect(() => {
     if (isLoggedIn && username) {
-      if(!business.business?._id){
+      if (!business.business?._id) {
         dispatch(fetchBusinessCredentials(username));
       }
     }
-  }, [isLoggedIn,username]);
+  }, [isLoggedIn, username]);
 
   useEffect(() => {
-    if(isLoggedIn && myUserId){
+    if (isLoggedIn && myUserId) {
       dispatch(fetchTopic(topicId));
     }
   }, [topicId, channelId]);
@@ -63,8 +63,6 @@ const PageHome = () => {
       connectSocketWithUser(myUserId);
     }
   }, [isLoggedIn, myUserId]);
-
-  
 
   const toggleBottomSheet = () => {
     setIsBottomSheetOpen(!isBottomSheetOpen);
@@ -77,16 +75,28 @@ const PageHome = () => {
         navigate(
           `${getAppPrefix()}/get-started?redirect=${getAppPrefix()}/account/${username}/channel/${channelId}/c-id/topic/${topicId}`
         );
-      }, 500); 
+      }, 500);
       return () => clearTimeout(timeout);
     }
   }, [isLoggedIn, username, channelId, topicId, myUserId, navigate]);
 
   const loading = topicStatus === "loading";
 
-  const isMember = topic?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined");
-  const isRequested = topic?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="request");
-  const isTopicOwner = topic?.user?._id ===myUserId;
+  const isMember = topic?.members?.find(
+    (member) =>
+      member?.user?.toString() === myUserId.toString() &&
+      member.status === "joined"
+  );
+  const isRequested = topic?.members?.find(
+    (member) =>
+      member?.user?.toString() === myUserId.toString() &&
+      member.status === "request"
+  );
+  const isTopicAdmin = topic?.members?.find(
+    (member) =>
+      member?.user?.toString() === myUserId.toString() &&
+      (member.role === "admin" || member.role === "owner")
+  );
 
   if (inviteCode) {
     return (
@@ -103,15 +113,26 @@ const PageHome = () => {
     return <TopicHomeSkeleton />;
   }
 
-  if (isLoggedIn &&  myUserId && !isTopicOwner && !isMember && isRequested) {
+  if (
+    !loading &&
+    isLoggedIn &&
+    myUserId &&
+    !isTopicAdmin &&
+    !isMember &&
+    isRequested
+  ) {
     return (
       <div className="w-full h-screen bg-theme-secondaryBackground px-4 text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
-        <p>You have already requested to join this topic. Waiting for approval...</p>
+        <p>
+          You have already requested to join this topic. Waiting for approval...
+        </p>
         <div
           className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
          bg-theme-secondaryText py-2 px-3 text-theme-primaryBackground w-max"
           onClick={() =>
-            navigate(`${getAppPrefix()}/account/${username}/channel/${channelId}`)
+            navigate(
+              `${getAppPrefix()}/account/${username}/channel/${channelId}`
+            )
           }
         >
           Return to Channel Page
@@ -119,15 +140,27 @@ const PageHome = () => {
       </div>
     );
   }
-  if (isLoggedIn &&  myUserId && !isTopicOwner &&  !isMember && !isRequested) {
+  if (
+    !loading &&
+    isLoggedIn &&
+    myUserId &&
+    !isTopicAdmin &&
+    !isMember &&
+    !isRequested
+  ) {
     return (
       <div className="w-full h-screen bg-theme-secondaryBackground px-4 text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
-        <p>You have not joined this topic. Please join the Topic from Channel Page.</p>
+        <p>
+          You have not joined this topic. Please join the Topic from Channel
+          Page.
+        </p>
         <div
           className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
          bg-theme-secondaryText py-2 px-3 text-theme-primaryBackground w-max"
           onClick={() =>
-            navigate(`${getAppPrefix()}/account/${username}/channel/${channelId}`)
+            navigate(
+              `${getAppPrefix()}/account/${username}/channel/${channelId}`
+            )
           }
         >
           Return to Channel Page
@@ -145,7 +178,7 @@ const PageHome = () => {
           channelId={channelId}
           isLoggedIn={isLoggedIn}
           myData={myData}
-          channelName={topic.channel.name}
+          channelName={topic.channel?.name}
           toggleBottomSheet={toggleBottomSheet}
           isOpen={isBottomSheetOpen}
           username={username}

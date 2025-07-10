@@ -16,6 +16,7 @@ import AdminPricingCard from "../Admin/Account/widgets/AdminPricingCard";
 const Pricing = () => {
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const myUserId = useSelector((state) => state.auth.user._id);
   const [activeTabPricing, setActiveTabPricing] = useState("monthly");
   const [plans, setPlans] = useState([]);
   const [loading,setLoading] = useState(false);
@@ -23,7 +24,7 @@ const Pricing = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       setLoading(true);
-      if(isLoggedIn && myData._id && myData.business){
+      if(isLoggedIn && myUserId){
         const response = await postRequestAuthenticated(`/fetch/business/plans`);
         setPlans(response.plans);
       }
@@ -34,7 +35,7 @@ const Pricing = () => {
       setLoading(false);
     };
     fetchPlans();
-  }, [myData._id , isLoggedIn]);
+  }, [myUserId , isLoggedIn]);
   return (
     <div className="flex flex-col mt-20 items-center z-10 px-8 bg-[#202020] h-full ">
       <p className="text-white text-2xl font-normal">

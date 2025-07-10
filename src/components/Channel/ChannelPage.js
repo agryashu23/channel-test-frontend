@@ -1,9 +1,13 @@
 import ChannelCover from "../../assets/channel_images/channel_cover.svg";
 import Settings from "../../assets/icons/setting.svg";
 import ChannelLogo from "../../assets/icons/default_channel_logo.svg";
-import { createGeneralTopic,setChannelOnce } from "./../../redux/slices/channelItemsSlice";
+import {
+  createGeneralTopic,
+  setChannelOnce,
+} from "./../../redux/slices/channelItemsSlice";
 import { usePaymentHandler } from "../../utils/paymentPage";
 import { ChannelImages } from "../constants/images";
+import SignOutIcon from "../../assets/icons/sign_out.svg";
 import {
   clearCreateTopic,
   setCreateTopicField,
@@ -66,7 +70,7 @@ const ChannelPage = () => {
   const dispatch = useDispatch();
   const channel = useSelector((state) => state.channel);
   const [joinLoading, setJoinLoading] = useState(false);
-  const myUser  = useSelector((state) => state.auth.user);
+  const myUser = useSelector((state) => state.auth.user);
   const myUserId = myUser?._id;
   const loading = useSelector((state) => state.channel.loading);
   const channelstatus = useSelector((state) => state.channel.channelstatus);
@@ -99,7 +103,7 @@ const ChannelPage = () => {
 
   useEffect(() => {
     if (isLoggedIn && username) {
-      if(!business.business?._id){
+      if (!business.business?._id) {
         dispatch(fetchBusinessCredentials(username));
       }
     }
@@ -152,13 +156,12 @@ const ChannelPage = () => {
   useEffect(() => {
     if (channelId) {
       const formData = new FormData();
-      formData.append("id",channelId);
-      formData.append("user_id",myUserId);
+      formData.append("id", channelId);
+      formData.append("user_id", myUserId);
       dispatch(fetchChannel(formData));
       dispatch(fetchTopics(channelId));
     }
   }, [channelId, dispatch]);
-
 
   const closeDropdown = (event) => {
     setIsDropdownOpen(false);
@@ -189,9 +192,7 @@ const ChannelPage = () => {
     if (channel._id) {
       dispatch(createGeneralTopic(channel._id))
         .unwrap()
-        .then((topic) => {
-          
-        })
+        .then((topic) => {})
         .catch((error) => {
           alert(error);
         });
@@ -209,23 +210,23 @@ const ChannelPage = () => {
 
   const handleRemoveCover = () => {
     dispatch(removeCover(channel._id))
-    .then(() => {
-      setIsRemoveCover(false);
-      // dispatch(setChannelField({ field: "cover_image", value: "" }));
-      // dispatch(setChannelField({ field: "imageSource", value: "" }));
-    })
-    .catch((error) => {
-      alert(error);
-    });
+      .then(() => {
+        setIsRemoveCover(false);
+        // dispatch(setChannelField({ field: "cover_image", value: "" }));
+        // dispatch(setChannelField({ field: "imageSource", value: "" }));
+      })
+      .catch((error) => {
+        alert(error);
+      });
   };
 
   const toggleRemoveCover = () => {
     closeDropdown();
-     setFile(null);
+    setFile(null);
     dispatch(setChannelField({ field: "cover_image", value: "" }));
     dispatch(setChannelField({ field: "imageSource", value: "" }));
     setIsRemoveCover(true);
-  }
+  };
 
   const handleSaveCover = () => {
     const formDataToSend = new FormData();
@@ -303,43 +304,49 @@ const ChannelPage = () => {
   };
   const handleJoinChannel = (channel) => {
     if (isLoggedIn) {
-      const isMember = channel.members?.find(member=>member?.user?.toString()===myData?._id?.toString());
-      if(isMember && isMember.status==="request"){
+      const isMember = channel.members?.find(
+        (member) => member?.user?.toString() === myData?._id?.toString()
+      );
+      if (isMember && isMember.status === "request") {
         showCustomToast("You have already requested to join this channel");
         return;
-      }
-      else {
+      } else {
         setJoinLoading(true);
         dispatch(joinChannel(channel._id))
           .unwrap()
           .then((response) => {
-            if(response.success && response.paywall && response.paywallPrice>0){
+            if (
+              response.success &&
+              response.paywall &&
+              response.paywallPrice > 0
+            ) {
               const data = {
-                amount:response.paywallPrice,
-                currency:"INR",
-                channel:response.channel._id,
-                name:response.channel.name,
-                type:"channel",
-                username:channel.user.username
-              }
+                amount: response.paywallPrice,
+                currency: "INR",
+                channel: response.channel._id,
+                name: response.channel.name,
+                type: "channel",
+                username: channel.user.username,
+              };
               setJoinLoading(false);
-              handlePayment(data,"channel");
-            }
-            else{
+              handlePayment(data, "channel");
+            } else {
               dispatch(setChannelOnce(false));
               setJoinLoading(false);
-              if(response.success && response.joined && response.joinStatus==="already"){
+              if (
+                response.success &&
+                response.joined &&
+                response.joinStatus === "already"
+              ) {
                 navigate(
                   `${getAppPrefix()}/account/${username}/channel/${
                     channel._id
                   }/c-id/topic/${response.topics[0]}`
                 );
-              }
-              else{
-                showCustomToast(response.message);
+              } else {
+                showCustomToast(response.message, 2000);
               }
             }
-            
           })
           .catch((error) => {
             console.log(error);
@@ -381,28 +388,67 @@ const ChannelPage = () => {
   if (loading) {
     return <ChannelSkeleton />;
   }
-
-  const isOwner = myData?._id.toString() === channel?.user?._id?.toString();
-
-  const channelButtonState=()=>{
-    if(!isLoggedIn || !myData?._id){
-      return "Join channel";
-    }
-    else if(channel.user?._id.toString()===myData?._id.toString()){
-      return "";
-    }
-    else if(channel.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined")){
-      return "Exit channel";
-    }else if(channel.members?.find(request=>request?.user?.toString()===myUserId.toString() && request.status==="request")){
-      return "Requested";
-    }else{
-      return "Join channel";
-    }
+  if (!loading && !channel._id) {
+    return (
+      <div className="w-full h-screen bg-theme-secondaryBackground px-4 text-center flex flex-col justify-center font-bold text-lg text-theme-secondaryText">
+        <p>Channel doesn't exist or deleted.</p>
+        <div
+          className="cursor-pointer text-sm font-normal text-center mt-4 rounded-lg mx-auto
+         bg-theme-secondaryText py-2 px-3 text-theme-primaryBackground w-max"
+          onClick={() =>
+            navigate(`${getAppPrefix()}/account/${username}/profile`)
+          }
+        >
+          Return to Profile Page
+        </div>
+      </div>
+    );
   }
+
+  // const isOwner = myData?._id.toString() === channel?.user?._id?.toString();
+  const isAdmin = channel.members?.find(
+    (member) =>
+      (member.role === "admin" || member.role === "owner") &&
+      member?.user.toString() === myUserId.toString()
+  );
+  const isOwner = channel.members?.find(
+    (member) =>
+      member.role === "owner" && member?.user.toString() === myUserId.toString()
+  );
+  const isOnlyAdmin = channel.members?.find(
+    (member) =>
+      member.role === "admin" && member?.user.toString() === myUserId.toString()
+  );
+
+  const channelButtonState = () => {
+    if (!isLoggedIn || !myUserId) {
+      return "Join channel";
+    } else if (channel.user?._id.toString() === myUserId.toString()) {
+      return "";
+    } else if (
+      channel.members?.find(
+        (member) =>
+          member?.user?.toString() === myUserId.toString() &&
+          member.status === "joined"
+      )
+    ) {
+      return "Exit channel";
+    } else if (
+      channel.members?.find(
+        (request) =>
+          request?.user?.toString() === myUserId.toString() &&
+          request.status === "request"
+      )
+    ) {
+      return "Requested";
+    } else {
+      return "Join channel";
+    }
+  };
   const buttonState = channelButtonState();
 
   const isChannelPart = !!channel.members?.find(
-    member =>
+    (member) =>
       member?.user?.toString() === myUserId?.toString() &&
       member?.status === "joined"
   );
@@ -410,16 +456,16 @@ const ChannelPage = () => {
   //   return <div className="w-full h-full bg-[#202020] bg-opacity-10 z-50 flex items-center justify-center">
   //     <Loading text="Joining channel..."/>
   //   </div>
-    
+
   // }
 
   return (
     <div className="relative bg-theme-secondaryBackground w-full h-full flex flex-col overflow-y-auto">
-       {joinLoading && (
-      <div className="absolute inset-0 bg-[#202020] bg-opacity-80 z-50 flex items-center justify-center">
-        <Loading text="Joining channel..." />
-      </div>
-    )}
+      {joinLoading && (
+        <div className="absolute inset-0 bg-[#202020] bg-opacity-80 z-50 flex items-center justify-center">
+          <Loading text="Joining channel..." />
+        </div>
+      )}
       <div className="relative w-full h-44 shrink-0">
         <img
           src={channel.cover_image ? channel.cover_image : ChannelCover}
@@ -447,17 +493,17 @@ const ChannelPage = () => {
             {channelstatus === "loading" ? "Saving" : "Save"}
           </div>
         )}
-         {isRemoveCover && (
+        {isRemoveCover && (
           <div
             className="absolute left-3 top-3 cursor-pointer bg-theme-secondaryText px-3 text-sm font-light py-1.5
          text-theme-primaryBackground rounded-lg"
             onClick={handleRemoveCover}
           >
-           {channelstatus === "loading" ? "Removing" : "Remove"}
+            {channelstatus === "loading" ? "Removing" : "Remove"}
           </div>
         )}
       </div>
-      {isOwner && (
+      {isAdmin && (
         <div className="absolute right-4 sm:top-2 top-14">
           <img
             src={Settings}
@@ -490,8 +536,16 @@ const ChannelPage = () => {
               className="relative flex flex-row px-4 items-center"
               // onClick={handleOpenCover}
             >
-              <img src={ChannelImages.Edit.default} alt="edit" className="dark:block hidden " />
-              <img src={ChannelImages.EditLight.default} alt="edit" className="dark:hidden" />
+              <img
+                src={ChannelImages.Edit.default}
+                alt="edit"
+                className="dark:block hidden "
+              />
+              <img
+                src={ChannelImages.EditLight.default}
+                alt="edit"
+                className="dark:hidden"
+              />
               <p
                 className="block ml-2 py-2 text-sm text-theme-primaryText cursor-pointer"
                 role="menuitem"
@@ -505,27 +559,29 @@ const ChannelPage = () => {
                 onChange={handleCoverUpload}
               />
             </div>
-           {channel.cover_image && <div
-              className="flex flex-row px-4 items-center"
-              onClick={toggleRemoveCover}
-            >
-              <img
-                src={Delete}
-                alt="delete"
-                className="dark:block hidden w-4 h-4"
-              />
-              <img
-                src={DeleteLight}
-                alt="delete-light"
-                className="dark:hidden w-4 h-4"
-              />
-              <p
-                className="block ml-2 py-2 text-sm text-theme-primaryText cursor-pointer"
-                role="menuitem"
+            {channel.cover_image && (
+              <div
+                className="flex flex-row px-4 items-center"
+                onClick={toggleRemoveCover}
               >
-                Remove cover
-              </p>
-            </div>}
+                <img
+                  src={Delete}
+                  alt="delete"
+                  className="dark:block hidden w-4 h-4"
+                />
+                <img
+                  src={DeleteLight}
+                  alt="delete-light"
+                  className="dark:hidden w-4 h-4"
+                />
+                <p
+                  className="block ml-2 py-2 text-sm text-theme-primaryText cursor-pointer"
+                  role="menuitem"
+                >
+                  Remove cover
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -553,7 +609,7 @@ const ChannelPage = () => {
             {/* <img src={SettingIcon} alt="setting-icon" className=" w-5 h-5" /> */}
           </div>
           <p className="text-xs text-theme-emptyEvent font-light">
-            {channel.memberCount} members
+            {channel.memberCount > 0 ? `${channel.memberCount}` : "0"} members
           </p>
           <p
             className="mt-0.5 text-sm font-light text-theme-primaryText mb-1"
@@ -561,44 +617,75 @@ const ChannelPage = () => {
           >
             {channel.description}
           </p>
-          {(!isOwner && !isChannelPart) &&  <div className="flex flex-row items-center">
-              <img className="mr-1 w-3 h-3 mt-0.5 dark:block hidden" loading="lazy" src={channel.visibility==="paid"?ChannelImages.Secure.default:channel.visibility==="anyone"?
-                ChannelImages.LockOpen.default:ChannelImages.Lock.default} alt="lock"  />
-                <img className="mr-1 w-3 h-3 mt-0.5 dark:hidden block" loading="lazy" src={channel.visibility==="paid"?ChannelImages.SecureLight.default:channel.visibility==="anyone"?
-                ChannelImages.LockOpenLight.default:ChannelImages.LockLight.default} alt="lock-light"  />
-              <p className="mt-1 text-xs font-ligh text-theme-emptyEvent">{channel.visibility==="paid"?`This channel is paywalled. Youll be able to access 
-              it once you pay the price of ₹${channel.paywallPrice}/-`:channel.visibility==="anyone"?"This is a public channel. Anyone can join."
-              :"This channel is invite-only. You'll be able to access it once the admin approves your request."}</p>
-          </div>}
-          
+          {!isChannelPart && (
+            <div className="flex flex-row items-center">
+              <img
+                className="mr-1 w-3 h-3 mt-0.5 dark:block hidden"
+                loading="lazy"
+                src={
+                  channel.visibility === "paid"
+                    ? ChannelImages.Secure.default
+                    : channel.visibility === "anyone"
+                    ? ChannelImages.LockOpen.default
+                    : ChannelImages.Lock.default
+                }
+                alt="lock"
+              />
+              <img
+                className="mr-1 w-3 h-3 mt-0.5 dark:hidden block"
+                loading="lazy"
+                src={
+                  channel.visibility === "paid"
+                    ? ChannelImages.SecureLight.default
+                    : channel.visibility === "anyone"
+                    ? ChannelImages.LockOpenLight.default
+                    : ChannelImages.LockLight.default
+                }
+                alt="lock-light"
+              />
+              <p className="mt-1 text-xs font-ligh text-theme-emptyEvent">
+                {channel.visibility === "paid"
+                  ? `This channel is paywalled. Youll be able to access 
+              it once you pay the price of ₹${channel.paywallPrice}/-`
+                  : channel.visibility === "anyone"
+                  ? "This is a public channel. Anyone can join."
+                  : "This channel is invite-only. You'll be able to access it once the admin approves your request."}
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-row xs:space-x-4 space-x-3 pt-2">
-          {isOwner ? (
-            <div
-              className="py-2 xs:px-3 px-2 cursor-pointer text-theme-primaryBackground bg-theme-secondaryText rounded-lg text-sm font-inter"
-              onClick={() => handleOwnerShareChannel(channel._id)}
-            >
-              Create join link
-            </div>
-          ) : buttonState === "Exit channel" ? (
-            <div
-              className="border border-theme-primaryText py-2 xs:px-3 px-2 rounded-lg cursor-pointer text-theme-secondaryText text-sm font-inter"
-              onClick={() => handleLeaveChannel(channel)}
-            >
-              Exit channel
-            </div>
-          ) : (
-            <div
-              className={`py-2 xs:px-3 px-2 rounded-lg text-sm font-inter text-center cursor-pointer ${
-                buttonState === "Requested"
-                  ? "bg-theme-buttonDisable text-theme-buttonDisableText cursor-not-allowed"
-                  : "bg-theme-secondaryText text-theme-primaryBackground"
-              }`}
-              onClick={() => buttonState === "Requested" ? null : handleJoinChannel(channel)}
-            >
-              {buttonState}
-            </div>
-          )}      
-            {isOwner ? (  
+            {isAdmin ? (
+              <div
+                className="py-2 xs:px-3 px-2 cursor-pointer text-theme-primaryBackground bg-theme-secondaryText rounded-lg text-sm font-inter"
+                onClick={() => handleOwnerShareChannel(channel._id)}
+              >
+                Create join link
+              </div>
+            ) : buttonState === "Exit channel" ? (
+              <div
+                className="border border-theme-primaryText py-2 xs:px-3 px-2 rounded-lg cursor-pointer text-theme-secondaryText text-sm font-inter"
+                onClick={() => handleLeaveChannel(channel)}
+              >
+                Exit channel
+              </div>
+            ) : (
+              <div
+                className={`py-2 xs:px-3 px-2 rounded-lg text-sm font-inter text-center cursor-pointer ${
+                  buttonState === "Requested"
+                    ? "bg-theme-buttonDisable text-theme-buttonDisableText cursor-not-allowed"
+                    : "bg-theme-secondaryText text-theme-primaryBackground"
+                }`}
+                onClick={() =>
+                  buttonState === "Requested"
+                    ? null
+                    : handleJoinChannel(channel)
+                }
+              >
+                {buttonState}
+              </div>
+            )}
+            {isAdmin ? (
               <div className="relative flex items-center">
                 <img
                   src={ChannelImages.Dots.default}
@@ -643,40 +730,65 @@ const ChannelPage = () => {
                           Edit
                         </p>
                       </div>
-                      <div
-                        className="flex flex-row px-3 items-center"
-                        onClick={(e) => {
-                          dispatch(setChannelIdToDelete(channel._id));
-                          dispatch(setChannelNameToDelete(channel.name));
-                          handleOpenModal("modalDeleteChannelOpen");
-                        }}
-                      >
-                        <img
-                          src={Delete}
-                          alt="edit"
-                          className="dark:block hidden w-4 h-4"
-                        />
-                        <img
-                          src={DeleteLight}
-                          alt="edit"
-                          className="dark:hidden w-4 h-4"
-                        />
-                        <p
-                          className="block px-2 py-2 font-light text-sm   text-theme-secondaryText cursor-pointer"
-                          role="menuitem"
+                      {isOwner && (
+                        <div
+                          className="flex flex-row px-3 items-center"
+                          onClick={(e) => {
+                            dispatch(setChannelIdToDelete(channel._id));
+                            dispatch(setChannelNameToDelete(channel.name));
+                            handleOpenModal("modalDeleteChannelOpen");
+                          }}
                         >
-                          Delete
-                        </p>
-                      </div>
+                          <img
+                            src={Delete}
+                            alt="edit"
+                            className="dark:block hidden w-4 h-4"
+                          />
+                          <img
+                            src={DeleteLight}
+                            alt="edit"
+                            className="dark:hidden w-4 h-4"
+                          />
+                          <p
+                            className="block px-2 py-2 font-light text-sm   text-theme-secondaryText cursor-pointer"
+                            role="menuitem"
+                          >
+                            Delete
+                          </p>
+                        </div>
+                      )}
+                      {isOnlyAdmin && (
+                        <div
+                          className="flex flex-row px-3 items-center"
+                          onClick={(e) => {
+                            handleLeaveChannel(channel);
+                          }}
+                        >
+                          <img
+                            src={SignOutIcon}
+                            alt="edit"
+                            className="dark:block hidden w-4 h-4"
+                          />
+                          <img
+                            src={SignOutIcon}
+                            alt="edit"
+                            className="dark:hidden w-4 h-4"
+                          />
+                          <p
+                            className="block px-2 py-2 font-light text-sm   text-theme-secondaryText cursor-pointer"
+                            role="menuitem"
+                          >
+                            Exit
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             ) : (
               <div
-                className={`py-2 px-3 rounded-lg cursor-pointer ${
-                  "border border-theme-primaryText text-theme-secondaryText text-sm font-inter"
-                } `}
+                className={`py-2 px-3 rounded-lg cursor-pointer ${"border border-theme-primaryText text-theme-secondaryText text-sm font-inter"} `}
                 onClick={() => handleShareChannel(channel._id)}
               >
                 Share Invite
@@ -685,35 +797,36 @@ const ChannelPage = () => {
           </div>
         </div>
       </div>
-      {isOwner && <div className="flex flex-col mx-3">
-        <div className="border-t my-4 border-t-theme-chatDivider "></div>
-        {channel.topics.length === 0 && channel.user?._id === myData?._id && (
-          <div className="mt-2 flex flex-row space-x-3">
-            <div className="p-4 bg-theme-sidebarBackground rounded-lg flex-col justify-start items-start w-max border border-theme-sidebarDivider">
-              <div className="flex-col justify-start items-start  flex">
-                <div className=" text-theme-sidebarColor text-xs font-normal font-inter ">
-                  Suggested
+      {isAdmin && (
+        <div className="flex flex-col mx-3">
+          <div className="border-t my-4 border-t-theme-chatDivider "></div>
+          {channel.topics.length === 0 && (
+            <div className="mt-2 flex flex-row space-x-3">
+              <div className="p-4 bg-theme-sidebarBackground rounded-lg flex-col justify-start items-start w-max border border-theme-sidebarDivider">
+                <div className="flex-col justify-start items-start  flex">
+                  <div className=" text-theme-sidebarColor text-xs font-normal font-inter ">
+                    Suggested
+                  </div>
+                  <div className="text-theme-primaryText text-xs font-normal font-inter mt-1">
+                    For open-ended conversations,
+                    <br />
+                    you can start with General
+                  </div>
                 </div>
-                <div className="text-theme-primaryText text-xs font-normal font-inter mt-1">
-                  For open-ended conversations,
-                  <br />
-                  you can start with General
-                </div>
-              </div>
 
-              <div
-                className="p-2 rounded border cursor-pointer mt-2 w-max border-theme-primaryText text-theme-secondaryText text-xs justify-center items-center "
-                onClick={handleCreateTopic}
-              >
-                Create General
+                <div
+                  className="p-2 rounded border cursor-pointer mt-2 w-max border-theme-primaryText text-theme-secondaryText text-xs justify-center items-center "
+                  onClick={handleCreateTopic}
+                >
+                  Create General
+                </div>
               </div>
             </div>
-          </div>
-        )}
-       
+          )}
+
           <div className="items-center text-center mt-3">
             {tabs.map((tab) => {
-              if (tab.name === "Members" && !isOwner) return null;
+              if (tab.name === "Members" && !isAdmin) return null;
               return (
                 <button
                   key={tab.id}
@@ -731,19 +844,46 @@ const ChannelPage = () => {
           </div>
           <div
             className={`${
-              isOwner ? "xxs:w-80 w-72" : "w-28"
+              isAdmin ? "xxs:w-80 w-72" : "w-28"
             } mx-auto border border-theme-chatDivider`}
             style={{ height: "0.1px" }}
           ></div>
           <div className="mt-4 mb-6 h-full">
             {activeTab === "topics" ? (
-              <TopicsTab channelId={channelId} isOwner={isOwner} username={username}/>
+              isOnlyAdmin ? (
+                <UserTopicsTab
+                  username={username}
+                  isSubdomain={isSubdomain}
+                  galleryUsername={galleryUsername}
+                  channelId={channelId}
+                  isChannelAdmin={isAdmin}
+                />
+              ) : (
+                <TopicsTab
+                  channelId={channelId}
+                  isOwner={isAdmin}
+                  username={username}
+                  isOnlyAdmin={isOnlyAdmin}
+                />
+              )
             ) : (
-              <MembersTab channelId={channelId} isOwner={isOwner} />
+              <MembersTab
+                channelId={channelId}
+                isOwner={isAdmin}
+                channel={channel}
+              />
             )}
           </div>
-      </div>}
-      {!isOwner && isChannelPart && <UserTopicsTab username={username} isSubdomain={isSubdomain} galleryUsername={galleryUsername} channelId={channelId} />}
+        </div>
+      )}
+      {isChannelPart && !isAdmin && (
+        <UserTopicsTab
+          username={username}
+          isSubdomain={isSubdomain}
+          galleryUsername={galleryUsername}
+          channelId={channelId}
+        />
+      )}
     </div>
   );
 };

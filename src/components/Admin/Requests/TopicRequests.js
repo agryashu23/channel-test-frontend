@@ -1,6 +1,6 @@
 import React, { useEffect,useState,useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
-import { acceptTopicRequest, declineTopicRequest, fetchTopicRequests } from '../../../redux/slices/businessSlice';
+import { acceptTopicRequest, declineTopicRequest, fetchBusinessTopicRequests } from '../../../redux/slices/businessSlice';
 import {ChannelImages} from '../../constants/images';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ const TopicRequests = () => {
   const topicDropdownRef = useRef(null);
 
   useEffect(() => {
-    dispatch(fetchTopicRequests());
+    dispatch(fetchBusinessTopicRequests());
   }, []);
 
   const handleAcceptTopicRequest = (topicId, userId,email) => {

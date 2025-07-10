@@ -36,7 +36,7 @@ const PricingCard = ({ plan, type }) => {
         available: true,
       });
     if (f.userLimit && plan._id !== "enterprise")
-      features.push({ name: `Total ${f.userLimit} users`, available: true });
+      features.push({ name: `Upto ${f.userLimit} users`, available: true });
     if (f.paidEvents !== undefined)
       features.push({ name: "Paid Events", available: f.paidEvents });
     if (f.autoLogin !== undefined)

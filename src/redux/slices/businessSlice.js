@@ -24,12 +24,12 @@ export const fetchBusinessCredentials = createAsyncThunk(
     }
   }
 );
-export const fetchChannelRequests = createAsyncThunk(
-  "business/fetchchannel-requests",
-  async (_, { rejectWithValue }) => {
+export const fetchBusinessChannelRequests = createAsyncThunk(
+  "business/fetchBusinessChannelRequests",
+  async (channelId, { rejectWithValue }) => {
     try {
       const response = await postRequestAuthenticated(
-        `/fetch/channel/requests`
+        `/fetch/business/channel/requests`
       );
       if (response.success) {
         return response;
@@ -41,12 +41,12 @@ export const fetchChannelRequests = createAsyncThunk(
     }
   }
 );
-export const fetchTopicRequests = createAsyncThunk(
-  "business/fetchtopic-requests",
+export const fetchBusinessTopicRequests = createAsyncThunk(
+  "business/fetchBusinessTopicRequests",
   async (_, { rejectWithValue }) => {
     try {
       const response = await postRequestAuthenticated(
-        `/fetch/topic/requests`
+        `/fetch/business/topic/requests`
       );
       if (response.success) {
         return response;
@@ -104,6 +104,7 @@ export const acceptChannelRequest = createAsyncThunk(
         const newData = {
           channelId: response.channelId,
           userId: response.userId,
+          membership:response.membership
         };
         return newData;
       } else {
@@ -152,6 +153,7 @@ export const acceptTopicRequest = createAsyncThunk(
         const newData = {
           topicId: response.topicId,
           userId: response.userId,
+          membership:response.membership
         };
         return newData;
       } else {
@@ -386,31 +388,31 @@ const businessSlice = createSlice({
         state.customLoading = false;
         state.error = action.payload;
       })
-      .addCase(fetchChannelRequests.pending, (state) => {
+      .addCase(fetchBusinessChannelRequests.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchChannelRequests.fulfilled, (state, action) => {
+      .addCase(fetchBusinessChannelRequests.fulfilled, (state, action) => {
         state.loading = false;
         const response = action.payload;
         state.channelRequests = response.requests;
         state.channels = response.channels;
       })
-      .addCase(fetchChannelRequests.rejected, (state, action) => {
+      .addCase(fetchBusinessChannelRequests.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload.message;
       })
-      .addCase(fetchTopicRequests.pending, (state) => {
+      .addCase(fetchBusinessTopicRequests.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchTopicRequests.fulfilled, (state, action) => {
+      .addCase(fetchBusinessTopicRequests.fulfilled, (state, action) => {
         state.loading = false;
         const response = action.payload;
         state.topicRequests = response.requests;
         state.channels = response.channels;
       })
-      .addCase(fetchTopicRequests.rejected, (state, action) => {
+      .addCase(fetchBusinessTopicRequests.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload.message;
       })

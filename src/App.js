@@ -54,7 +54,7 @@ import TermsPage from "./components/Footer/Modals/TermsPage";
 import Shipping from "./components/Footer/Modals/Shipping";
 import ContactUs from "./components/Footer/Modals/ContactUs";
 import CancellationPolicy from "./components/Footer/Modals/Cancellation";
-import EventFullPage from "./components/ChannelPages/widgets/EventFullPage";
+import EventFullPage from "./components/Event/EventFullPage";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import AdminAnalytics from "./components/Admin/Tabs/AdminAnalytics";
@@ -67,6 +67,8 @@ import TopicRequests from "./components/Admin/Requests/TopicRequests";
 import EventRequests from "./components/Admin/Requests/EventRequests";
 import ApiPanel from "./components/Admin/Panel/ApiPanel";
 import SettingsPanel from "./components/Admin/Panel/SettingsPanel";
+import AdminNotifications from "./components/Admin/AdminNotifications";
+import PollFullPage from "./components/poll/PollFullPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -184,7 +186,8 @@ const App = () => {
                   element={<ProfileChipsView />}
                 />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
-
+                <Route path="/event/:eventId" element={<EventFullPage />} />
+                <Route path="/poll/:pollId" element={<PollFullPage />} />
                 <Route path="*" element={<Page404 />} />
               </Route>
             </>
@@ -239,6 +242,7 @@ const App = () => {
               <Route path="/admin/:username" element={<AdminHome />}>
                 <Route index element={<Navigate to="profile" replace />} />
                 <Route path="profile" element={<Profile/>} />
+                <Route path="notifications" element={<AdminNotifications/>} />
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="account/billing"  element={<AdminAccountBilling />} />
                 <Route path="account/members/roles" element={<AdminRoleMembers />} />
@@ -272,6 +276,8 @@ const App = () => {
               />
               <Route path="/query/feedback/channels" element={<QueryPage />} />
               <Route path="/event/:eventId" element={<EventFullPage />} />
+              <Route path="/poll/:pollId" element={<PollFullPage />} />
+
               <Route path="*" element={<Page404 />} />
               <Route
                 path="/reset-password/:token"

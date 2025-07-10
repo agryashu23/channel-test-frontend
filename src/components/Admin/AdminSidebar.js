@@ -134,7 +134,7 @@ const AdminSidebar = ({
         >
           Analytics
         </Link>
-        <div className="border-[1px] border-theme-sidebarDivider mt-3 mb-4"></div>
+        <div className="border-[1px] border-theme-sidebarDivider mt-2 mb-3"></div>
         {/* <div className={`border-[1px] border-theme-sidebarDivider mt-4 ${dropdowns.includes("admin")?"mb-2":"mb-3"}`}></div> */}
 
         <div className="flex flex-row justify-between items-center cursor-pointer pl-4 pr-3" onClick={() =>toggleDropdown("admin")}>
@@ -167,14 +167,14 @@ const AdminSidebar = ({
         >
           Notifications
         </Link>
-        <div className="border-[1px] border-theme-sidebarDivider mt-3 mb-4"></div>
+        <div className="border-[1px] border-theme-sidebarDivider mt-2 mb-4"></div>
         <div
           className={` font-normal text-sm cursor-pointer py-1 pl-4 pr-3 text-theme-primaryText`}
           onClick={() => navigate("/documentation/channels")}
         >
           Documentation
         </div>
-        <div className="border  border-theme-sidebarDivider my-4"></div>
+        <div className="border  border-theme-sidebarDivider my-3"></div>
       </div>
     </div>
   );

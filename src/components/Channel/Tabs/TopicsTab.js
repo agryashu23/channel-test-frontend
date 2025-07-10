@@ -3,18 +3,19 @@ import AddIconLight from "../../../assets/lightIcons/create_new_light.svg";
 import EditIcon from "../../../assets/icons/Edit.svg";
 import EditIconLight from "../../../assets/lightIcons/edit_light.svg";
 import { setModalModal } from "../../../redux/slices/modalSlice.js";
-
-import {
-  clearCreateTopic,
-  setCreateTopicField,
-  setCreateTopicItems,
-} from "../../../redux/slices/createTopicSlice";
-import ArrowForward from "../../../assets/icons/arrow_forward.svg";
+import SignOutIcon from "../../../assets/icons/sign_out.svg";
 import Dots from "../../../assets/icons/three_dots.svg";
 import DotsLight from "../../../assets/lightIcons/faqs_dots_light.svg";
 import Edit from "../../../assets/icons/Edit.svg";
 import Invite from "../../../assets/icons/invite.svg";
 import InviteLight from "../../../assets/lightIcons/invite_light.svg";
+import ArrowForward from "../../../assets/icons/arrow_forward.svg";
+import {
+  clearCreateTopic,
+  setCreateTopicField,
+  setCreateTopicItems,
+} from "../../../redux/slices/createTopicSlice";
+import { ChannelImages } from "../../constants/images";
 
 import EditLight from "../../../assets/lightIcons/edit_light.svg";
 import Delete from "../../../assets/icons/Delete.svg";
@@ -37,14 +38,14 @@ import {
   setTopicChannelToDelete,
 } from "../../../redux/slices/deleteTopicSlice.js";
 
-const TopicsTab = ({ channelId, isOwner,username }) => {
+const TopicsTab = ({ channelId, isOwner, username, isOnlyAdmin }) => {
   const { handleOpenModal } = useModal();
-  const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(null);
   const dropdownEditRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const reorderTopics = useSelector((state) => state.reorderTopic.topics);
   const status = useSelector((state) => state.reorderTopic.status);
+  const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(null);
   const [openUpward, setOpenUpward] = useState(false);
   const DROPDOWN_HEIGHT = 85;
   useEffect(() => {
@@ -65,7 +66,7 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
       }, 0);
     }
   }, [isEditDropdownOpen]);
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -97,12 +98,17 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
     navigate(`c-id/topic/${topicId}`);
   };
 
+  const handleLeaveTopic = (topicId) => {
+    dispatch(setModalModal({ field: "topicId", value: topicId }));
+    handleOpenModal("modalLeaveTopicOpen");
+  };
+
   if (status === "loading") {
     return (
       <div className="text-theme-secondaryText text-center flex mt-12 justify-center items-center">
-        <Loading text="Loading topics..."/>
+        <Loading text="Loading topics..." />
       </div>
-    ); 
+    );
   }
 
   const handleEditModal = (topic) => {
@@ -140,14 +146,16 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
               Create new
             </p>
           </div>
-          {reorderTopics.length > 0 && <div className="relative flex pr-2">
-            <div
-              className="flex flex-col space-y-1 cursor-pointer text-sm font-light text-theme-emptyEvent"
-              onClick={() => handleReorderTopicModal(channelId)}
-            >
-              Reorder
+          {reorderTopics.length > 0 && (
+            <div className="relative flex pr-2">
+              <div
+                className="flex flex-col space-y-1 cursor-pointer text-sm font-light text-theme-emptyEvent"
+                onClick={() => handleReorderTopicModal(channelId)}
+              >
+                Reorder
+              </div>
             </div>
-          </div>}
+          )}
         </div>
       )}
       <div className="mx-1">
@@ -159,12 +167,50 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
           reorderTopics.map((topic, index) => (
             <div
               key={topic._id}
-              className="bg-theme-tertiaryBackground rounded-lg px-4 py-4 flex cursor-pointer flex-row justify-between items-center my-3 "
+              className="bg-theme-tertiaryBackground rounded-lg px-4 py-3 flex cursor-pointer flex-row justify-between items-center my-3 "
               onClick={() => handleTopic(topic._id)}
             >
-              <p className="text-theme-primaryText text-sm font-normal mr-1">
-                #{topic.name}
-              </p>
+              <div className="flex flex-col mr-1">
+                <p className="text-theme-primaryText text-sm font-normal ">
+                  #{topic.name}
+                </p>
+                {
+                  <div className="flex flex-row items-center mt-0.5">
+                    <img
+                      className="mr-1 w-3 h-3 mt-0.5 dark:block hidden"
+                      loading="lazy"
+                      src={
+                        topic.visibility === "paid"
+                          ? ChannelImages.Secure.default
+                          : topic.visibility === "anyone"
+                          ? ChannelImages.LockOpen.default
+                          : ChannelImages.Lock.default
+                      }
+                      alt="lock"
+                    />
+                    <img
+                      className="mr-1 w-3 h-3 mt-0.5 dark:hidden block"
+                      loading="lazy"
+                      src={
+                        topic.visibility === "paid"
+                          ? ChannelImages.SecureLight.default
+                          : topic.visibility === "anyone"
+                          ? ChannelImages.LockOpenLight.default
+                          : ChannelImages.LockLight.default
+                      }
+                      alt="lock-light"
+                    />
+                    <p className="mt-1 text-xs font-light text-theme-emptyEvent">
+                      {topic.visibility === "paid"
+                        ? `This topic requires a ₹${topic.paywallPrice} fee to join.`
+                        : topic.visibility === "anyone"
+                        ? "Public topic — anyone can join."
+                        : "Invite-only — admin approval required."}
+                    </p>
+                  </div>
+                }
+              </div>
+
               <div className="flex flex-row xs:space-x-6 space-x-4 items-center ">
                 {isOwner && (
                   <div className="relative flex items-center">
@@ -252,10 +298,27 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
                             className="flex flex-row px-3 items-center"
                             onClick={(e) => {
                               e.stopPropagation();
-                              dispatch(setModalModal({ field: "shareUsername", value: username }));
-                              dispatch(setModalModal({ field: "type", value: "topic" }));
-                              dispatch(setModalModal({ field: "topicId", value: topic._id }));
-                              dispatch(setModalModal({ field: "channelId", value: topic.channel }));
+                              dispatch(
+                                setModalModal({
+                                  field: "shareUsername",
+                                  value: username,
+                                })
+                              );
+                              dispatch(
+                                setModalModal({ field: "type", value: "topic" })
+                              );
+                              dispatch(
+                                setModalModal({
+                                  field: "topicId",
+                                  value: topic._id,
+                                })
+                              );
+                              dispatch(
+                                setModalModal({
+                                  field: "channelId",
+                                  value: topic.channel,
+                                })
+                              );
                               handleOpenModal("modalInviteOpen");
                             }}
                           >
@@ -276,6 +339,30 @@ const TopicsTab = ({ channelId, isOwner,username }) => {
                               Invite
                             </p>
                           </div>
+                          {/* <div
+                            className="flex flex-row px-3 items-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLeaveTopic(topic._id);
+                            }}
+                          >
+                            <img
+                              src={SignOutIcon}
+                              alt="invite"
+                              className="dark:block hidden w-4 h-4"
+                            />
+                            <img
+                              src={SignOutIcon}
+                              alt="edit"
+                              className="dark:hidden w-4 h-4"
+                            />
+                            <p
+                              className="block px-2 py-2 font-light text-sm   text-theme-secondaryText cursor-pointer"
+                              role="menuitem"
+                            >
+                              Exit
+                            </p>
+                          </div> */}
                         </div>
                       </div>
                     )}

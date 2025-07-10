@@ -1,28 +1,31 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Close from "../../../assets/icons/Close.svg";
-import useModal from "./../../hooks/ModalHook";
-import { closeModal } from "../../../redux/slices/modalSlice";
-
-import "react-datepicker/dist/react-datepicker.css";
-
-import { useDispatch } from "react-redux";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   setPollField,
-  clearChatPoll,
   createChatPoll,
-  //   editChatpoll,
+  clearChatPoll,
 } from "../../../redux/slices/pollSlice";
+import { closeModal } from "../../../redux/slices/modalSlice";
+
+const MAX_CHOICES = 4;
 
 const PollModal = () => {
-  const { handleOpenModal } = useModal();
   const dispatch = useDispatch();
-  const poll = useSelector((state) => state.poll);
-  const [file, setFile] = useState(null);
+  const Poll = useSelector((state) => state.poll);
 
   const handleClose = () => {
-    dispatch(closeModal("modalpollOpen"));
+    dispatch(clearChatPoll());
+    dispatch(closeModal("modalPollOpen"));
+  };
+
+  const handleAddChoice = () => {
+    if (Poll.choices.length < MAX_CHOICES) {
+      dispatch(
+        setPollField({ field: "choices", value: [...Poll.choices, ""] })
+      );
+    }
   };
 
   const handleChange = (e) => {
@@ -30,104 +33,44 @@ const PollModal = () => {
     dispatch(setPollField({ field: name, value: value }));
   };
 
-  const handleCreatepoll = async (e) => {
-    e.prpollDefault();
-    if (poll.question.trim !== "" && poll.answers.length > 1) {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", poll.name.trim());
-      formDataToSend.append("topic", poll.topic);
-      formDataToSend.append("joining", poll.joining);
-      formDataToSend.append("description", poll.description);
-      formDataToSend.append("type", poll.type);
-      formDataToSend.append("meet_url", poll.meet_url);
-      formDataToSend.append("startDate", poll.startDate);
-      formDataToSend.append("endDate", poll.endDate);
-      formDataToSend.append("startTime", poll.startTime);
-      formDataToSend.append("timezone", poll.timezone);
-      formDataToSend.append("endTime", poll.endTime);
-      formDataToSend.append("locationText", poll.locationText);
-      formDataToSend.append("location", poll.location);
-      if (file && poll.cover_image_source === "upload") {
-        formDataToSend.append("file", file);
-      } else if (poll.cover_image && poll.cover_image_source === "unsplash") {
-        formDataToSend.append("cover_image", poll.cover_image);
-      }
-      formDataToSend.append("imageSource", poll.cover_image_source);
-      dispatch(createChatPoll(formDataToSend))
-        .unwrap()
-        .then(() => {
-          dispatch(clearChatPoll());
-          setFile(null);
-          handleClose();
-        })
-        .catch((error) => {
-          alert(error);
-        });
-    }
-  };
-
-  const handleEditpoll = async (e) => {
-    e.prpollDefault();
-    if (poll.name.trim !== "" && poll.startDate !== "") {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", poll.name.trim());
-      formDataToSend.append("id", poll._id);
-      formDataToSend.append("topic", poll.topic);
-      formDataToSend.append("joining", poll.joining);
-      formDataToSend.append("description", poll.description);
-      formDataToSend.append("type", poll.type);
-      formDataToSend.append("meet_url", poll.meet_url);
-      formDataToSend.append("startDate", poll.startDate);
-      formDataToSend.append("endDate", poll.endDate);
-      formDataToSend.append("startTime", poll.startTime);
-      formDataToSend.append("timezone", poll.timezone);
-      formDataToSend.append("endTime", poll.endTime);
-      formDataToSend.append("locationText", poll.locationText);
-      formDataToSend.append("location", poll.location);
-      if (file && poll.cover_image_source === "upload") {
-        formDataToSend.append("file", file);
-      } else if (poll.cover_image && poll.cover_image_source === "unsplash") {
-        formDataToSend.append("cover_image", poll.cover_image);
-      }
-      formDataToSend.append("imageSource", poll.cover_image_source);
-      //   dispatch(editChatpoll(formDataToSend))
-      //     .unwrap()
-      //     .then(() => {
-      //       dispatch(clearpoll());
-      //       setFile(null);
-      //       handleClose();
-      //     })
-      //     .catch((error) => {
-      //       alert(error);
-      //     });
-    }
+  const handleChoiceChange = (index, value) => {
+    const updated = [...Poll.choices];
+    updated[index] = value;
+    dispatch(setPollField({ field: "choices", value: updated }));
   };
 
   const handletoggleChange = (value) => {
     dispatch(setPollField({ field: "type", value: value }));
   };
 
-  const ispollEmpty = poll.question.trim() === "" || poll.answers.length < 1;
+  const handletoggleResults = (value) => {
+    dispatch(setPollField({ field: "showResults", value: value }));
+  };
 
-  const buttonClass = ispollEmpty
-    ? "text-theme-buttonDisableText text-theme-opacity-40 bg-theme-buttonDisable bg-theme-opacity-10"
-    : "bg-theme-secondaryText text-theme-primaryBackground";
-  const isOpen = useSelector((state) => state.modals.modalpollOpen);
+  const handleSubmit = () => {
+    const trimmedChoices = Poll.choices.filter((c) => c.trim());
+    if (trimmedChoices.length < 2) return;
+    const payload = {
+      name:Poll.name,
+      question: Poll.question,
+      choices: trimmedChoices,
+      topic: Poll.topic,
+      type: Poll.type,
+      showResults: Poll.showResults,
+      visibility: Poll.visibility,
+    };
+    dispatch(createChatPoll(payload))
+      .unwrap()
+      .then(() => {
+        handleClose();
+      })
+      .catch((err) => alert(err));
+  };
 
-  const ReadOnlyDateInput = React.forwardRef(
-    ({ value, onClick, placeholder }, ref) => (
-      <input
-        readOnly
-        value={value}
-        onClick={onClick}
-        ref={ref}
-        placeholder={placeholder}
-        className="w-full py-1 text-sm pr-10 font-light rounded bg-transparent
-       border-b border-theme-chatDivider placeholder-font-light placeholder-text-sm 
-       text-theme-secondaryText focus:outline-none placeholder:text-emptypoll"
-      />
-    )
-  );
+  const isCreateDisabled =
+    Poll.choices.filter((c) => c.trim()).length < 2 || !Poll.question.trim();
+
+  const isOpen = useSelector((state) => state.modals.modalPollOpen);
 
   return (
     <Dialog.Root open={isOpen}>
@@ -136,14 +79,14 @@ const PollModal = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <Dialog.Content
             className="bg-theme-secondaryBackground rounded-xl overflow-hidden z-50
-           shadow-xl transform transition-all min-h-[20%] max-h-[90%] overflow-y-auto custom-scrollbar w-[90%]
-            xs:w-3/4 sm:w-1/2 md:w-2/5 lg:w-[35%] xl:w-[30%]"
+              shadow-xl transform transition-all min-h-[20%] max-h-[90%] overflow-y-auto custom-scrollbar w-[90%]
+              xs:w-3/4 sm:w-1/2 md:w-2/5 lg:w-[35%] xl:w-[30%]"
           >
-            <Dialog.Title />
-            {/* <div className="flex flex-col p-5">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-theme-secondaryText text-lg font-normal fonr-inter">
-                  {poll.type === "edit" ? "Edit poll" : "New poll"}
+            <Dialog.Title></Dialog.Title>
+            <div className="flex flex-col p-5 items-start">
+              <div className="flex justify-between items-center mb-4 w-full">
+                <h2 className="text-theme-secondaryText text-lg font-normal font-inter">
+                  New Poll
                 </h2>
                 <img
                   src={Close}
@@ -152,112 +95,170 @@ const PollModal = () => {
                   onClick={handleClose}
                 />
               </div>
-              <div className="mb-4">
+              <div className="mb-4 w-full">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
-                  Name
+                  Poll Name (default: Poll)
                 </p>
                 <input
-                  id="poll-name"
-                  className="w-full  p-0.5 rounded bg-chipBackground 
-                   placeholder:font-light placeholder:text-sm text-md font-light
-                   focus:outline-none bg-transparent border-b border-theme-chatDivider
-                    text-theme-secondaryText  placeholder:text-theme-emptypoll"
+                  id="name"
+                  className="w-full p-0.5 rounded bg-chipBackground
+                    placeholder:font-light placeholder:text-sm text-md font-light
+                    focus:outline-none bg-transparent border-b border-theme-chatDivider
+                    text-theme-secondaryText placeholder:text-theme-emptyEvent"
                   type="text"
                   name="name"
-                  value={poll.name}
-                  autoComplete="off"
+                  value={Poll.name}
                   onChange={handleChange}
-                  maxLength={maxChars}
-                  placeholder="poll Name"
+                  placeholder="Enter poll name"
                 />
               </div>
 
-              <div className="mt-4">
+              <div className="mb-4 w-full">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
-                  poll type
+                  Ask a question
+                </p>
+                <input
+                  id="question"
+                  className="w-full p-0.5 rounded bg-chipBackground
+                    placeholder:font-light placeholder:text-sm text-md font-light
+                    focus:outline-none bg-transparent border-b border-theme-chatDivider
+                    text-theme-secondaryText placeholder:text-theme-emptyEvent"
+                  type="text"
+                  name="question"
+                  value={Poll.question}
+                  onChange={handleChange}
+                  placeholder="What's your poll about?"
+                />
+              </div>
+
+              {Poll.choices.map((choice, index) => (
+                <div key={index} className="mb-3 w-full">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
+                    Choice {index + 1}
+                  </p>
+                  <input
+                    className="w-full p-0.5 rounded bg-chipBackground
+                      placeholder:font-light placeholder:text-sm text-md font-light
+                      focus:outline-none bg-transparent border-b border-theme-chatDivider
+                      text-theme-secondaryText placeholder:text-theme-emptyEvent"
+                    type="text"
+                    value={Poll.choices[index]}
+                    placeholder={`Response ${index + 1} `}
+                    onChange={(e) => handleChoiceChange(index, e.target.value)}
+                  />
+                </div>
+              ))}
+
+              {Poll.choices.length < MAX_CHOICES && (
+                <button
+                  onClick={handleAddChoice}
+                  className="text-theme-secondaryText font-normal text-sm mt-2 mb-4"
+                >
+                  + Add Choice
+                </button>
+              )}
+              <div className="mb-4">
+                <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
+                  Who can join this poll?
                 </p>
                 <div className="flex mt-3 items-center border border-theme-chatDivider rounded-md overflow-hidden w-max">
                   <button
                     type="button"
-                    onClick={() => handletoggleChange("offline")}
+                    onClick={() => handletoggleChange("public")}
                     className={`px-6 py-2 text-sm font-inter font-light transition-colors duration-200 ${
-                      poll.type === "offline"
+                      Poll.type === "public"
                         ? "bg-theme-secondaryText text-theme-primaryBackground"
                         : "bg-transparent text-theme-secondaryText"
                     }`}
                   >
-                    Offline
+                    Everyone
                   </button>
                   <button
                     type="button"
-                    onClick={() => handletoggleChange("online")}
+                    onClick={() => handletoggleChange("private")}
                     className={`px-6 py-2 text-sm font-inter font-light transition-colors duration-200 ${
-                      poll.type === "online"
+                      Poll.type === "private"
                         ? "bg-theme-secondaryText text-theme-primaryBackground"
                         : "bg-transparent text-theme-secondaryText"
                     }`}
                   >
-                    Online
+                    Logged users
                   </button>
                 </div>
               </div>
 
-              <div className="mb-4 mt-1">
+              <div className="mb-4 mt-2">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
-                  Who can join this poll?
+                  Who can view this poll?
                 </p>
-                <div className="flex mt-3 items-center space-x-12">
-                  <label
-                    className={`${
-                      poll.joining === "public"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex items-center`}
-                  >
+                <div className="flex flex-row mt-3 items-start space-x-3">
+                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
                       type="radio"
-                      name="joining"
-                      value="public"
+                      name="visibility"
+                      value="anyone"
                       className="mr-2 custom-radio"
-                      checked={poll.joining === "public"}
+                      checked={Poll.visibility === "anyone"}
                       onChange={handleChange}
                     />
-                    <span>Public</span>
+                    <span>Anyone</span>
                   </label>
-                  <label
-                    className={`${
-                      poll.joining === "private"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex items-center`}
-                  >
+                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
                       type="radio"
-                      name="joining"
-                      value="private"
+                      name="visibility"
+                      value="topic"
                       className="mr-2 custom-radio"
-                      checked={poll.joining === "private"}
+                      checked={Poll.visibility === "topic"}
                       onChange={handleChange}
                     />
-                    <span>Private</span>
+                    <span>Only topic users</span>
                   </label>
                 </div>
               </div>
 
+              {/* <div className="mb-4 mt-2">
+                <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
+                  Show poll results -
+                </p>
+                <div className="flex flex-row mt-3 items-start space-x-3">
+                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                    <input
+                      type="radio"
+                      name="showResults"
+                      value="afterVote"
+                      className="mr-2 custom-radio"
+                      checked={Poll.showResults === "afterVote"}
+                      onChange={() => handletoggleResults("afterVote")}
+                    />
+                    <span>After voting</span>
+                  </label>
+                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                    <input
+                      type="radio"
+                      name="showResults"
+                      value="adminOnly"
+                      className="mr-2 custom-radio"
+                      checked={Poll.showResults === "adminOnly"}
+                      onChange={() => handletoggleResults("adminOnly")}
+                    />
+                    <span>Admin only</span>
+                  </label>
+                </div>
+              </div> */}
+
               <button
-                className={`w-full mt-3 py-2.5 font-normal text-sm rounded-lg ${buttonClass}`}
-                disabled={ispollEmpty}
-                onClick={
-                  poll.type === "edit" ? handleEditpoll : handleCreatepoll
-                }
+                className={`w-full mt-4 py-2.5 font-normal text-sm rounded-lg ${
+                  isCreateDisabled
+                    ? "bg-theme-buttonDisable text-theme-buttonDisableText cursor-not-allowed"
+                    : "bg-theme-secondaryText text-theme-primaryBackground"
+                }`}
+                disabled={isCreateDisabled}
+                onClick={handleSubmit}
               >
-                {poll.status === "loading"
-                  ? "Please wait..."
-                  : poll.type === "edit"
-                  ? "Save Changes"
-                  : "Create poll"}
+                {Poll.buttonStatus===":loading"?"Creating...":"Create Poll"}
               </button>
-            </div> */}
+            </div>
           </Dialog.Content>
         </div>
       </Dialog.Portal>

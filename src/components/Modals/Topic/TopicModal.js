@@ -12,6 +12,7 @@ import {
   updateTopic,
 } from "../../../redux/slices/createTopicSlice.js";
 import { useNavigate } from "react-router-dom";
+import { setAdminNotification } from "../../../redux/slices/notificationSlice";
 
 const TopicModal = () => {
   const topic = useSelector((state) => state.createTopic);
@@ -25,8 +26,7 @@ const TopicModal = () => {
     setPayError("");
     dispatch(closeModal("modalTopicOpen"));
   };
-  const myData = useSelector((state) => state.myData);
-
+  const { handleOpenModal } = useModal();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -40,7 +40,7 @@ const TopicModal = () => {
   const handleCreateTopic = async (e) => {
     e.preventDefault();
     setError("");
-    if(topic.visibility==="paid" && topic.paywallPrice===0){
+    if (topic.visibility === "paid" && topic.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -51,17 +51,21 @@ const TopicModal = () => {
       formDataToSend.append("editability", topic.editability);
       formDataToSend.append("channel", topic.channel);
       formDataToSend.append("visibility", topic.visibility);
-     
+
       formDataToSend.append("paywallPrice", topic.paywallPrice);
       dispatch(createTopic(formDataToSend))
         .unwrap()
-        .then((topic) => {
+        .then((response) => {
           handleClose();
           dispatch(clearCreateTopic());
-          // navigate(
-          //   `/account/${myData.username}/channel/${topic.channel}}/c-id/topic/${topic._id}`
-          // );
           setError("");
+          if (response.success && response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          }
+          // else{
+          //   navigate(`/account/${myData.username}/channel/${response.channel._id}`);
+          // }
         })
         .catch((error) => {
           setError(error.message || String(error));
@@ -71,7 +75,7 @@ const TopicModal = () => {
   const handleEditTopic = async (e) => {
     e.preventDefault();
     setError("");
-    if(topic.visibility==="paid" && topic.paywallPrice===0){
+    if (topic.visibility === "paid" && topic.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -82,14 +86,18 @@ const TopicModal = () => {
       formDataToSend.append("_id", topic._id);
       formDataToSend.append("editability", topic.editability);
       formDataToSend.append("visibility", topic.visibility);
-     
+
       formDataToSend.append("paywallPrice", topic.paywallPrice);
       dispatch(updateTopic(formDataToSend))
         .unwrap()
-        .then(() => {
+        .then((response) => {
           handleClose();
           dispatch(clearCreateTopic());
           setError("");
+          if (response.success && response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          }
         })
         .catch((error) => {
           setError(error.message || String(error));
@@ -106,8 +114,6 @@ const TopicModal = () => {
     : "bg-theme-secondaryText text-theme-primaryBackground";
 
   const isOpen = useSelector((state) => state.modals.modalTopicOpen);
-
- 
 
   return (
     <Dialog.Root open={isOpen}>
@@ -149,7 +155,7 @@ const TopicModal = () => {
                   autoComplete="off"
                   placeholder="Enter topic of discussion"
                 />
-                 {error && (
+                {error && (
                   <p
                     className={`text-theme-error font-light ml-1 font-inter text-xs`}
                   >
@@ -157,73 +163,80 @@ const TopicModal = () => {
                   </p>
                 )}
               </div>
-              
 
-              { <div className="mb-4 mt-1">
-                <p className="text-theme-secondaryText text-sm font-normal font-inter">
-                  Who can view this topic?
-                </p>
-                <div className="flex mt-3 items-center sm:space-x-6 space-x-4">
-                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="anyone"
-                      className="mr-2 custom-radio"
-                      checked={topic.visibility === "anyone"}
-                      onChange={handleChange}
-                    />
-                    <span>Anyone in channel (Anyone in channel can join)</span>
-                  </label>
-                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="invite"
-                      className="mr-2 custom-radio"
-                      checked={topic.visibility === "invite"}
-                      onChange={handleChange}
-                    />
-                    <span>Invite only (Admin approval required)</span>
-                  </label>
-                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="paid"
-                      className="mr-2 custom-radio"
-                      checked={topic.visibility === "paid"}
-                      onChange={handleChange}
-                    />
-                    <span>Paid (Access with paid tickets)</span>
-                  </label>
-                </div>
-              </div>}
-              {topic.visibility==="paid" && <div className="mb-4 mt-1">
-                <label className="text-theme-secondaryText text-sm font-light font-inter">
-                  Joining fee
-                </label>
-                <div className="flex flex-row items-center">
-                  <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">₹</p>
-                <input
-                    id="topic-name"
-                    className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
-                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
-                    type="number"
-                    name="paywallPrice"
-                    value={topic.paywallPrice}
-                    onChange={handleChange}
-                    placeholder="Enter the joining fee for your topic."
-                  />
-                </div>
-              </div>}
-              {payError && (
-                  <p
-                    className={`text-theme-error font-light ml-1 font-inter text-xs`}
-                  >
-                    {payError}
+              {
+                <div className="mb-4 mt-1">
+                  <p className="text-theme-secondaryText text-sm font-normal font-inter">
+                    Who can view this topic?
                   </p>
-                )}
+                  <div className="flex flex-col mt-3 items-start space-y-3">
+                    <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="anyone"
+                        className="mr-2 custom-radio"
+                        checked={topic.visibility === "anyone"}
+                        onChange={handleChange}
+                      />
+                      <span>
+                        Anyone in channel (Anyone in channel can join)
+                      </span>
+                    </label>
+                    <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="invite"
+                        className="mr-2 custom-radio"
+                        checked={topic.visibility === "invite"}
+                        onChange={handleChange}
+                      />
+                      <span>Invite only (Admin approval required)</span>
+                    </label>
+                    <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="paid"
+                        className="mr-2 custom-radio"
+                        checked={topic.visibility === "paid"}
+                        onChange={handleChange}
+                      />
+                      <span>Paid (Access with paid tickets)</span>
+                    </label>
+                  </div>
+                </div>
+              }
+              {topic.visibility === "paid" && (
+                <div className="mb-4 mt-1">
+                  <label className="text-theme-secondaryText text-sm font-light font-inter">
+                    Access ticket amount inclusive of tax.
+                  </label>
+                  <div className="flex flex-row items-center">
+                    <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">
+                      ₹
+                    </p>
+                    <input
+                      id="topic-name"
+                      className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
+                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
+                      type="number"
+                      name="paywallPrice"
+                      value={topic.paywallPrice}
+                      onChange={handleChange}
+                      placeholder="Enter the joining fee for your topic."
+                    />
+                  </div>
+                </div>
+              )}
+              {payError && (
+                <p
+                  className={`text-theme-error font-light ml-1 font-inter text-xs`}
+                >
+                  {payError}
+                </p>
+              )}
               <div className="mb-4 mt-1">
                 <p className="text-theme-secondaryText text-sm font-normal font-inter">
                   Who can write in this topic?
@@ -249,9 +262,9 @@ const TopicModal = () => {
                       checked={topic.editability === "invite"}
                       onChange={handleChange}
                     />
-                    <span>Invite only</span>
+                    <span>Admin only</span>
                   </label>
-                  <label className="text-theme-primaryText text-sm font-normal flex items-center">
+                  {/* <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
                       type="radio"
                       name="editability"
@@ -261,11 +274,10 @@ const TopicModal = () => {
                       onChange={handleChange}
                     />
                     <span>Only me</span>
-                  </label>
+                  </label> */}
                 </div>
               </div>
 
-             
               <button
                 className={`w-full mt-3 py-2.5 font-normal text-sm rounded-lg ${buttonClass}`}
                 disabled={isNameEmpty}

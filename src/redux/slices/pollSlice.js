@@ -14,7 +14,7 @@ export const createChatPoll = createAsyncThunk(
         data
       );
       if (response.success) {
-        return response.poll;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -23,7 +23,7 @@ export const createChatPoll = createAsyncThunk(
     }
   }
 );
-export const privatePollResponse = createAsyncThunk(
+export const createPrivatePollResponse = createAsyncThunk(
   "poll/privatePollResponse",
   async (data, { rejectWithValue }) => {
     try {
@@ -31,8 +31,9 @@ export const privatePollResponse = createAsyncThunk(
         "/create/private/poll/response",
         data
       );
+      console.log(response);
       if (response.success) {
-        return response.poll;
+        return response.response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -41,7 +42,7 @@ export const privatePollResponse = createAsyncThunk(
     }
   }
 );
-export const publicPollResponse = createAsyncThunk(
+export const createPublicPollResponse = createAsyncThunk(
   "poll/publicPollResponse",
   async (data, { rejectWithValue }) => {
     try {
@@ -49,8 +50,9 @@ export const publicPollResponse = createAsyncThunk(
         "/create/public/poll/response",
         data
       );
+      console.log(response);
       if (response.success) {
-        return response.poll;
+        return response.response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -60,17 +62,81 @@ export const publicPollResponse = createAsyncThunk(
   }
 );
 
-const initialState = {
-  question: "",
-  answers: [],
-  status: "idle",
-  type: "private",
-  error: null,
-};
+export const fetchTopicPollResponses = createAsyncThunk(
+  "poll/fetchPollResponses",
+  async (topicId, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        "/fetch/topic/poll/responses",
+        {topicId:topicId}
+      );
+      console.log(response);
+      if (response.success) {
+        return response.responses;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const fetchPollData = createAsyncThunk(
+  "poll/fetchPollData",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await postRequestUnAuthenticated(
+        "/fetch/poll/data",
+        data
+      );
+      console.log(response);
+      if (response.success) {
+        return response;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteChatPoll = createAsyncThunk(
+  "poll/fetchPollData",
+  async (pollId, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        "/delete/chat/poll",
+        {pollId:pollId}
+      );
+      console.log(response);
+      if (response.success) {
+        return response;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const pollSlice = createSlice({
-  name: "poll",
-  initialState,
+  name: "Poll",
+  poll:{},
+  initialState :{
+  question: "",
+  choices: ["", ""],
+  type: "private",
+  showResults: "afterVote",
+  visibility: "anyone",
+  topic: "",
+  status: "idle",
+  buttonStatus:"idle",
+  responses:[],
+  error: null,
+  },
   reducers: {
     setPollItems: (state, action) => {
       return { ...state, ...action.payload };
@@ -80,29 +146,88 @@ const pollSlice = createSlice({
       state[field] = value;
     },
     clearChatPoll: (state, action) => {
-      return { ...initialState };
+      state.question="";
+      state.name="Poll";
+      state.choices=["",""];
+      state.question="";
+      state.type="private";
+      state.visibility="anyone";
+      state.showResults="afterVote";
+      state.topic="";
+      state.status="idle";
+      state.loading=false;
+      state.error=null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(createChatPoll.pending, (state) => {
-        state.status = "loading";
+        state.buttonStatus = "loading";
       })
       .addCase(createChatPoll.fulfilled, (state, action) => {
-        state.status = "idle";
+        state.buttonStatus = "idle";
       })
       .addCase(createChatPoll.rejected, (state, action) => {
+        state.buttonStatus = "idle";
+      })
+       .addCase(fetchTopicPollResponses.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchTopicPollResponses.fulfilled, (state, action) => {
+        state.status = "idle";
+        state.responses = action.payload;
+      })
+      .addCase(fetchTopicPollResponses.rejected, (state, action) => {
+        state.status = "idle";
+      })
+      .addCase(createPrivatePollResponse.pending, (state) => {
+        state.buttonStatus = "loading";
+      })
+      .addCase(createPrivatePollResponse.fulfilled, (state, action) => {
+        state.buttonStatus = "idle";
+        const response =action.payload;
+          let index = state.responses.findIndex((item)=>item.pollId===response.pollId);
+          if(index===-1){
+            state.responses.push(response);
+          }
+          else{
+            state.responses[index] = response;
+          }
+      })
+      .addCase(createPrivatePollResponse.rejected, (state, action) => {
+        state.buttonStatus = "idle";
+      })
+      .addCase(createPublicPollResponse.pending, (state) => {
+        state.buttonStatus = "loading";
+      })
+      .addCase(createPublicPollResponse.fulfilled, (state, action) => {
+        state.buttonStatus = "idle";
+        const response = action.payload;
+          let index = state.responses.findIndex((item)=>item.pollId===response.pollId);
+          if(index===-1){
+            state.responses.push(response);
+          }
+          else{
+            state.responses[index] = response;
+          }
+      })
+      .addCase(createPublicPollResponse.rejected, (state, action) => {
+        state.buttonStatus = "idle";
+      })
+      .addCase(fetchPollData.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchPollData.fulfilled, (state, action) => {
+        state.status = "idle";
+        const response = action.payload;
+        if(response.success){
+          state.poll = response.poll;
+          state.responses = [response.response];
+        }
+      })
+      .addCase(fetchPollData.rejected, (state, action) => {
         state.status = "idle";
       });
-    //   .addCase(editChatPoll.pending, (state) => {
-    //     state.status = "loading";
-    //   })
-    //   .addCase(editChatPoll.fulfilled, (state, action) => {
-    //     state.status = "idle";
-    //   })
-    //   .addCase(editChatPoll.rejected, (state, action) => {
-    //     state.status = "idle";
-    //   });
   },
 });
 

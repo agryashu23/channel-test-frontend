@@ -38,6 +38,7 @@ const initialState = {
   modalShareTopicOpen: false,
   modalDeleteTopicOpen: false,
   modalShareEventOpen: false,
+  modalDeletePollOpen:false,
   modalShareProfileOpen: false,
   modalTokenExpiryOpen: false,
   modalUnsubscriptionOpen: false,
@@ -65,6 +66,7 @@ const initialState = {
   topicName: "",
   event: {},
   eventId: "",
+  pollId:""
 };
 
 const modalSlice = createSlice({
@@ -84,6 +86,9 @@ const modalSlice = createSlice({
     },
     clearEventIdToDelete: (state, action) => {
       state.eventId = "";
+    },
+    clearPollIdToDelete: (state, action) => {
+      state.pollId = "";
     },
     openModal: (state, action) => {
       const { modalName, link } = action.payload;
@@ -157,6 +162,7 @@ export const {
   setModalModal,
   clearEventItem,
   clearEventIdToDelete,
+  clearPollIdToDelete
 } = modalSlice.actions;
 
 export default modalSlice.reducer;

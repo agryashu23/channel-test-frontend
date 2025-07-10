@@ -13,7 +13,7 @@ export const createChatEvent = createAsyncThunk(
         data
       );
       if (response.success) {
-        return response.chat;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -31,7 +31,7 @@ export const editChatEvent = createAsyncThunk(
         data
       );
       if (response.success) {
-        return response.chat;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -58,14 +58,14 @@ export const deleteChatEvent = createAsyncThunk(
   }
 );
 
-
 const initialState = {
   name: "",
   topic: "",
   description: "",
   startDate: "",
   type: "offline",
-  paywallPrice:0,
+  paywallPrice: 0,
+  event_type: "",
   meet_url: "",
   endDate: "",
   startTime: "",
@@ -74,6 +74,7 @@ const initialState = {
   timezone: "Asia/Kolkata",
   location: "",
   joining: "public",
+  visibility: "anyone",
   cover_image: "",
   cover_image_source: "",
   status: "idle",

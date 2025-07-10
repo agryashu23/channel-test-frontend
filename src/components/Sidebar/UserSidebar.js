@@ -268,9 +268,9 @@ const UserSidebar = ({ closeSidebar }) => {
                 <>
                   {channel.topics.map(
                     (topic, topicIndex) =>
-                      (channel.visibility === "anyone" ||
-                        channel?.membership?.user?.toString()===myUserId.toString() ||
-                        channel.user._id === myUserId) && (
+                      // (channel.visibility === "anyone" ||
+                      //   channel?.membership?.user?.toString()===myUserId.toString() ||
+                      //   channel.user._id === myUserId) && (
                         <div key={`${topicIndex}-${topic._id}-sidebar`}>
                           <Link
                             to={`/account/${channel?.user?.username}/channel/${channel._id}/c-id/topic/${topic._id}`}
@@ -285,9 +285,9 @@ const UserSidebar = ({ closeSidebar }) => {
                             # {topic.name}
                           </Link>
                         </div>
-                      )
+                      // )
                   )}
-                  {channel?.user?._id === myUserId && (
+                  {(channel?.membership?.role==="admin" || channel?.membership?.role==="owner") && (
                     <div
                       className="flex flex-row items-center w-max mx-6 my-1.5 cursor-pointer  "
                       onClick={() => handleTopicModal(channel._id)}

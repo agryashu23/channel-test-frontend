@@ -14,8 +14,9 @@ export const createTopic = createAsyncThunk(
         "/create/topic",
         topicData
       );
+      console.log(response);
       if (response.success) {
-        return response.topic;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -34,7 +35,7 @@ export const updateTopic = createAsyncThunk(
       );
       console.log(response);
       if (response.success) {
-        return response.topic;
+        return response;
       } else {
         return rejectWithValue(response.message);
       }
@@ -71,7 +72,7 @@ const initialState = {
   _id: "",
   topicstatus: "idle",
   topicNameError: false,
-  paywallPrice:0,
+  paywallPrice: 0,
   isEdit: false,
 };
 
@@ -92,7 +93,7 @@ export const createTopicSlice = createSlice({
       state.channel = "";
       state.editability = "anyone";
       state._id = "";
-      state.paywallPrice=0;
+      state.paywallPrice = 0;
       state.topicstatus = "idle";
       state.topicNameError = false;
       state.isEdit = false;

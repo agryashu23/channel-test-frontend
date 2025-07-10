@@ -9,7 +9,7 @@ import Unsplash from "../../../assets/icons/Unsplash.svg";
 import UnsplashLight from "../../../assets/lightIcons/unsplash_light.svg";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationIcon from "../../../assets/icons/location-marker.svg";
-
+import { setAdminNotification } from "../../../redux/slices/notificationSlice";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import {
@@ -35,7 +35,7 @@ const EventModal = () => {
   const chat = useSelector((state) => state.chat);
   const event = useSelector((state) => state.event);
   const [suggestions, setSuggestions] = useState([]);
-  const [payError,setPayError] = useState("");
+  const [payError, setPayError] = useState("");
   const [file, setFile] = useState(null);
   const [locationFocus, setLocationFocus] = useState(false);
   const locationRef = useRef(null);
@@ -88,9 +88,8 @@ const EventModal = () => {
       setCharCount(value.length);
     } else if (name === "description") {
       setDescCount(value.length);
-    }
-    else if(name==="joining" && value==="paid"){
-        dispatch(setEventField({ field: "paywallPrice", value: 0 }));
+    } else if (name === "joining" && value === "paid") {
+      dispatch(setEventField({ field: "paywallPrice", value: 0 }));
     }
   };
 
@@ -103,17 +102,18 @@ const EventModal = () => {
     dispatch(setEventField({ field: "endDate", value: isoDate }));
   };
   const handleStartTimeChange = (date) => {
-    const timePart = date ? date.toISOString().split("T")[1].replace("Z", "") : "";
+    const timePart = date
+      ? date.toISOString().split("T")[1].replace("Z", "")
+      : "";
     dispatch(setEventField({ field: "startTime", value: timePart }));
   };
-  
+
   const handleEndTimeChange = (date) => {
-    const timePart = date ? date.toISOString().split("T")[1].replace("Z", "") : "";
+    const timePart = date
+      ? date.toISOString().split("T")[1].replace("Z", "")
+      : "";
     dispatch(setEventField({ field: "endTime", value: timePart }));
   };
-
-  
-  
 
   const fetchSuggestions = async (input) => {
     if (input.trim() === "") {
@@ -198,17 +198,15 @@ const EventModal = () => {
         );
         return;
       }
-        setFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          dispatch(
-            setEventField({ field: "cover_image", value: reader.result })
-          );
-          dispatch(
-            setEventField({ field: "cover_image_source", value: "upload" })
-          );
-        };
-        reader.readAsDataURL(file);
+      setFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        dispatch(setEventField({ field: "cover_image", value: reader.result }));
+        dispatch(
+          setEventField({ field: "cover_image_source", value: "upload" })
+        );
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -235,30 +233,34 @@ const EventModal = () => {
 
   const isValidDateTimeRange = (event) => {
     const { startDate, endDate, startTime, endTime } = event;
-    if (!startDate){
+    if (!startDate) {
       setErrorMessage("Start date is required.");
       return false;
-    };
+    }
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
     if (end && start > end) {
       setErrorMessage("Start date cannot be after end date.");
       return false;
     }
-    if (end && start.toISOString().split("T")[0] === end.toISOString().split("T")[0]) {
+    if (
+      end &&
+      start.toISOString().split("T")[0] === end.toISOString().split("T")[0]
+    ) {
       if (startTime && endTime && startTime > endTime) {
-        setErrorMessage("End time cannot be earlier than start time on the same day.");
+        setErrorMessage(
+          "End time cannot be earlier than start time on the same day."
+        );
         return false;
       }
     }
     return true;
   };
-  
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
-    if (!isValidDateTimeRange(event))return;
-    if(event.joining==="paid" && event.paywallPrice===0){
+    if (!isValidDateTimeRange(event)) return;
+    if (event.joining === "paid" && event.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -270,6 +272,7 @@ const EventModal = () => {
       formDataToSend.append("description", event.description);
       formDataToSend.append("type", event.type);
       formDataToSend.append("meet_url", event.meet_url);
+      formDataToSend.append("visibility", event.visibility);
       formDataToSend.append("startDate", event.startDate);
       formDataToSend.append("endDate", event.endDate);
       formDataToSend.append("startTime", event.startTime);
@@ -286,21 +289,26 @@ const EventModal = () => {
       formDataToSend.append("imageSource", event.cover_image_source);
       dispatch(createChatEvent(formDataToSend))
         .unwrap()
-        .then(() => {
+        .then((response) => {
           dispatch(clearEvent());
           setFile(null);
           handleClose();
+          if (response.success && response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          }
         })
         .catch((error) => {
           alert(error);
+          console.log(error);
         });
     }
   };
 
   const handleEditEvent = async (e) => {
     e.preventDefault();
-    if (!isValidDateTimeRange(event))return;
-    if(event.joining==="paid" && event.paywallPrice===0){
+    if (!isValidDateTimeRange(event)) return;
+    if (event.joining === "paid" && event.paywallPrice === 0) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -312,6 +320,7 @@ const EventModal = () => {
       formDataToSend.append("joining", event.joining);
       formDataToSend.append("description", event.description);
       formDataToSend.append("type", event.type);
+      formDataToSend.append("visibility", event.visibility);
       formDataToSend.append("meet_url", event.meet_url);
       formDataToSend.append("startDate", event.startDate);
       formDataToSend.append("endDate", event.endDate);
@@ -329,10 +338,14 @@ const EventModal = () => {
       formDataToSend.append("imageSource", event.cover_image_source);
       dispatch(editChatEvent(formDataToSend))
         .unwrap()
-        .then(() => {
+        .then((response) => {
           dispatch(clearEvent());
           setFile(null);
           handleClose();
+          if (response.success && response.limitReached) {
+            dispatch(setAdminNotification(response));
+            handleOpenModal("modalNotificationOpen");
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -380,7 +393,7 @@ const EventModal = () => {
             <div className="flex flex-col p-5">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-theme-secondaryText text-lg font-normal fonr-inter">
-                  {event.type === "edit" ? "Edit Event" : "New Event"}
+                  {event.event_type === "edit" ? "Edit Event" : "New Event"}
                 </h2>
                 <img
                   src={Close}
@@ -486,7 +499,7 @@ const EventModal = () => {
                       >
                         ×
                       </button>
-                    )}    
+                    )}
                   </div>
                 </div>
               </div>
@@ -622,89 +635,139 @@ const EventModal = () => {
                   placeholder="Add a Description (optional)"
                 />
               </div>
-              {<div className="mb-4 mt-1">
-                <p className="text-theme-secondaryText text-sm font-light font-inter mb-2">
-                  Who can join this event?
-                </p>
-                <div className="flex flex-col mt-3 items-start space-y-3">
-                  <label
-                    className={`${
-                      event.joining === "public"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="joining"
-                      value="public"
-                      className="mr-2 custom-radio"
-                      checked={event.joining === "public"}
-                      onChange={handleChange}
-                    />
-                    <span>Public (anyone can join)</span>
-                  </label>
-                  <label
-                    className={`${
-                      event.joining === "private"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="joining"
-                      value="private"
-                      className="mr-2 custom-radio"
-                      checked={event.joining === "private"}
-                      onChange={handleChange}
-                    />
-                    <span>Private (access with invited tickets)</span>
-                  </label>
-                  <label
-                    className={`${
-                      event.joining === "paid"
-                        ? "text-theme-secondaryText"
-                        : "text-theme-primaryText"
-                    } text-sm font-light flex flex-row items-center`}
-                  >
-                    <input
-                      type="radio"
-                      name="joining"
-                      value="paid"
-                      className="mr-2 custom-radio"
-                      checked={event.joining === "paid"}
-                      onChange={handleChange}
-                    />
-                    <span>Paid (access with paid tickets)</span>
-                  </label>
-                </div>
-              </div>}
-              {event.joining==="paid" && <div className="mb-4 mt-1">
-                <label className="text-theme-secondaryText text-sm font-light font-inter">
-                Access ticket amount inclusive of tax.
-                </label>
-                <div className="flex flex-row items-center">
-                  <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">₹</p>
-                <input
-                    id="event-name"
-                    className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
-                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
-                    type="number"
-                    name="paywallPrice"
-                    value={event.paywallPrice}
-                    onChange={handleChange}
-                    placeholder="Enter amount in INR ₹"
-                  />
-                </div>
-              </div>}
-              {payError && (
-                  <p
-                    className={`text-theme-error font-light ml-1 font-inter text-xs`}
-                  >
-                    {payError}
+              {
+                <div className="mb-4 mt-1">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter mb-2">
+                    Who can view this event?
                   </p>
-                )}
+                  <div className="flex flex-row mt-3 items-start space-x-3">
+                    <label
+                      className={`${
+                        event.visibility === "anyone"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="anyone"
+                        className="mr-2 custom-radio"
+                        checked={event.visibility === "anyone"}
+                        onChange={handleChange}
+                      />
+                      <span>Anyone</span>
+                    </label>
+                    <label
+                      className={`${
+                        event.visibility === "topic"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="visibility"
+                        value="topic"
+                        className="mr-2 custom-radio"
+                        checked={event.visibility === "topic"}
+                        onChange={handleChange}
+                      />
+                      <span>Restricted (specific to topic)</span>
+                    </label>
+                  </div>
+                </div>
+              }
+              {
+                <div className="mb-4 mt-1">
+                  <p className="text-theme-secondaryText text-sm font-light font-inter mb-2">
+                    Who can join this event?
+                  </p>
+                  <div className="flex flex-col mt-3 items-start space-y-3">
+                    <label
+                      className={`${
+                        event.joining === "public"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="joining"
+                        value="public"
+                        className="mr-2 custom-radio"
+                        checked={event.joining === "public"}
+                        onChange={handleChange}
+                      />
+                      <span>Public (anyone can join)</span>
+                    </label>
+                    <label
+                      className={`${
+                        event.joining === "private"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="joining"
+                        value="private"
+                        className="mr-2 custom-radio"
+                        checked={event.joining === "private"}
+                        onChange={handleChange}
+                      />
+                      <span>Private (access with invited tickets)</span>
+                    </label>
+                    <label
+                      className={`${
+                        event.joining === "paid"
+                          ? "text-theme-secondaryText"
+                          : "text-theme-primaryText"
+                      } text-sm font-light flex flex-row items-center`}
+                    >
+                      <input
+                        type="radio"
+                        name="joining"
+                        value="paid"
+                        className="mr-2 custom-radio"
+                        checked={event.joining === "paid"}
+                        onChange={handleChange}
+                      />
+                      <span>Paid (access with paid tickets)</span>
+                    </label>
+                  </div>
+                </div>
+              }
+              {event.joining === "paid" && (
+                <div className="mb-4 mt-1">
+                  <label className="text-theme-secondaryText text-sm font-light font-inter">
+                    Access ticket amount inclusive of tax.
+                  </label>
+                  <div className="flex flex-row items-center">
+                    <p className="text-theme-secondaryText text-sm font-light font-inter mr-0.5 mt-1.5">
+                      ₹
+                    </p>
+                    <input
+                      id="event-name"
+                      className="w-full mt-1.5 p-1 rounded bg-transparent border-b border-theme-chatDivider font-light text-sm
+                    placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
+                      type="number"
+                      name="paywallPrice"
+                      value={event.paywallPrice}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={handleChange}
+                      placeholder="Enter amount in INR ₹"
+                    />
+                  </div>
+                </div>
+              )}
+              {payError && (
+                <p
+                  className={`text-theme-error font-light ml-1 font-inter text-xs`}
+                >
+                  {payError}
+                </p>
+              )}
 
               <div className="mb-4">
                 <p className="text-theme-secondaryText text-sm font-light font-inter">
@@ -775,18 +838,24 @@ const EventModal = () => {
                   </div>
                 )}
               </div>
-              {errorMessage && <div className="text-xs text-theme-error font-light pt-2">{errorMessage}</div>}
-              
+              {errorMessage && (
+                <div className="text-xs text-theme-error font-light pt-2">
+                  {errorMessage}
+                </div>
+              )}
+
               <button
                 className={`w-full mt-3 py-2.5 font-normal text-sm rounded-lg ${buttonClass}`}
                 disabled={isEventEmpty}
                 onClick={
-                  event.type === "edit" ? handleEditEvent : handleCreateEvent
+                  event.event_type === "edit"
+                    ? handleEditEvent
+                    : handleCreateEvent
                 }
               >
                 {event.status === "loading"
                   ? "Please wait..."
-                  : event.type === "edit"
+                  : event.event_type === "edit"
                   ? "Save Changes"
                   : "Create Event"}
               </button>

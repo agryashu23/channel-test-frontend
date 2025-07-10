@@ -40,7 +40,7 @@ const RequestTab = ({ apiKey }) => {
     formDataToSend.append("userId", userId);
     dispatch(declineChannelRequest(formDataToSend));
   };
-  console.log(business);
+  
 
   return (
     <div className="flex flex-col sm:pl-10 pl-5 sm:pr-0 pr-4 pt-6 lg:w-4/5  w-full">

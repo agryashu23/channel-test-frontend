@@ -132,8 +132,9 @@ const PageHeader = ({
   // }, []);
 
   useEffect(() => {
-    const formDataToSend = new FormData();
-    dispatch(fetchMyTopics(channelId));
+    if(!reorderTopics.myTopicsFetchedOnce){
+      dispatch(fetchMyTopics(channelId));
+    }
   }, []);
 
   const toggleDropdown = () => {

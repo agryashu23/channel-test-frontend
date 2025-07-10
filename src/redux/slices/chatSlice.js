@@ -6,11 +6,8 @@ import {
   postRequestAuthenticatedWithFile,
 } from "./../../services/rest";
 import { postRequestUnAuthenticated } from "./../../services/rest";
-import {
-  createChatEvent,
-  deleteChatEvent,
-  editChatEvent,
-} from "./eventSlice";
+import { createChatEvent, deleteChatEvent, editChatEvent } from "./eventSlice";
+import { createChatPoll, } from "./pollSlice";
 
 export const fetchTopicChats = createAsyncThunk(
   "channelChat/fetchChats",
@@ -36,7 +33,6 @@ export const fetchTopicChats = createAsyncThunk(
   }
 );
 
-
 export const fetchBrandChats = createAsyncThunk(
   "channelChat/fetchBrandChats",
   async (user_id, { rejectWithValue }) => {
@@ -58,12 +54,9 @@ export const fetchResourceChats = createAsyncThunk(
   "channelChat/fetchResourceChats",
   async (topicId, { rejectWithValue }) => {
     try {
-      const response = await postRequestAuthenticated(
-        "/fetch/resource/chats",
-        {
-          topicId: topicId,
-        }
-      );
+      const response = await postRequestAuthenticated("/fetch/resource/chats", {
+        topicId: topicId,
+      });
       if (response.success) {
         return response.chats;
       } else {
@@ -74,7 +67,6 @@ export const fetchResourceChats = createAsyncThunk(
     }
   }
 );
-
 
 export const createTopicChat = createAsyncThunk(
   "channelChat/createChat",
@@ -216,8 +208,7 @@ export const markAsRead = createAsyncThunk(
       });
       if (response.success) {
         const data = {
-          chatId: response.chatId,
-          reaction: response.reaction,
+          topicId: topicId,
         };
         return data;
       } else {
@@ -231,11 +222,12 @@ export const markAsRead = createAsyncThunk(
 
 export const fetchPinnedChats = createAsyncThunk(
   "channelChat/fetchPinnedChats",
-  async (topicId , { rejectWithValue }) => {
+  async (topicId, { rejectWithValue }) => {
     try {
       const response = await postRequestAuthenticated("/fetch/pinned/chats", {
         topicId,
       });
+      console.log(response);
       if (response.success) {
         return response.chats;
       } else {
@@ -284,7 +276,6 @@ export const unpinChat = createAsyncThunk(
     }
   }
 );
-
 
 export const chatSlice = createSlice({
   name: "chatSlice ",
@@ -335,7 +326,7 @@ export const chatSlice = createSlice({
       if (index !== -1) {
         state.chats[index].reactions = chat.reactions;
       }
-    },  
+    },
     deleteMessage: (state, action) => {
       let index = state.chats.findIndex((item) => item._id === action.payload);
       console.log(index);
@@ -424,7 +415,7 @@ export const chatSlice = createSlice({
         state.resourceLoading = false;
         state.chatError = action.payload || action.error.message;
       })
-      
+
       .addCase(pushToResource.pending, (state) => {
         state.chatStatus = "loading";
       })
@@ -441,23 +432,37 @@ export const chatSlice = createSlice({
           if (mediaIndex !== -1) {
             state.resourceChats[index].media[mediaIndex].resource = true;
           }
-        }
-        else{
+        } else {
           state.resourceChats.push(response.chat);
         }
       })
       .addCase(createChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
-        const chat = action.payload;
-        state.chats.push(chat);
+        const response = action.payload;
+        if (response.success && !response.limitReached) {
+          const chat = response.chat;
+          state.chats.push(chat);
+        }
       })
-     
+      .addCase(createChatPoll.fulfilled, (state, action) => {
+        state.chatStatus = "idle";
+        const response = action.payload;
+        if (response.success) {
+          const chat = response.chat;
+          state.chats.push(chat);
+        }
+      })
+
       .addCase(editChatEvent.fulfilled, (state, action) => {
         state.chatStatus = "idle";
-        const chat = action.payload;
-        let index = state.chats.findIndex((item) => item._id === chat._id);
-        if (index !== -1) {
-          state.chats[index] = chat;
+        const response = action.payload;
+        if (response.success && !response.limitReached) {
+          const chat = response.chat;
+          console.log(chat);
+          let index = state.chats.findIndex((item) => item._id === chat._id);
+          if (index !== -1) {
+            state.chats[index] = chat;
+          }
         }
       })
       .addCase(pushToResource.rejected, (state, action) => {
@@ -477,10 +482,9 @@ export const chatSlice = createSlice({
           let mediaIndex = state.resourceChats[index].media.findIndex(
             (item) => item._id === mediaData.mediaId
           );
-          if(mediaIndex !== -1){
+          if (mediaIndex !== -1) {
             state.resourceChats[index].media[mediaIndex].resource = false;
-          }
-          else{
+          } else {
             state.resourceChats.splice(index, 1);
           }
         }
@@ -539,18 +543,18 @@ export const chatSlice = createSlice({
       })
       .addCase(pinChat.fulfilled, (state, action) => {
         const chat = action.payload;
-        let index = state.pinnedChats.findIndex((item) => item._id === chat._id);
+        let index = state.pinnedChats.findIndex(
+          (item) => item._id === chat._id
+        );
         let index2 = state.chats.findIndex((item) => item._id === chat._id);
         if (index === -1) {
           state.pinnedChats.push(chat);
         }
-        if(index2!==-1){
+        if (index2 !== -1) {
           state.chats[index2].pinned = chat.pinned;
-        }
-        else if(index!==-1){
+        } else if (index !== -1) {
           state.pinnedChats.splice(index, 1);
         }
-
       })
       .addCase(pinChat.rejected, (state, action) => {
         state.chatError = action.payload || action.error.message;
@@ -562,7 +566,7 @@ export const chatSlice = createSlice({
         if (index !== -1) {
           state.pinnedChats.splice(index, 1);
         }
-        if(index2!==-1){
+        if (index2 !== -1) {
           state.chats[index2].pinned = false;
         }
       })
@@ -572,7 +576,6 @@ export const chatSlice = createSlice({
       .addCase(fetchPinnedChats.fulfilled, (state, action) => {
         state.pinnedLoading = false;
         state.pinnedChats = action.payload;
-
       })
       .addCase(fetchPinnedChats.rejected, (state, action) => {
         state.pinnedLoading = false;
@@ -580,7 +583,6 @@ export const chatSlice = createSlice({
       })
       .addCase(fetchPinnedChats.pending, (state, action) => {
         state.pinnedLoading = true;
-
       })
       .addCase(deleteTopicChat.rejected, (state, action) => {
         state.chatStatus = "idle";

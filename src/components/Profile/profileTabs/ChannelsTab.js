@@ -185,7 +185,6 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
     }
   }
 
-  const isChannelPart = channels?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined");
 
   if (channels.length === 0 && isOwner) {
     return <EmptyChannelCard />;
@@ -199,6 +198,7 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
     );
   }
   return channels.map((channel) => {
+  const isChannelPart = channels?.members?.find(member=>member?.user?.toString()===myUserId.toString() && member.status==="joined");
     const buttonState = channelButtonState(channel);
     return (
     <div

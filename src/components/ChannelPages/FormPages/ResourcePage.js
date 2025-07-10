@@ -14,7 +14,7 @@ import { FaPlay } from "react-icons/fa";
 import useModal from "./../../hooks/ModalHook";
 import Loading from "../../../widgets/Loading";
 
-const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
+const ResourcePage = ({ fetchedOnce, setFetchedOnce }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { username, topicId } = useParams();
   const { handleOpenModal } = useModal();
@@ -23,7 +23,7 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
   const [resourceChats, setResourceChats] = useState([]);
   const myData = useSelector((state) => state.myData);
   const Chats = useSelector((state) => state.chat.resourceChats);
-  const loading  = useSelector((state) => state.chat.resourceLoading);
+  const loading = useSelector((state) => state.chat.resourceLoading);
   const dispatch = useDispatch();
   const [hoveredMedia, setHoveredMedia] = useState({
     mediaId: null,
@@ -62,11 +62,11 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
   };
 
   useEffect(() => {
-    if(myUserId && fetchedOnce===false){
+    if (myUserId && fetchedOnce === false) {
       dispatch(fetchResourceChats(topicId));
       setFetchedOnce(true);
     }
-  }, [topicId,myUserId,fetchedOnce]);
+  }, [topicId, myUserId, fetchedOnce]);
 
   const handleFilterItems = (name) => {
     setFilterItems((prevItems) =>
@@ -77,7 +77,7 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
   };
 
   useEffect(() => {
-    let filteredChats = Chats.filter((chat) =>
+    let filteredChats = Chats?.filter((chat) =>
       chat.media.some((media) => media.resource === true)
     );
     if (filterItems.length > 0) {
@@ -92,12 +92,14 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
       const query = searchQuery.toLowerCase();
       filteredChats = filteredChats
         .map((chat) => {
-          const matchUsername = chat.user?.username?.toLowerCase().includes(query);
+          const matchUsername = chat.user?.username
+            ?.toLowerCase()
+            .includes(query);
           const matchDate = new Date(chat.createdAt)
             .toLocaleString()
             .toLowerCase()
             .includes(query);
-  
+
           const filteredMedia = chat.media.filter((media) =>
             media.name?.toLowerCase().includes(query)
           );
@@ -183,7 +185,6 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
         >
           Videos
         </div>
-        
       </div>
       <div className="mt-3 relative w-full ">
         <img
@@ -211,9 +212,11 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
         />
       </div>
 
-      {
-        loading ? <div className="mt-4 flex justify-center items-center"><Loading text="Loading Resources..." /></div> :
-      resourceChats.length === 0 ? (
+      {loading ? (
+        <div className="mt-4 flex justify-center items-center">
+          <Loading text="Loading Resources..." />
+        </div>
+      ) : resourceChats.length === 0 ? (
         <div className="text-theme-primaryText mt-20 text-center font-light text-sm">
           No Resources found...
         </div>
@@ -225,9 +228,10 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
           >
             {/* Header only once per chat */}
             <div className="text-theme-emptyEvent font-extralight text-xs">
-              {chat.user?.username} • {new Date(chat.createdAt).toLocaleString()}
+              {chat.user?.username} •{" "}
+              {new Date(chat.createdAt).toLocaleString()}
             </div>
-        
+
             {/* Grouped media display */}
             <div className="flex flex-row flex-wrap gap-3">
               {chat.media.map((media, mediaIndex) => (
@@ -286,19 +290,21 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
                           {media.name}
                         </p>
                         <p className="text-theme-primaryText text-[10px] mt-1 font-light font-inter">
-                          {parseInt(parseInt(media.size || "0")/1000)} Kb
+                          {parseInt(parseInt(media.size || "0") / 1000)} Kb
                         </p>
                       </div>
                     </div>
                   ) : null}
-        
+
                   {/* Hover menu trigger */}
                   {isOwner &&
                     hoveredMedia.mediaId === media._id &&
                     hoveredMedia.mediaIndex === mediaIndex && (
                       <div
                         className="absolute top-2 right-2 cursor-pointer"
-                        onClick={() => handleShowMediaMenu(chat._id, mediaIndex)}
+                        onClick={() =>
+                          handleShowMediaMenu(chat._id, mediaIndex)
+                        }
                       >
                         <img
                           src={ArrowDropDown}
@@ -307,7 +313,7 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
                         />
                       </div>
                     )}
-        
+
                   {/* Dropdown menu */}
                   {isOwner &&
                     showMediaMenu.chatId === chat._id &&
@@ -332,7 +338,6 @@ const ResourcePage = ({fetchedOnce, setFetchedOnce}) => {
             </div>
           </div>
         ))
-        
       )}
     </div>
   );

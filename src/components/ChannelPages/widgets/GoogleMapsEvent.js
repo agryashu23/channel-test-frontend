@@ -62,7 +62,7 @@ const GoogleMapsEvent = ({ url, text }) => {
       <div className="relative ">
         {!showMap ? (
           <div
-            className="flex flex-col items-center  justify-center h-[150px] cursor-pointer bg-theme-primaryBackground text-white w-full"
+            className="flex flex-col items-center  justify-center h-[150px] cursor-pointer bg-theme-tertiaryBackground text-white w-full"
             onClick={handleShowMap}
           >
             <img src={Maps} alt="maps" className="h-5 w-5 " />

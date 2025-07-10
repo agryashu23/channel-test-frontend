@@ -9,7 +9,7 @@ import StorageManager from "../EmbedChannels/utility/storage_manager";
 import Menu from "../../assets/icons/menu.svg";
 import Media from "../../assets/icons/media.svg";
 import Document from "../../assets/icons/document.svg";
-// import Poll from "../../assets/icons/graph.svg";
+import Poll from "../../assets/icons/graph.svg";
 import Event from "../../assets/icons/calendar.svg";
 import EventLight from "../../assets/lightIcons/calendar_light.svg";
 import EmojiPicker from "emoji-picker-react";
@@ -32,6 +32,7 @@ import {
   markAsRead,
 } from "../../redux/slices/chatSlice";
 import { setEventField } from "../../redux/slices/eventSlice";
+import { setPollField } from "../../redux/slices/pollSlice";
 import {
   updateWhatsAppNumber,
   saveWhatsAppNumber,
@@ -87,13 +88,12 @@ const PageChat = ({
   const myUser = useSelector((state) => state.auth.user);
   const myUserId = myUser?._id;
   const pageChatDataRef = useRef(null);
-  
+
   // useEffect(() => {
   //   if (!channel.members?.includes(myData._id)) {
   //     dispatch(visitTopic(topicId));
   //   }
   // }, [topicId]);
-
 
   useEffect(() => {
     setFileObjects([]);
@@ -153,25 +153,25 @@ const PageChat = ({
     const maxFileSize = 20 * 1024 * 1024;
 
     if (files.length <= 10) {
-      const newFiles = []; 
+      const newFiles = [];
       const promises = files.map((file) => {
         return new Promise((resolve, reject) => {
           if (file.size > maxFileSize) {
             alert(
               `The file "${file.name}" exceeds the 20 MB size limit and will not be uploaded.`
             );
-            return resolve(null); 
+            return resolve(null);
           }
-            const newFile = {
-              id: uuidv4(),
-              url: URL.createObjectURL(file),
-              name: file.name,
-              type: file.type.startsWith("video") ? "video" : "image",
-              size: file.size,
-            };
-            dispatch(addMediaItem(newFile)); 
-            newFiles.push(file); 
-            resolve();
+          const newFile = {
+            id: uuidv4(),
+            url: URL.createObjectURL(file),
+            name: file.name,
+            type: file.type.startsWith("video") ? "video" : "image",
+            size: file.size,
+          };
+          dispatch(addMediaItem(newFile));
+          newFiles.push(file);
+          resolve();
         });
       });
 
@@ -314,7 +314,7 @@ const PageChat = ({
     if (!isBrandTalk) {
       return;
     }
-   
+
     const extractLinks = (text) => {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       return text.match(urlRegex) || [];
@@ -374,20 +374,29 @@ const PageChat = ({
     handleOpenModal("modalEventOpen");
   };
 
+  const handlePollOpen = (topic) => {
+    console.log(topic);
+    dispatch(setPollField({ field: "topic", value: topic._id }));
+    handleOpenModal("modalPollOpen");
+  };
+
   const autoExpand = (field) => {
     field.style.height = "inherit";
     field.style.height = `${field.scrollHeight}px`;
   };
 
-    const handleBrandTalk = () => {
-      setIsBrandTalk(!isBrandTalk);
-    };
-    const handleMembersClick = () => {
-      setIsMemberClick(!isMemberClick);
-    };
-    const isTopicOwner = topic?.user._id ===myUserId;
-    const isEditor = isTopicOwner || (topic?.members?.find(member=>member?.user?.toString()===myUserId?.toString()
-    && member.status==="joined" && (member.role==="editor" || member.role==="admin"))) || topic.editability==="anyone";
+  const handleBrandTalk = () => {
+    setIsBrandTalk(!isBrandTalk);
+  };
+  const handleMembersClick = () => {
+    setIsMemberClick(!isMemberClick);
+  };
+  const isTopicAdmin = topic?.members?.find(
+    (member) =>
+      member?.user?.toString() === myUserId?.toString() &&
+      (member.role === "owner" || member.role === "admin")
+  );
+  const isEditor = isTopicAdmin || topic.editability === "anyone";
 
   return (
     <div
@@ -395,7 +404,7 @@ const PageChat = ({
         isEmbeddedOrExternal() ? "h-full" : "sm:h-full h-full-height-36"
       }`}
     >
-      {!isBrandTalk && !isMemberClick && 
+      {!isBrandTalk && !isMemberClick && (
         <PageHeader
           channelName={channelName}
           topic={topic}
@@ -406,7 +415,7 @@ const PageChat = ({
           username={username}
           channelId={channelId}
         />
-      }
+      )}
 
       {(isBrandTalk || isMemberClick) && (
         <div className="relative h-8 sm:h-10 bg-theme-secondaryBackground w-full shrink-0">
@@ -414,8 +423,8 @@ const PageChat = ({
             className="absolute flex flex-row items-center space-x-1 top-2 sm:top-8 left-[40%] sm:left-[45%] border-theme-emptyEvent border rounded-full 
           bg-theme-tertiaryBackground z-20 text-theme-emptyEvent py-1 px-2 font-light text-xs sm:text-sm cursor-pointer"
             onClick={() => {
-              setIsMemberClick(false)
-              setIsBrandTalk(false)
+              setIsMemberClick(false);
+              setIsBrandTalk(false);
             }}
           >
             <img src={Close} alt="close" className="w-3 h-3" />
@@ -424,38 +433,24 @@ const PageChat = ({
         </div>
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
-        {/* {
-        isBrandTalk ? (
-          <div className="bg-theme-primaryBackground w-full h-full overflow-y-auto">
-            <PageChatData2
-              topicId={topicId}
-              isLoggedIn={isLoggedIn}
-              myData={myData}
-              user_id={topic.user._id}
-              onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
-              channelName={channelName}
-            />
-          </div>
-        ) : ( */}
-          <div className="bg-theme-secondaryBackground w-full h-full overflow-y-auto pt-1">
-            <PageChatData
-              ref={pageChatDataRef}
-              topicId={topicId}
-              isPinned={isPinned}
-              setIsPinned={setIsPinned} 
-              channelName={channelName}
-              isBrandTalk={isBrandTalk}
-              isMemberClick={isMemberClick}
-              // onJumpToChat={(id) => pageChatDataRef.current?.scrollToChat(id)}
-              isLoggedIn={isLoggedIn}
-              business={business}
-              topic={topic}
-              channelId={channelId}
-              myData={myData}
-              onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
-            />
-          </div>
-        {/* )} */}
+        <div className="bg-theme-secondaryBackground w-full h-full overflow-y-auto pt-1">
+          <PageChatData
+            ref={pageChatDataRef}
+            topicId={topicId}
+            isPinned={isPinned}
+            setIsPinned={setIsPinned}
+            channelName={channelName}
+            isBrandTalk={isBrandTalk}
+            isMemberClick={isMemberClick}
+            isLoggedIn={isLoggedIn}
+            business={business}
+            topic={topic}
+            isTopicAdmin={isTopicAdmin}
+            channelId={channelId}
+            myData={myData}
+            onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
+          />
+        </div>
 
         {channelChat.media.length > 0 && (
           <div className="w-full bg-theme-chatDivider flex flex-row space-x-5 overflow-x-auto custom-scrollbar flex-shrink-0 z-50 pl-4 pr-2 pt-4 pb-2">
@@ -638,18 +633,18 @@ const PageChat = ({
                         ref={fileInputRef}
                       />
                     </div>
-                    {/* <div
-                    className="flex flex-row items-center space-x-2 px-1 py-2 cursor-pointer "
-                    onClick={() => console.log("Poll Clicked")}
-                  >
-                    <img src={Poll} alt="poll" className="w-5 h-5 mr-1" />
-                    <span className="text-theme-emptyEvent">Poll</span>
-                  </div> */}
+                   {isTopicAdmin &&  <div
+                      className="flex flex-row items-center space-x-2 cursor-pointer ml-1"
+                      onClick={() => handlePollOpen(topic)}
+                    >
+                      <img src={Poll} alt="poll" className="w-4 h-4 mr-1" />
+                      <span className="text-theme-emptyEvent">Poll</span>
+                    </div>}
 
-                    {topic.user._id === myData._id && (
+                    {isTopicAdmin && (
                       <div
-                        className="flex flex-row items-center px-1 py-2 cursor-pointer"
-                        onClick={()=>handleEventOpen(topic)}
+                        className="flex flex-row items-center py-1 cursor-pointer"
+                        onClick={() => handleEventOpen(topic)}
                       >
                         <img
                           src={Event}
@@ -666,32 +661,33 @@ const PageChat = ({
                     )}
                   </div>
                 )}
-                {(!business?.parameters ||  business?.parameters?.talkToBrand ) &&  topic?.user._id !==myUserId && (
-                  <div
-                    className={`${
-                      isBrandTalk
-                        ? "bg-theme-secondaryText text-theme-primaryBackground"
-                        : "dark:bg-theme-tertiaryBackground bg-theme-buttonDisable text-theme-buttonDisableText"
-                    } ml-4 rounded-full px-3 py-1.5 flex flex-row cursor-pointer`}
-                    onClick={handleBrandTalk}
-                  >
-                    <img
-                      src={isBrandTalk ? ChatIcon2 : ChatIcon}
-                      alt="icon"
-                      className="w-5 h-5 mr-1"
-                    />
-                    <p
-                      className={`text-sm font-light ${
+                {(!business?.parameters || business?.parameters?.talkToBrand) &&
+                  !isTopicAdmin && (
+                    <div
+                      className={`${
                         isBrandTalk
-                          ? "text-theme-primaryBackground"
-                          : "text-theme-emptyEvent"
-                      }`}
+                          ? "bg-theme-secondaryText text-theme-primaryBackground"
+                          : "dark:bg-theme-tertiaryBackground bg-theme-buttonDisable text-theme-buttonDisableText"
+                      } ml-4 rounded-full px-3 py-1.5 flex flex-row cursor-pointer`}
+                      onClick={handleBrandTalk}
                     >
-                      Talk to us
-                    </p>
-                  </div>
-                )}
-              
+                      <img
+                        src={isBrandTalk ? ChatIcon2 : ChatIcon}
+                        alt="icon"
+                        className="w-5 h-5 mr-1"
+                      />
+                      <p
+                        className={`text-sm font-light ${
+                          isBrandTalk
+                            ? "text-theme-primaryBackground"
+                            : "text-theme-emptyEvent"
+                        }`}
+                      >
+                        Talk to us
+                      </p>
+                    </div>
+                  )}
+
                 <div
                   className={`xl:hidden flex text-center ml-4 rounded-full px-3 py-1.5 flex-row cursor-pointer ${
                     isOpen
@@ -710,7 +706,9 @@ const PageChat = ({
                     Resource
                   </p>
                 </div>
-                {topic?.user._id ===myUserId && (
+                {(isTopicAdmin ||
+                  (business?.parameters &&
+                    business.parameters?.viewMembers)) && (
                   <div
                     className={`${
                       isMemberClick
@@ -731,7 +729,7 @@ const PageChat = ({
                   </div>
                 )}
               </div>
-              
+
               {(data.length > 0 ||
                 channelChat.content ||
                 channelChat.media.length > 0) && (

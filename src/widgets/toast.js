@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-export const showCustomToast = (message) => {
+export const showCustomToast = (message,autoClose=1000) => {
   const isDark = document.documentElement.classList.contains("dark");
   const backgroundColor = isDark ? "#e8e8e8" : "#202020"; 
   const textColor = isDark ? "#32302c" : "#c4c4c4";       
@@ -22,6 +22,6 @@ export const showCustomToast = (message) => {
     closeOnClick: true,
     pauseOnHover: false,
     draggable: false,
-    autoClose: 1000,
+    autoClose: autoClose,
   });
 };

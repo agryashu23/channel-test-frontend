@@ -14,20 +14,42 @@ const PaymentSuccessModal = () => {
   const isOpen = useSelector((state) => state.modals.modalPaymentSuccessOpen);
   const myData = useSelector((state) => state.myData);
   const paymentData = useSelector((state) => state.payment);
-
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
-        dispatch(setPaymentField({field:"loading",value:false}));
+        dispatch(setPaymentField({ field: "loading", value: false }));
 
         dispatch(closeModal("modalPaymentSuccessOpen"));
-        if(paymentData.paymentType === "subscription" && paymentData.paymentData.planId){
+        if (
+          paymentData.paymentType === "subscription" &&
+          paymentData.paymentData.planId
+        ) {
           navigate(`${getAppPrefix()}/account/${myData.username}/profile`);
-        }else if(paymentData.paymentType === "channel" && paymentData.paymentData.channel){
-          navigate(`${getAppPrefix()}/account/${paymentData.paymentData.username}/channel/${paymentData.paymentData.channel}`);
-        }else if(paymentData.paymentType === "topic" && paymentData.paymentData.topic && paymentData.paymentData.channel){
-          navigate(`${getAppPrefix()}/account/${paymentData.paymentData.username}/channel/${paymentData.paymentData.channel}/c-id/topic/${paymentData.paymentData.topic}`);
-        }else if(paymentData.paymentType === "event" && paymentData.paymentData.event){
+        } else if (
+          paymentData.paymentType === "channel" &&
+          paymentData.paymentData.channel
+        ) {
+          navigate(
+            `${getAppPrefix()}/account/${
+              paymentData.paymentData.username
+            }/channel/${paymentData.paymentData.channel}`
+          );
+        } else if (
+          paymentData.paymentType === "topic" &&
+          paymentData.paymentData.topic &&
+          paymentData.paymentData.channel
+        ) {
+          navigate(
+            `${getAppPrefix()}/account/${
+              paymentData.paymentData.username
+            }/channel/${paymentData.paymentData.channel}/c-id/topic/${
+              paymentData.paymentData.topic
+            }`
+          );
+        } else if (
+          paymentData.paymentType === "event" &&
+          paymentData.paymentData.event
+        ) {
           navigate(`${getAppPrefix()}/event/${paymentData.paymentData.event}`);
         }
       }, 2000);
