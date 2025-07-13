@@ -26,7 +26,7 @@ const PaymentModal = () => {
   const handlePaymentPage=()=>{
     handleClose();
     const data = {
-        amount:paymentData.totalAmount/1.18,
+        amount:(paymentData.totalAmount/1.18)/100,
         currency:"INR",
         planId:paymentData.planId,
         billingCycle:paymentData.billingCycle,

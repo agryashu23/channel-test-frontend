@@ -65,6 +65,12 @@ const TopicMembersTab = ({ isAdmin, topicId, topic, business }) => {
     dispatch(declineTopicRequest(formDataToSend));
   };
 
+  const myRoleData = reorderMembers.find(
+  (member) => member?.user?.username === myData?.username
+  );
+
+  const myRole = myRoleData?.role;
+
   const filteredMembers = reorderMembers.filter(
     (member) => member?.user?.username !== myData.username
   );
@@ -177,39 +183,42 @@ const TopicMembersTab = ({ isAdmin, topicId, topic, business }) => {
                       </p>
                     </div>
                   </div>
-                  {isAdmin && (
-                    <div className="flex flex-row items-center">
-                      <div
-                        className="bg-theme-tertiaryBackground rounded-md p-2 text-theme-primaryText text-sm font-light cursor-pointer"
-                        onClick={() =>
-                          memberType === "joined"
-                            ? handleRemoveMember(member, topicId)
-                            : handleAcceptTopicRequest(member?.user, topicId)
-                        }
-                      >
-                        {memberType === "joined" ? "Remove" : "Accept"}
-                      </div>
-                      {memberType === "requests" && (
+                  {(myRole === "owner") ||
+                      (myRole === "admin" && member.role === "member")
+                      ? (
+                      <div className="flex flex-row items-center">
                         <div
-                          className="ml-3"
+                          className="bg-theme-tertiaryBackground rounded-md p-2 text-theme-primaryText text-sm font-light cursor-pointer"
                           onClick={() =>
-                            handleDeclineTopicRequest(member?.user, topicId)
+                            memberType === "joined"
+                              ? handleRemoveMember(member, topicId)
+                              : handleAcceptTopicRequest(member?.user, topicId)
                           }
                         >
-                          <img
-                            src={ChannelImages.Delete.default}
-                            alt="close"
-                            className="w-5 h-5 dark:block hidden"
-                          />
-                          <img
-                            src={ChannelImages.DeleteLight.default}
-                            alt="close_light"
-                            className="w-5 h-5 dark:hidden block"
-                          />
+                          {memberType === "joined" ? "Remove" : "Accept"}
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {memberType === "requests" && (
+                          <div
+                            className="ml-3"
+                            onClick={() =>
+                              handleDeclineTopicRequest(member?.user, topicId)
+                            }
+                          >
+                            <img
+                              src={ChannelImages.Delete.default}
+                              alt="close"
+                              className="w-5 h-5 dark:block hidden"
+                            />
+                            <img
+                              src={ChannelImages.DeleteLight.default}
+                              alt="close_light"
+                              className="w-5 h-5 dark:hidden block"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
                 </div>
                 <div className="border-t border-t-theme-chatDivider w-full px-4"></div>
               </div>

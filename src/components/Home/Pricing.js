@@ -16,7 +16,8 @@ import AdminPricingCard from "../Admin/Account/widgets/AdminPricingCard";
 const Pricing = () => {
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  const myUserId = useSelector((state) => state.auth.user._id);
+  const myUser = useSelector((state) => state.auth.user);
+  const myUserId = myUser?._id;
   const [activeTabPricing, setActiveTabPricing] = useState("monthly");
   const [plans, setPlans] = useState([]);
   const [loading,setLoading] = useState(false);

@@ -16,8 +16,6 @@ const EventMembersTab = ({ eventId }) => {
     }
   }, [eventId]);
 
-  console.log(members);
-
   return (
     <div className="h-full overflow-y-auto">
       <p className="text-theme-secondaryText text-md font-normal">Guest list</p>

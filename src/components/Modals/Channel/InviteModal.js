@@ -140,7 +140,6 @@ const InviteModal = () => {
         `/create/${type}/invite`,
         payload
       );
-      console.log(response);
       setIsLoading(false);
       if (response.success) {
         setCode(response.invite.code);

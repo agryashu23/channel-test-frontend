@@ -137,10 +137,20 @@ const EventsPage = ({fetchedOnceEvents, setFetchedOnceEvents}) => {
     };
   }, []);
 
-  const upcomingEvents = Events.filter(
-    (event) =>
-      new Date(event.startDate) >= new Date(today.toDateString())
-  );
+
+const buildDateTime = (date, time) => {
+  if (!date) return null;
+  const dateStr = new Date(date).toISOString().split("T")[0];
+  if (time && typeof time === "string" && time.trim()) {
+    return new Date(`${dateStr}T${time.trim()}`);
+  }
+  return new Date(date);
+};
+
+const upcomingEvents = Events.filter((eventD) => {
+  const eventDateTime = buildDateTime(eventD.startDate, eventD.startTime);
+  return eventDateTime && eventDateTime >= new Date(); 
+});
 
   const eventsForSelectedDate = Events.filter(
     (event) =>

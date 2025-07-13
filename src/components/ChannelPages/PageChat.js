@@ -33,6 +33,7 @@ import {
 } from "../../redux/slices/chatSlice";
 import { setEventField } from "../../redux/slices/eventSlice";
 import { setPollField } from "../../redux/slices/pollSlice";
+import {triggerScrollToBottom} from "../../redux/slices/scrollSignalSlice"
 import {
   updateWhatsAppNumber,
   saveWhatsAppNumber,
@@ -83,7 +84,6 @@ const PageChat = ({
   const emojiButtonRef = useRef(null);
   const emojiRef = useRef(null);
   const channelChat = useSelector((state) => state.chat);
-  const newMessageScrollRef = useRef(null);
   const { handleOpenModal } = useModal();
   const myUser = useSelector((state) => state.auth.user);
   const myUserId = myUser?._id;
@@ -295,9 +295,10 @@ const PageChat = ({
       .then(() => {
         dispatch(clearChat());
         setLoading(false);
-        if (newMessageScrollRef.current) {
-          newMessageScrollRef.current();
-        }
+        // if (newMessageScrollRef.current) {
+        //   newMessageScrollRef.current();
+        // }
+        dispatch(triggerScrollToBottom());
         setFileObjects([]);
         if (inputRef.current) {
           inputRef.current.style.height = "inherit";
@@ -338,9 +339,10 @@ const PageChat = ({
         dispatch(clearChat());
         setLoading(false);
         setFileObjects([]);
-        if (newMessageScrollRef.current) {
-          newMessageScrollRef.current();
-        }
+        // if (newMessageScrollRef.current) {
+        //   newMessageScrollRef.current();
+        // }
+        dispatch(triggerScrollToBottom());
 
         if (inputRef.current) {
           inputRef.current.style.height = "inherit";
@@ -375,7 +377,6 @@ const PageChat = ({
   };
 
   const handlePollOpen = (topic) => {
-    console.log(topic);
     dispatch(setPollField({ field: "topic", value: topic._id }));
     handleOpenModal("modalPollOpen");
   };
@@ -448,7 +449,6 @@ const PageChat = ({
             isTopicAdmin={isTopicAdmin}
             channelId={channelId}
             myData={myData}
-            onNewMessageSent={(fn) => (newMessageScrollRef.current = fn)}
           />
         </div>
 

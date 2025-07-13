@@ -112,27 +112,6 @@ const ChannelModal = () => {
         );
         return;
       }
-
-      if (file.size > 7 * 1024 * 1024) {
-        new Compressor(file, {
-          quality: 0.5,
-          maxWidth: 1920,
-          maxHeight: 1080,
-          success(result) {
-            setLogoFile(result);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              dispatch(
-                setCreateChannelField({ field: "logo", value: reader.result })
-              );
-            };
-            reader.readAsDataURL(result);
-          },
-          error(err) {
-            alert("Image compression failed: " + err);
-          },
-        });
-      } else {
         setLogoFile(file);
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -141,7 +120,6 @@ const ChannelModal = () => {
           );
         };
         reader.readAsDataURL(file);
-      }
     }
   };
 
@@ -202,7 +180,7 @@ const ChannelModal = () => {
       return;
     }
 
-    if (channel.visibility === "paid" && channel.paywallPrice === 0) {
+    if (channel.visibility === "paid" && (channel.paywallPrice === "0" || channel.paywallPrice===0 || channel.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -247,7 +225,7 @@ const ChannelModal = () => {
   const handleEditChannel = async (e) => {
     e.preventDefault();
     setError("");
-    if (channel.visibility === "paid" && channel.paywallPrice === 0) {
+    if (channel.visibility === "paid" && (channel.paywallPrice === "0" || channel.paywallPrice===0 || channel.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -326,7 +304,8 @@ const ChannelModal = () => {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-70 z-50" />
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <Dialog.Content className="bg-theme-tertiaryBackground rounded-xl overflow-hidden shadow-xl transform transition-all min-h-[20%] max-h-[90%] overflow-y-auto custom-scrollbar w-[90%] xs:w-3/4 sm:w-3/5 md:w-1/2 lg:w-[35%] xl:w-[30%]">
+          <Dialog.Content className="bg-theme-tertiaryBackground rounded-xl overflow-hidden shadow-xl transform transition-all min-h-[20%]
+           max-h-[90%] overflow-y-auto custom-scrollbar w-[90%] xs:w-3/4 sm:w-3/5 md:w-1/2 lg:w-[35%] xl:w-[30%]">
             <Dialog.Title />
             <div className="flex flex-col p-5">
               <div className="flex justify-between items-center mb-4">

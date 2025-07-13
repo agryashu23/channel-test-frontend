@@ -10,8 +10,9 @@ const initialState = {
   visibility: "anyone",
   members: [],
   cover_image: null,
+  memberCount: 0,
   admins: [],
-  paywallPrice: 0,
+  paywallPrice: "",
   topics: [],
   logo: null,
   description: "",
@@ -46,7 +47,7 @@ export const createChannelSlice = createSlice({
       state.admins = [];
       state.members = [];
       state.name = "";
-      state.paywallPrice = 0;
+      state.paywallPrice = "";
       state.description = "";
       state.channelstatus = "idle";
       state.channelNameError = false;

@@ -567,22 +567,22 @@ const Gallery = () => {
             </div>
             <div className="items-center text-center mt-3">
               {tabs.map(
-                (tab) =>
-                  tab.name === "Channels" && (
-                    <button
-                      key={tab.id}
-                      onClick={(event) => handleTabClick(event, tab.href)}
-                      className={`mx-2 xs:px-8 px-4 py-3 text-sm transition-colors duration-300 ${
-                        activeTab === tab.href
-                          ? "border-b-2 text-theme-secondaryText border-theme-secondaryText"
-                          : "text-theme-emptyEvent "
-                      }`}
-                      style={{ marginBottom: "-1px" }}
-                    >
-                      {tab.name}
-                    </button>
-                  )
-              )}
+               (tab) =>
+                  (
+                   <button
+                     key={tab.id}
+                     onClick={(event) => handleTabClick(event, tab.href)}
+                     className={`mx-2 xs:px-8 px-4 py-3 text-sm transition-colors duration-300 ${
+                       activeTab === tab.href
+                         ? "border-b-2 text-theme-secondaryText border-theme-secondaryText"
+                         : "text-theme-emptyEvent "
+                     }`}
+                     style={{ marginBottom: "-1px" }}
+                   >
+                     {tab.name}
+                   </button>
+                 )
+             )}
             </div>
             <div
               className={`

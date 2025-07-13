@@ -5,7 +5,7 @@ import {
   postRequestAuthenticatedWithFile,
 } from "./../../services/rest";
 import { updateChannel } from "./channelItemsSlice";
-import { createGeneralTopic } from "./channelItemsSlice";
+import { createGeneralTopic} from "./channelItemsSlice";
 import { removeMember } from "./reorderTopicSlice";
 import { deleteChannel } from "./deleteChannelSlice";
 import { verifyPayment } from "./paymentSlice";
@@ -344,6 +344,7 @@ export const channelSlice = createSlice({
       // })
       .addCase(updateChannel.fulfilled, (state, action) => {
         const response = action.payload;
+        console.log(response.channel);
         if (response.success && !response.limitReached) {
           if (response.channel._id === state._id) {
             Object.assign(state, initialState, response.channel);

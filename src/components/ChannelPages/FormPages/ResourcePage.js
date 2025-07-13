@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import Close from "../../../assets/icons/Close.svg";
 import Search from "../../../assets/icons/search.svg";
 import { useSelector, useDispatch } from "react-redux";
@@ -24,6 +24,8 @@ const ResourcePage = ({ fetchedOnce, setFetchedOnce }) => {
   const myData = useSelector((state) => state.myData);
   const Chats = useSelector((state) => state.chat.resourceChats);
   const loading = useSelector((state) => state.chat.resourceLoading);
+  const dropdownRef = useRef(null);
+
   const dispatch = useDispatch();
   const [hoveredMedia, setHoveredMedia] = useState({
     mediaId: null,
@@ -75,6 +77,24 @@ const ResourcePage = ({ fetchedOnce, setFetchedOnce }) => {
         : [...prevItems, name]
     );
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowMediaMenu({ chatId: null, mediaIndex: null });
+      }
+    };
+    if (showMediaMenu.chatId !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMediaMenu]);
+
 
   useEffect(() => {
     let filteredChats = Chats?.filter((chat) =>
@@ -318,7 +338,9 @@ const ResourcePage = ({ fetchedOnce, setFetchedOnce }) => {
                   {isOwner &&
                     showMediaMenu.chatId === chat._id &&
                     showMediaMenu.mediaIndex === mediaIndex && (
-                      <div className="absolute top-10 right-0 w-max bg-theme-tertiaryBackground border border-theme-modalBorder shadow-lg rounded-lg z-10">
+                      <div 
+                      ref={dropdownRef}
+                      className="absolute top-10 -right-10 w-max bg-theme-tertiaryBackground border border-theme-modalBorder shadow-lg rounded-lg z-10">
                         <div className="py-1">
                           <div
                             className="flex flex-row px-4 items-center"

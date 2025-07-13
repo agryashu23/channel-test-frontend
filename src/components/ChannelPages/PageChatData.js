@@ -22,6 +22,7 @@ import {
 } from "./../../redux/slices/chatSlice";
 import { fetchTopicEventMembers } from "./../../redux/slices/eventItemsSlice";
 import {fetchTopicPollResponses} from "./../../redux/slices/pollSlice";
+import {resetScrollTrigger} from "./../../redux/slices/scrollSignalSlice";
 import { pdfjs } from "react-pdf";
 import Profile from "../../assets/icons/profile.svg";
 import documentImage from "../../assets/images/Attachment.svg";
@@ -62,7 +63,6 @@ const PageChatData = forwardRef(
       topicId,
       isLoggedIn,
       myData,
-      onNewMessageSent,
       business,
       topic,
       isPinned,
@@ -81,6 +81,7 @@ const PageChatData = forwardRef(
     const [modalImages, setModalImages] = useState([]);
     const [modalStartIndex, setModalStartIndex] = useState(0);
     const myUser = useSelector((state) => state.auth.user);
+    const triggerScroll = useSelector((state) => state.scrollSignal.triggerScroll);
 
     const myUserId = myUser?._id;
 
@@ -339,16 +340,15 @@ const PageChatData = forwardRef(
       }
     }, [Chats, shouldScrollToBottom]);
 
+    
     useEffect(() => {
-      if (onNewMessageSent) {
-        onNewMessageSent(() => {
+        if (triggerScroll) {
           if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop =
-              chatContainerRef.current.scrollHeight;
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
           }
-        });
-      }
-    }, [onNewMessageSent]);
+          dispatch(resetScrollTrigger());
+        }
+      }, [triggerScroll]);
 
     useEffect(() => {
       const handleChatDeleted = (message) => {
@@ -546,7 +546,6 @@ const PageChatData = forwardRef(
               isLoggedIn={isLoggedIn}
               myData={myData}
               user_id={topic.user._id}
-              onNewMessageSent={onNewMessageSent}
               channelName={channelName}
             />
           </div>
@@ -554,6 +553,7 @@ const PageChatData = forwardRef(
           <PinnedChat
             setIsPinned={setIsPinned}
             topicId={topicId}
+            isAdmin={isAdmin}
             onJumpToChat={(id) => scrollToChat(id)}
           />
         ) : (

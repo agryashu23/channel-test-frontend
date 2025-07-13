@@ -69,6 +69,7 @@ import ApiPanel from "./components/Admin/Panel/ApiPanel";
 import SettingsPanel from "./components/Admin/Panel/SettingsPanel";
 import AdminNotifications from "./components/Admin/AdminNotifications";
 import PollFullPage from "./components/poll/PollFullPage";
+import AdminNewsletter from "./components/Admin/AdminNewsletter";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -244,6 +245,7 @@ const App = () => {
                 <Route path="profile" element={<Profile/>} />
                 <Route path="notifications" element={<AdminNotifications/>} />
                 <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="newsletter" element={<AdminNewsletter />} />
                 <Route path="account/billing"  element={<AdminAccountBilling />} />
                 <Route path="account/members/roles" element={<AdminRoleMembers />} />
                 <Route path="account/payments" element={<AdminPayments />} />

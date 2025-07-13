@@ -14,8 +14,9 @@ import Profile from "../../assets/icons/profile.svg";
 import ChannelCover from "../../assets/channel_images/channel_cover.svg";
 import documentImage from "../../assets/images/Attachment.svg";
 import { unpinChat } from "../../redux/slices/chatSlice";
+import PollCard from "./widgets/PollCard";
 
-const PinnedChat = ({ topicId, setIsPinned, onJumpToChat }) => {
+const PinnedChat = ({ topicId, setIsPinned, onJumpToChat,isAdmin }) => {
   const dispatch = useDispatch();
   const pinnedChats = useSelector((state) => state.chat.pinnedChats);
   const pinnedLoading = useSelector((state) => state.chat.pinnedLoading);
@@ -28,7 +29,6 @@ const PinnedChat = ({ topicId, setIsPinned, onJumpToChat }) => {
     dispatch(fetchPinnedChats(topicId));
   }, [topicId]);
 
-  console.log(pinnedChats);
 
   const componentDecorator = (href, text, key) => (
     <a
@@ -135,7 +135,7 @@ const PinnedChat = ({ topicId, setIsPinned, onJumpToChat }) => {
                         {formatChatDate(chat.createdAt)}
                       </span>
                     </p>
-                    <div
+                    {isAdmin && <div
                       className="bg-theme-secondaryText text-theme-primaryBackground 
                       px-2 py-1 rounded-full text-xs cursor-pointer"
                       onClick={(e) => {
@@ -144,7 +144,7 @@ const PinnedChat = ({ topicId, setIsPinned, onJumpToChat }) => {
                       }}
                     >
                       Jump
-                    </div>
+                    </div>}
                   </div>
 
                   {chat.content && (
@@ -169,6 +169,12 @@ const PinnedChat = ({ topicId, setIsPinned, onJumpToChat }) => {
                         btnPadding="xs:px-2 px-1"
                         spacing=""
                       />
+                    </div>
+                  )}
+
+                  {chat.poll && (
+                    <div className="mt-2">
+                      <PollCard poll={chat.poll} key={chat.poll._id} isAdmin={isAdmin}/>
                     </div>
                   )}
 

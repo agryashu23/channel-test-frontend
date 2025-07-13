@@ -2,7 +2,7 @@
   if (window.ChannelsWidgetLoaded) return;
   window.ChannelsWidgetLoaded = true;
 
-  const production = false;
+  const production = true;
 
   const breakpoints = {
     sm: 500,

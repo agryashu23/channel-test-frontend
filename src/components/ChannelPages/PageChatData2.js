@@ -6,7 +6,7 @@ import EmojiPicker from "emoji-picker-react";
 import StorageManager from "../EmbedChannels/utility/storage_manager";
 import ArrowDropDownLight from "../../assets/lightIcons/chat_drop_light.svg";
 import ColorProfile from "../../assets/images/color_profile.svg";
-
+import {resetScrollTrigger} from "./../../redux/slices/scrollSignalSlice";
 import {
   fetchBrandChats,
   setChatField,
@@ -42,13 +42,13 @@ const PageChatData2 = ({
   topicId,
   isLoggedIn,
   myData,
-  onNewMessageSent,
   user_id,
   channelName,
 }) => {
   const { handleOpenModal } = useModal();
   const { username } = useParams();
   const navigate = useNavigate();
+  const triggerScroll = useSelector((state) => state.scrollSignal.triggerScroll);
 
   const handleClick = (document) => {
     handleOpenModal("modalDocumentOpen", document);
@@ -233,16 +233,14 @@ const PageChatData2 = ({
     return () => clearTimeout(timeout);
   }, [Chats]);
 
-  useEffect(() => {
-    if (onNewMessageSent) {
-      onNewMessageSent(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.scrollTop =
-            chatContainerRef.current.scrollHeight;
+   useEffect(() => {
+        if (triggerScroll) {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+          dispatch(resetScrollTrigger());
         }
-      });
-    }
-  }, [onNewMessageSent]);
+      }, [triggerScroll]);
 
   const handleReactionClick = (reaction, chatId) => {
     // setReactions((prevReactions) => {

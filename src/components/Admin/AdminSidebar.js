@@ -167,7 +167,20 @@ const AdminSidebar = ({
         >
           Notifications
         </Link>
+        <div className="border-[1px] border-theme-sidebarDivider mt-2 mb-2"></div>
+        <Link
+          to={`/admin/${myUser?.username}/newsletter`}
+          className={`block text-sm font-normal font-inter cursor-pointer py-2 px-4 ${
+            location.pathname === `/admin/${myUser?.username}/newsletter`
+              ? "text-theme-secondaryText bg-theme-sidebarHighlight rounded-lg mx-3"
+              : "text-theme-primaryText"
+          }`}
+          onClick={closeSidebar}
+        >
+          Newsletter
+        </Link>
         <div className="border-[1px] border-theme-sidebarDivider mt-2 mb-4"></div>
+        
         <div
           className={` font-normal text-sm cursor-pointer py-1 pl-4 pr-3 text-theme-primaryText`}
           onClick={() => navigate("/documentation/channels")}

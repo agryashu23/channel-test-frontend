@@ -42,6 +42,7 @@ import pollReducer from "./../slices/pollSlice";
 import eventItemsReducer from "./../slices/eventItemsSlice";
 import paymentReducer from "./../slices/paymentSlice";
 import notificationReducer from "./../slices/notificationSlice";
+import scrollSignalReducer from "./../slices/scrollSignalSlice"
 
 export const appReducer = {
   auth: authReducer,
@@ -86,7 +87,8 @@ export const appReducer = {
   poll: pollReducer,
   eventItems: eventItemsReducer,
   payment:paymentReducer,
-  notification:notificationReducer
+  notification:notificationReducer,
+  scrollSignal:scrollSignalReducer
 };
 
 const combinedReducer = combineReducers(appReducer);

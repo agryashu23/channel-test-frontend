@@ -1,4 +1,4 @@
-/*import Cookies from "js-cookie";
+import Cookies from "js-cookie";
 import { domainUrl } from "./../utils/globals";
 
 export const setAuthCookies = (token, user) => {
@@ -57,9 +57,9 @@ export const updateAuthUsername = (newUsername) => {
       path: "/",
     });
   }
-};*/
+};
 
-import Cookies from "js-cookie";
+/*import Cookies from "js-cookie";
 import { domainUrl } from "./../utils/globals";
 export const setAuthCookies = (token, user) => {
   const userData = {
@@ -101,4 +101,4 @@ export const updateAuthUsername = (newUsername) => {
     user.username = newUsername;
     Cookies.set("user", JSON.stringify(user));
   }
-};
+};*/

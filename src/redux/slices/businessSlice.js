@@ -325,18 +325,56 @@ export const fetchBusinessChannelsTopics = createAsyncThunk(
     }
   }
 );
+export const fetchBusinessNotifications = createAsyncThunk(
+  "business/fetchBusinessNotifications",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        `/fetch/business/notifications`,
+      );
+      console.log(response);
+      if (response.success) {
+        return response;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+export const updateBusinessNotification = createAsyncThunk(
+  "business/updateBusinessNotification",
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await postRequestAuthenticated(
+        `/update/business/notification`,
+        data
+      );
+      if (response.success) {
+        return response;
+      } else {
+        return rejectWithValue(response.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const businessSlice = createSlice({
   name: "business",
   initialState: {
     business: {},
     channelRequests: [],
+    notifications:[],
     members:[],
     channels:[],
     topicRequests:[],
     eventRequests:[],
     events:[],
     loading: false,
+    notificationLoading:false,
     customLoading:false,
     error: null,
   },
@@ -554,6 +592,37 @@ const businessSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchBusinessNotifications.pending, (state) => {
+        state.notificationLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchBusinessNotifications.fulfilled, (state, action) => {
+        state.notificationLoading = false;
+        state.notifications = action.payload.notifications;
+      })
+      .addCase(fetchBusinessNotifications.rejected, (state, action) => {
+        state.notificationLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateBusinessNotification.pending, (state) => {
+        state.customLoading = true;
+        state.error = null;
+      })
+      .addCase(updateBusinessNotification.fulfilled, (state, action) => {
+        state.customLoading = false;
+        const response = action.payload;
+        if(response.success){
+          let index = state.notifications.findIndex((item)=>item._id===response.notificationId);
+          if(index!==-1){
+            state.notifications[index].action = true;
+          }
+        }
+      })
+      .addCase(updateBusinessNotification.rejected, (state, action) => {
+        state.customLoading = false;
+        state.error = action.payload;
+      })
+
       .addCase(updateUserBusinessRole.pending, (state) => {
         state.customLoading = true;
         state.error = null;

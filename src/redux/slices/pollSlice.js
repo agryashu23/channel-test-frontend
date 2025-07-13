@@ -70,7 +70,6 @@ export const fetchTopicPollResponses = createAsyncThunk(
         "/fetch/topic/poll/responses",
         {topicId:topicId}
       );
-      console.log(response);
       if (response.success) {
         return response.responses;
       } else {
@@ -123,10 +122,11 @@ export const deleteChatPoll = createAsyncThunk(
 );
 
 const pollSlice = createSlice({
-  name: "Poll",
-  poll:{},
+  name: "poll",
   initialState :{
+  poll:{},
   question: "",
+  name:"Poll",
   choices: ["", ""],
   type: "private",
   showResults: "afterVote",

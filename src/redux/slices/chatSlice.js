@@ -246,7 +246,6 @@ export const pinChat = createAsyncThunk(
       const response = await postRequestAuthenticated("/pin/chat", {
         chatId,
       });
-      console.log(response);
       if (response.success) {
         return response.chat;
       } else {
@@ -433,7 +432,16 @@ export const chatSlice = createSlice({
             state.resourceChats[index].media[mediaIndex].resource = true;
           }
         } else {
-          state.resourceChats.push(response.chat);
+           const mediaItem = response.chat.media?.find(
+              (item) => item._id === response.mediaId
+            );
+
+            const chatData = {
+              ...response.chat,
+              media: mediaItem ? [mediaItem] : [],
+            };
+
+            state.resourceChats.push(chatData);
         }
       })
       .addCase(createChatEvent.fulfilled, (state, action) => {

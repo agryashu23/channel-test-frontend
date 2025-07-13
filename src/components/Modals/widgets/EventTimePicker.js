@@ -49,16 +49,6 @@ const EventTimePicker = ({
         text-theme-secondaryText focus:outline-none placeholder:text-emptyEvent"
     />
   ));
-  // const ReadOnlyInput2 = forwardRef(({ value, onClick }, ref) => (
-  //   <input
-  //     readOnly
-  //     value={value}
-  //     onClick={onClick}
-  //     ref={ref}
-  //     placeholder="End Time"
-  //     className="w-full py-1 text-sm pr-10 font-light rounded bg-chipBackground border-b border-b-dividerLine placeholder-font-light placeholder-text-sm text-primaryGrey focus:outline-none placeholder-text-primaryGrey"
-  //   />
-  // ));
 
   return (
     <div className="flex flex-row justify-between items-center w-full">

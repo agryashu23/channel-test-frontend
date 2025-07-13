@@ -43,6 +43,7 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
   const { handlePayment } = usePaymentHandler();
   
   const handleEditChannel = (channel) => {
+    console.log(channel);
     const transformedData = {
       ...channel,
     };
@@ -52,11 +53,11 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
       handleOpenModal("modalChannelOpen");
     }, 500);
   };
-  const handleShareChannel = (id, username) => {
+  const handleShareChannel = (id) => {
     dispatch(setModalModal({ field: "shareUsername", value: username }));
     handleOpenModal("modalShareChannelOpen", id);
   };
-  const handleOwnerShareChannel = (id, username) => {
+  const handleOwnerShareChannel = (id) => {
     dispatch(setModalModal({ field: "shareUsername", value: username }));
     dispatch(setModalModal({ field: "type", value: "channel" }));
     dispatch(setModalModal({ field: "channelId", value: id }));
@@ -311,7 +312,7 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
                         <p
                           className="block font-light px-2 py-2 text-sm text-theme-secondaryText cursor-pointer"
                           role="menuitem"
-                          onClick={handleEditChannel}
+                          onClick={()=>handleEditChannel(channel)}
                         >
                           Edit
                         </p>

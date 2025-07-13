@@ -63,10 +63,21 @@ const MembersTab = ({ channelId, isOwner,channel }) => {
     dispatch(declineChannelRequest(formDataToSend));
   };
   
-
-  const filteredMembers = reorderMembers.filter(
-    (member) => member?.user?.username !== myData.username
+  const myRoleData = reorderMembers.find(
+  (member) => member?.user?.username === myData?.username
   );
+  const myRole = myRoleData.role;
+
+  const filteredMembers = reorderMembers.filter((member) => {
+    const username = member?.user?.username;
+    const role = member?.role;
+    if (username === myData?.username) return false; 
+    if(role==="owner") return false;
+    if (myRole === "admin") {
+      return role !== "admin";
+    }
+    return true;
+  });
 
   const filteredRequests = reorderRequests.filter(
     (request) => request?.user?.username !== myData.username

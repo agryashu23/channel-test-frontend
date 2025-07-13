@@ -8,6 +8,8 @@ import {
   clearChatPoll,
 } from "../../../redux/slices/pollSlice";
 import { closeModal } from "../../../redux/slices/modalSlice";
+import { triggerScrollToBottom } from "../../../redux/slices/scrollSignalSlice";
+
 
 const MAX_CHOICES = 4;
 
@@ -63,6 +65,7 @@ const PollModal = () => {
       .unwrap()
       .then(() => {
         handleClose();
+        dispatch(triggerScrollToBottom());
       })
       .catch((err) => alert(err));
   };

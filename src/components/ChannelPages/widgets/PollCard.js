@@ -35,16 +35,16 @@ const PollCard = ({ poll, isAdmin }) => {
       <div className="flex flex-row items-center justify-between">
         <p className="font-normal text-theme-secondaryText">{poll.name || "Poll"}</p>
         <div className="flex flex-row space-x-2 items-center">
-          <div className="cursor-pointer" onClick={()=>navigate(`/poll/${poll._id}`)}>
+          <div className="cursor-pointer text-theme-secondaryText w-5 h-5" onClick={()=>navigate(`/poll/${poll._id}`)}>
             <IoExpand />
           </div>
-          {isAdmin && (
+          {/* {isAdmin && (
             <div className="flex space-x-1 cursor-pointer">
               <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
               <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
               <div className="w-1 h-1 bg-theme-primaryText rounded-full"></div>
             </div>
-          )}
+          )} */}
         </div>
       
       </div>

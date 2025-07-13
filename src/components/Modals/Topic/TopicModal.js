@@ -40,7 +40,7 @@ const TopicModal = () => {
   const handleCreateTopic = async (e) => {
     e.preventDefault();
     setError("");
-    if (topic.visibility === "paid" && topic.paywallPrice === 0) {
+    if (topic.visibility === "paid" && (topic.paywallPrice === "0" || topic.paywallPrice===0 || topic.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -75,7 +75,8 @@ const TopicModal = () => {
   const handleEditTopic = async (e) => {
     e.preventDefault();
     setError("");
-    if (topic.visibility === "paid" && topic.paywallPrice === 0) {
+    console.log(topic.paywallPrice);
+    if (topic.visibility === "paid" && (topic.paywallPrice === "0" || topic.paywallPrice===0 || topic.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -86,7 +87,6 @@ const TopicModal = () => {
       formDataToSend.append("_id", topic._id);
       formDataToSend.append("editability", topic.editability);
       formDataToSend.append("visibility", topic.visibility);
-
       formDataToSend.append("paywallPrice", topic.paywallPrice);
       dispatch(updateTopic(formDataToSend))
         .unwrap()
@@ -223,7 +223,7 @@ const TopicModal = () => {
                     placeholder:font-light placeholder:text-sm text-theme-secondaryText focus:outline-none placeholder:text-theme-placeholder"
                       type="number"
                       name="paywallPrice"
-                      value={topic.paywallPrice}
+                      value={topic.paywallPrice??""}
                       onChange={handleChange}
                       placeholder="Enter the joining fee for your topic."
                     />

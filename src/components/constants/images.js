@@ -1,6 +1,7 @@
 export class ChannelImages{
     static HomeBackground = require("../../assets/images/home_background.svg");
     static CommunityPage = require("../../assets/channel_images/community_page.png");
+    static ChannelLogo = require("../../assets/icons/channels_logo.svg");
     static HomeImage = require("../../assets/channel_images/home_image.png");
     static PricingImage = require("../../assets/icons/pricing_card.svg");
     static CLogo = require("../../assets/icons/logo.svg");
@@ -20,6 +21,7 @@ export class ChannelImages{
     static UnsplashLight = require("../../assets/lightIcons/unsplash_light.svg");
     static DragDrop = require("../../assets/icons/dragdrop.png");
     static ArrowForward = require("../../assets/icons/arrow_forward_dark.svg");
+    static ArrowForwardLight = require("../../assets/icons/arrow_forward.svg");
     static ArrowBack = require("../../assets/icons/arrow_back.svg");
     static ArrowBackLight = require("../../assets/lightIcons/arrow_back_light.svg");
     static ProfileIcon = require("../../assets/icons/profile.svg");
@@ -49,5 +51,9 @@ export class ChannelImages{
     static LockOpenLight = require("../../assets/lightIcons/unlock_light.svg");
     static Secure = require("../../assets/icons/secure.svg");
     static SecureLight = require("../../assets/lightIcons/secure_light.svg");
+    static Event = require("../../assets/icons/calendar.svg");
+    static EventLight = require("../../assets/lightIcons/calendar_light.svg");
+    static Time = require("../../assets/icons/Stopwatch.svg");
+    static TimeLight = require("../../assets/lightIcons/stopwatch_light.svg"); 
  
 }

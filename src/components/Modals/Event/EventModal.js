@@ -10,6 +10,7 @@ import UnsplashLight from "../../../assets/lightIcons/unsplash_light.svg";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationIcon from "../../../assets/icons/location-marker.svg";
 import { setAdminNotification } from "../../../redux/slices/notificationSlice";
+import { triggerScrollToBottom } from "../../../redux/slices/scrollSignalSlice";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import {
@@ -260,7 +261,7 @@ const EventModal = () => {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     if (!isValidDateTimeRange(event)) return;
-    if (event.joining === "paid" && event.paywallPrice === 0) {
+    if (event.joining === "paid" && (event.paywallPrice === "0" || event.paywallPrice===0 || event.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }
@@ -293,6 +294,7 @@ const EventModal = () => {
           dispatch(clearEvent());
           setFile(null);
           handleClose();
+          dispatch(triggerScrollToBottom());    
           if (response.success && response.limitReached) {
             dispatch(setAdminNotification(response));
             handleOpenModal("modalNotificationOpen");
@@ -308,7 +310,7 @@ const EventModal = () => {
   const handleEditEvent = async (e) => {
     e.preventDefault();
     if (!isValidDateTimeRange(event)) return;
-    if (event.joining === "paid" && event.paywallPrice === 0) {
+    if (event.joining === "paid" && (event.paywallPrice === "0" || event.paywallPrice===0 || event.paywallPrice.length===0)) {
       setPayError("Joining fee can't be 0");
       return;
     }

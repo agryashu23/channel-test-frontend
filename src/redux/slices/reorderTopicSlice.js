@@ -308,6 +308,9 @@ export const reorderTopicSlice = createSlice({
       .addCase(fetchTopicMembers.pending, (state) => {
         state.memberStatus = "loading";
       })
+      .addCase(fetchTopicMembers.rejected, (state) => {
+        state.memberStatus = "idle";
+      })
       .addCase(fetchTopicMembers.fulfilled, (state, action) => {
         state.memberStatus = "idle";
         state.topicMembersFetchedOnce = true;
