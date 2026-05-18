@@ -34,6 +34,7 @@ const PollFullPage = () => {
   const userResponded = pollResponse?.userResponded;
   const isSubmitted = userResponded || Boolean(userChoice);
   const isAdmin = poll?.isAdmin;
+  const isLoggedIn = useSelector((state)=>state.auth.isLoggedIn);
 
   useEffect(() => {
     if (pollId) {
@@ -56,16 +57,8 @@ const PollFullPage = () => {
   const handleChoiceChange = (e) => setSelectedChoice(e.target.value);
 
   const handleSubmit = () => {
-    if (selectedChoice && poll?._id && poll.type==="public") {
+    if (selectedChoice && poll?._id) {
       dispatch(createPublicPollResponse({ pollId: poll._id, choice: selectedChoice,userId:myUserId }));
-    }
-    else if(selectedChoice && poll?._id && poll.type==="private"){
-        if(!myUserId){
-            navigate(`/get-started?redirect=/poll/${pollId}`)
-        }
-        else{
-            dispatch(createPublicPollResponse({ pollId: poll._id, choice: selectedChoice,userId:myUserId }));
-        }
     }
   };
 
@@ -77,7 +70,7 @@ const PollFullPage = () => {
     handleOpenModal("modalPollDeleteOpen");
   };
 
-  if(status!=="loading" && poll && poll.visibility==="topic" &&  !poll.isTopicMembership ){
+  if(status!=="loading" && poll && poll.visibility==="topic" && (!isLoggedIn || !poll.isTopicMembership) ){
     return (
           <div className="flex flex-col items-center justify-center h-full">
             <img

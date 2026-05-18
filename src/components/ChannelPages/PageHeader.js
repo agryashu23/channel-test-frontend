@@ -222,6 +222,7 @@ const PageHeader = ({
                   className="dark:hidden w-6 h-6 mr-2 cursor-pointer z-20"
                   onClick={toggleEditDropdown}
                 />
+                
                 {isEditDropdownOpen && (
                   <div
                     ref={dropdownEditRef}
@@ -324,15 +325,15 @@ const PageHeader = ({
                 </div>
               </div>
             )} */}
+             
           </div>
         )}
 
         <div className="flex flex-row items-center">
-          <div onClick={() => setIsPinned(true)}>
+          {!isEmbeddedOrExternal() && <div onClick={() => setIsPinned(true)}>
             <img src={Pin} alt="pin" className="w-5 h-5 sm:mr-0 mr-3 dark:hidden block cursor-pointer"/>
             <img src={PinLight} alt="pin" className="w-5 h-5 sm:mr-0 mr-3 dark:block hidden cursor-pointer"/>
-          </div>
-         
+          </div>}   
 
         {!isEmbeddedOrExternal() && (
           <div
@@ -368,8 +369,9 @@ const PageHeader = ({
           </div>
         )}
         </div>
-     
       </div>
+  
+      
       {reorderTopics.myTopics.length > 0 && <div className="sm:hidden flex flex-row space-x-3 w-full overflow-x-auto pl-6 pr-2 pt-0.5 mb-0.5 pb-3">
         {reorderTopics.myTopics.map((topic) => {
           return (
@@ -416,6 +418,7 @@ const PageHeader = ({
           );
         })}
       </div>}
+      
     </div>
   );
 };

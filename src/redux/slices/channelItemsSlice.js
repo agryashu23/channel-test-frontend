@@ -126,6 +126,7 @@ const channelItemsSlice = createSlice({
   name: "channelItems",
   initialState: {
     channels: [],
+    embedChannels:[],
     userChannels: [],
     selectedChannel: null,
     channelstatus: "idle",
@@ -140,6 +141,9 @@ const channelItemsSlice = createSlice({
   reducers: {
     setSelectedChannel: (state, action) => {
       state.selectedChannel = action.payload;
+    },
+    setChannelItemsField:(state,action)=>{
+      state.embedChannels = action.payload;
     },
     setSelectedPage: (state, action) => {
       state.selectedPage = action.payload;
@@ -592,10 +596,9 @@ const channelItemsSlice = createSlice({
 });
 
 export const {
-  setSelectedCuration,
-  setError,
-  clearCurationChips,
+  setChannelItemsField,
   setChannelOnce,
+  setSelectedChannel
 } = channelItemsSlice.actions;
 
 export default channelItemsSlice.reducer;

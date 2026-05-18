@@ -304,6 +304,7 @@ export const chatSlice = createSlice({
     loadingMore: false,
     brandLoading: false,
     resourceLoading: false,
+    pinned:false,
   },
   reducers: {
     setChatField: (state, action) => {

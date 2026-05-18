@@ -65,7 +65,6 @@ const PageChatData = forwardRef(
       myData,
       business,
       topic,
-      isPinned,
       setIsPinned,
       channelName,
       isBrandTalk,
@@ -122,11 +121,11 @@ const PageChatData = forwardRef(
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
-    const [showNewMessageIndicator, setShowNewMessageIndicator] =
-      useState(false);
+    const [showNewMessageIndicator, setShowNewMessageIndicator] =useState(false);
 
     const reactionsData = ["❤️", "😂", "👍", "😢"];
     const Chats = useSelector((state) => state.chat.chats);
+    const isPinned = useSelector((state) => state.chat.pinned);
     const loading = useSelector((state) => state.chat.loading);
     const loadingMore = useSelector((state) => state.chat.loadingMore);
     const chatRefs = useRef(new Map());

@@ -232,7 +232,7 @@ const InviteModal = () => {
                 <div className="flex flex-col gap-4 mb-6 pr-4">
                   <div>
                     <label className="block text-theme-secondaryText text-sm mb-1">
-                      Usage Limit of users
+                      Number of people who can join using link
                     </label>
                     <input
                       type="number"

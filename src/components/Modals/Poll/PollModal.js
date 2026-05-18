@@ -57,7 +57,7 @@ const PollModal = () => {
       question: Poll.question,
       choices: trimmedChoices,
       topic: Poll.topic,
-      type: Poll.type,
+      // type: Poll.type,
       showResults: Poll.showResults,
       visibility: Poll.visibility,
     };
@@ -98,7 +98,7 @@ const PollModal = () => {
                   onClick={handleClose}
                 />
               </div>
-              <div className="mb-4 w-full">
+              {/* <div className="mb-4 w-full">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
                   Poll Name (default: Poll)
                 </p>
@@ -114,7 +114,7 @@ const PollModal = () => {
                   onChange={handleChange}
                   placeholder="Enter poll name"
                 />
-              </div>
+              </div> */}
 
               <div className="mb-4 w-full">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
@@ -160,9 +160,9 @@ const PollModal = () => {
                   + Add Choice
                 </button>
               )}
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
-                  Who can join this poll?
+                  Who can vote?
                 </p>
                 <div className="flex mt-3 items-center border border-theme-chatDivider rounded-md overflow-hidden w-max">
                   <button
@@ -187,14 +187,14 @@ const PollModal = () => {
                   >
                     Logged users
                   </button>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
 
               <div className="mb-4 mt-2">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-1">
-                  Who can view this poll?
+                  Who can vote?
                 </p>
-                <div className="flex flex-row mt-3 items-start space-x-3">
+                <div className="flex flex-col mt-3 items-start space-y-3">
                   <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
                       type="radio"
@@ -204,7 +204,7 @@ const PollModal = () => {
                       checked={Poll.visibility === "anyone"}
                       onChange={handleChange}
                     />
-                    <span>Anyone</span>
+                    <span>Anyone on the internet</span>
                   </label>
                   <label className="text-theme-primaryText text-sm font-normal flex items-center">
                     <input
@@ -215,7 +215,7 @@ const PollModal = () => {
                       checked={Poll.visibility === "topic"}
                       onChange={handleChange}
                     />
-                    <span>Only topic users</span>
+                    <span>Members of this Topic</span>
                   </label>
                 </div>
               </div>
@@ -259,7 +259,7 @@ const PollModal = () => {
                 disabled={isCreateDisabled}
                 onClick={handleSubmit}
               >
-                {Poll.buttonStatus===":loading"?"Creating...":"Create Poll"}
+                {Poll.buttonStatus==="loading"?"Creating...":"Create Poll"}
               </button>
             </div>
           </Dialog.Content>

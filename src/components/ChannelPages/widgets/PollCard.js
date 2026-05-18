@@ -31,7 +31,7 @@ const PollCard = ({ poll, isAdmin }) => {
   };
 
   return (
-    <div className="border border-theme-chatDivider rounded-lg p-3 flex flex-col mb-2 w-full xs:min-w-72 bg-theme-tertiaryBackground">
+    <div className="border border-theme-chatDivider rounded-lg p-3 flex flex-col mb-2 w-full min-w-56 xs:min-w-72 bg-theme-tertiaryBackground">
       <div className="flex flex-row items-center justify-between">
         <p className="font-normal text-theme-secondaryText">{poll.name || "Poll"}</p>
         <div className="flex flex-row space-x-2 items-center">
@@ -102,7 +102,7 @@ const PollCard = ({ poll, isAdmin }) => {
                         <span className="text-xs ml-1 text-theme-emptyEvent">(your choice)</span>
                       )}
                     </span>
-                    {(poll.showResults==="afterVote" || isAdmin)&&<span>{votes} vote{Number(votes) !== 1 ? "s" : ""}</span>
+                    {(poll.showResults==="afterVote" || isAdmin)&&<span className="ml-3">{votes} vote{Number(votes) !== 1 ? "s" : ""}</span>
                     }
                   </div>
                   {(poll.showResults==="afterVote" || isAdmin)&&

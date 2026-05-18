@@ -128,7 +128,7 @@ const pollSlice = createSlice({
   question: "",
   name:"Poll",
   choices: ["", ""],
-  type: "private",
+  // type: "private",
   showResults: "afterVote",
   visibility: "anyone",
   topic: "",

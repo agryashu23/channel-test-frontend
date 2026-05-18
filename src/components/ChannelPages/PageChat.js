@@ -78,7 +78,6 @@ const PageChat = ({
   const inputRef = useRef(null);
   const addMenuRef = useRef(null);
   const addMenuButtonRef = useRef(null);
-  const [isPinned, setIsPinned] = useState(false);
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
@@ -399,6 +398,11 @@ const PageChat = ({
   );
   const isEditor = isTopicAdmin || topic.editability === "anyone";
 
+  const setIsPinned=(value)=>{
+    dispatch(setChatField({field:"pinned",value:value}));
+  }
+
+
   return (
     <div
       className={`w-full relative flex flex-col ${
@@ -438,7 +442,6 @@ const PageChat = ({
           <PageChatData
             ref={pageChatDataRef}
             topicId={topicId}
-            isPinned={isPinned}
             setIsPinned={setIsPinned}
             channelName={channelName}
             isBrandTalk={isBrandTalk}
@@ -507,7 +510,7 @@ const PageChat = ({
             </div>
           </div>
         )}
-        {isEditor && !isPinned && !isMemberClick && (
+        {isEditor && !channelChat.isPinned && !isMemberClick && (
           <div className="flex flex-col items-center px-2 pt-2 pb-3 space-x-2 bg-theme-secondaryBackground border-t border-t-theme-chatDivider">
             <div className="relative flex flex-row items-center w-full">
               <img
@@ -571,24 +574,24 @@ const PageChat = ({
             </div>
 
             <div className="flex flex-row justify-between items-center w-full px-2 mt-2">
-              <div className="flex flex-row justify-start">
+              <div className="flex flex-row justify-start items-center min-w-0 flex-1 overflow-hidden">
                 <div
                   ref={addMenuButtonRef}
                   onClick={(e) => {
                     e.preventDefault();
                     setShowAddMenu((prev) => !prev);
                   }}
-                  className="cursor-pointer"
+                  className="cursor-pointer flex-shrink-0"
                 >
                   <img
                     src={AddButton}
                     alt="add-btn"
-                    className="dark:block hidden w-8 h-8"
+                    className="dark:block hidden w-8 h-8 flex-shrink-0"
                   />
                   <img
                     src={AddButtonLight}
                     alt="add-btn"
-                    className="dark:hidden w-8 h-8"
+                    className="dark:hidden w-8 h-8 flex-shrink-0"
                   />
                 </div>
 
@@ -661,31 +664,35 @@ const PageChat = ({
                     )}
                   </div>
                 )}
-                {(!business?.parameters || business?.parameters?.talkToBrand) &&
-                  !isTopicAdmin && (
+                <div className="flex flex-row overflow-x-auto whitespace-nowrap xs:ml-2 no-scrollbar min-w-0 flex-1">
+                    {
+                     (!business?.parameters || business?.parameters?.talkToBrand) &&
+                   !isTopicAdmin && 
+                  (
                     <div
-                      className={`${
-                        isBrandTalk
-                          ? "bg-theme-secondaryText text-theme-primaryBackground"
-                          : "dark:bg-theme-tertiaryBackground bg-theme-buttonDisable text-theme-buttonDisableText"
-                      } ml-4 rounded-full px-3 py-1.5 flex flex-row cursor-pointer`}
-                      onClick={handleBrandTalk}
-                    >
-                      <img
-                        src={isBrandTalk ? ChatIcon2 : ChatIcon}
-                        alt="icon"
-                        className="w-5 h-5 mr-1"
-                      />
-                      <p
-                        className={`text-sm font-light ${
+                        className={`${
                           isBrandTalk
-                            ? "text-theme-primaryBackground"
-                            : "text-theme-emptyEvent"
-                        }`}
+                            ? "bg-theme-secondaryText text-theme-primaryBackground"
+                            : "dark:bg-theme-tertiaryBackground bg-theme-buttonDisable text-theme-buttonDisableText"
+                        } ml-4 rounded-full px-3 py-1.5 inline-flex items-center min-w-max whitespace-nowrap cursor-pointer`}
+                        onClick={handleBrandTalk}
                       >
-                        Talk to us
-                      </p>
-                    </div>
+                        <img
+                          src={isBrandTalk ? ChatIcon2 : ChatIcon}
+                          alt="icon"
+                          className="w-5 h-5 mr-1 flex-shrink-0"
+                      />
+                        <p
+                          className={`text-sm font-light ${
+                            isBrandTalk
+                              ? "text-theme-primaryBackground"
+                              : "text-theme-emptyEvent"
+                          }`}
+                        >
+                          Talk to us
+                        </p>
+                      </div>
+
                   )}
 
                 <div
@@ -728,12 +735,14 @@ const PageChat = ({
                     </p>
                   </div>
                 )}
+                </div>
+                
               </div>
 
               {(data.length > 0 ||
                 channelChat.content ||
                 channelChat.media.length > 0) && (
-                <div className="relative">
+                <div className="relative flex-shrink-0 ml-2">
                   {loading ? (
                     <div className="absolute inset-0 flex items-center justify-center pl-2">
                       <div className="w-5 h-5 border-[3px] border-t-[3px] border-gray-900 mr-10 border-theme-secondaryText rounded-full animate-spin"></div>
@@ -742,7 +751,7 @@ const PageChat = ({
                     <img
                       src={SendButton}
                       alt="send-btn"
-                      className="w-9 h-9 cursor-pointer"
+                      className="w-9 h-9 cursor-pointer flex-shrink-0"
                       onClick={
                         isBrandTalk ? handleSendBrandChat : handleSendChat
                       }

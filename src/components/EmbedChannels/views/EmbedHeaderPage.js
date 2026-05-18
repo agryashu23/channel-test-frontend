@@ -9,14 +9,16 @@ import {
 import { fetchChannel } from "../../../redux/slices/channelSlice";
 import ProfileIcon from "../../../assets/icons/profile.svg";
 import ColorProfile from "../../../assets/images/color_profile.svg";
-
+import Pin from "../../../assets/icons/Pin.svg";
+import PinLight from "../../../assets/icons/pin_light.svg";
 import DropDown from "../../../assets/icons/arrow_drop_down.svg";
 import DropDownLight from "../../../assets/lightIcons/arrow_drop_down_light.svg";
 import { getAppPrefix } from "./../utility/embedHelper";
-import { fetchChannels } from "./../../../redux/slices/channelItemsSlice";
+import { setChannelItemsField} from "./../../../redux/slices/channelItemsSlice";
 import { fetchMyData } from "./../../../redux/slices/myDataSlice";
 import useModal from "./../../hooks/ModalHook";
 import ThemeToggleButton from "./../../../utils/theme";
+import { createChannelChatReply, setChatField } from "../../../redux/slices/chatSlice";
 
 const EmbedHeaderPage = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -36,7 +38,7 @@ const EmbedHeaderPage = () => {
   const myData = useSelector((state) => state.myData);
   const business = useSelector((state) => state.business);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  const channelsData = useSelector((state) => state.channelItems.channels);
+  const channelsData = useSelector((state) => state.channelItems.embedChannels);
   const myUser = useSelector((state) => state.auth.user);
   const myUserId = myUser?._id;
   const channelName = channel.name;
@@ -54,6 +56,7 @@ const EmbedHeaderPage = () => {
         const dataId = JSON.parse(data);
         setUsername(dataId.username);
         setChannelId(dataId.selectedChannel);
+        dispatch(setChannelItemsField(dataId.channels));
         clearInterval(interval);
       }
     }, 200);
@@ -70,18 +73,18 @@ const EmbedHeaderPage = () => {
     }
   }, [channelId]);
 
-  useEffect(() => {
-    if (username && !hasFetched.current) {
-      dispatch(fetchChannels({username:username, user_id:myUserId || null}))
-        .unwrap()
-        .then((channels) => {
-          hasFetched.current = true;
-        })
-        .catch((error) => {
-          alert(error);
-        });
-    }
-  }, [username, dispatch]);
+  // useEffect(() => {
+  //   if (username && !hasFetched.current) {
+  //     dispatch(fetchChannels({username:username, user_id:myUserId || null}))
+  //       .unwrap()
+  //       .then((channels) => {
+  //         hasFetched.current = true;
+  //       })
+  //       .catch((error) => {
+  //         alert(error);
+  //       });
+  //   }
+  // }, [username, dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -124,8 +127,8 @@ const EmbedHeaderPage = () => {
 
   const handleMessagePage = () => {
     toggleDropdown();
-    if (myData.username) {
-      navigate(`${getAppPrefix()}/account/${myData.username}/messages/list`);
+    if (myData?.username) {
+      navigate(`${getAppPrefix()}/account/${myData?.username}/messages/list`);
     }
   };
 
@@ -136,6 +139,10 @@ const EmbedHeaderPage = () => {
     ) ||
     matchPath(
       `${getAppPrefix()}/account/:username/channel/:channelId`,
+      location.pathname
+    );
+  const isOnlyTopicPage = matchPath(
+      `${getAppPrefix()}/account/:username/channel/:channelId/c-id/topic/:topicId`,
       location.pathname
     );
   const isMessagePage = matchPath(
@@ -150,6 +157,10 @@ const EmbedHeaderPage = () => {
     toggleDropdown();
     handleOpenModal("modalEmbedLogoutOpen");
   };
+
+  const setIsPinned=(value)=>{
+    dispatch(setChatField({field:"pinned",value:value}));
+  }
 
   const handleLogin = () => {
     const data = localStorage.getItem("embedFetchedData");
@@ -256,7 +267,7 @@ const EmbedHeaderPage = () => {
               {!isLoggedIn && (
                 <p
                   onClick={handleLogin}
-                  className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6  text-theme-primaryText`}
+                  className={`block text-sm font-normal font-inter cursor-pointer py-2 px-3  text-theme-primaryText`}
                 >
                   Login
                 </p>
@@ -264,6 +275,10 @@ const EmbedHeaderPage = () => {
             </div>
           </div>
         )}
+        {isOnlyTopicPage && <div onClick={() => setIsPinned(true)}>
+            <img src={Pin} alt="pin" className="w-5 h-5 ml-3 mt-0.5 dark:hidden block cursor-pointer"/>
+            <img src={PinLight} alt="pin" className="w-5 h-5 ml-3 mt-0.5  dark:block hidden cursor-pointer"/>
+        </div>}
       </div>
       {myData?.username && (
         <div
@@ -279,7 +294,7 @@ const EmbedHeaderPage = () => {
           /> */}
           {myData?.logo ? (
             <img
-              src={myData.logo}
+              src={myData?.logo}
               alt="profile-icon"
               className="rounded-full w-full h-full object-cover cursor-pointer shrink-0"
             />

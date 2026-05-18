@@ -251,7 +251,7 @@ const ChannelsTab = ({ gallery = false, isOwner }) => {
               className="py-2 xs:px-3 px-2 cursor-pointer text-theme-primaryBackground bg-theme-secondaryText rounded-lg text-xs font-inter"
               onClick={() => handleOwnerShareChannel(channel._id)}
             >
-              Create join link
+              Create joining link
             </div>
           ) : buttonState === "Exit channel" ? (
             <div

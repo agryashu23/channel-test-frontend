@@ -21,6 +21,7 @@ const UserSidebar = ({ closeSidebar }) => {
   const { handleOpenModal } = useModal();
   const navigate = useNavigate();
   const [isDashboard, setIsDashboard] = useState(false);
+  const [isIntegration, setIsIntegration] = useState(false);
   const [apiFetchOnce, setApiFetchOnce] = useState(false);
   const dispatch = useDispatch();
   const [expandedChannels, setExpandedChannels] = useState({});
@@ -95,15 +96,16 @@ const UserSidebar = ({ closeSidebar }) => {
     const checkInitialKey = async () => {
       try {
         const response = await postRequestAuthenticated(
-          "/check/api/key/generated"
+          "/check/business/exist"
         );
         setApiFetchOnce(true)
         if (response.success) {
-          setIsDashboard(true);
+          setIsDashboard(response.isDashboard);
+          setIsIntegration(response.isIntegration);
         } 
       } catch (error) {}
     };
-    if(!apiFetchOnce){
+    if(!apiFetchOnce && myUserId){
       checkInitialKey();
     }
   }, []);
@@ -327,15 +329,24 @@ const UserSidebar = ({ closeSidebar }) => {
         </nav>
       </div>
       <div className="pb-5 mt-12">
-        {isLoggedIn && (
+        {isLoggedIn && isDashboard && (
           <div
             className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6 text-theme-primaryText`}
             onClick={handleAdminNavigation}
           >
-            {isDashboard ? "Dashboard" : "Integrate Channels"}
+            Dashboard
           </div>
         )}
-        <div className="border-t  border-t-theme-sidebarDivider my-2"></div>
+        {isLoggedIn && isDashboard && <div className="border-t  border-t-theme-sidebarDivider my-2"></div>}
+        {isLoggedIn && !isIntegration &&  (
+          <div
+            className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6 text-theme-primaryText`}
+            onClick={handleAdminNavigation}
+          >
+           Integrate Channels
+          </div>
+        )}
+        {isLoggedIn && !isIntegration && <div className="border-t  border-t-theme-sidebarDivider my-2"></div>}
         <div
           className={`block text-sm font-normal font-inter cursor-pointer py-2 px-6 text-theme-primaryText`}
           onClick={() => navigate("/documentation/channels")}

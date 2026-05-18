@@ -308,7 +308,7 @@ const CurationModal = () => {
                   </p>
                 )}
               </div>
-              <div className="mb-5 mt-1">
+              {/* <div className="mb-5 mt-1">
                 <p className="text-theme-secondaryText text-sm font-light font-inter">
                   Who can add content to this curation?
                 </p>
@@ -365,7 +365,7 @@ const CurationModal = () => {
                     <span>Only me</span>
                   </label>
                 </div>
-              </div>
+              </div> */}
               <div className="relative mb-2">
                 <p className="text-theme-secondaryText text-sm font-light font-inter mb-2">
                   Description for your curation

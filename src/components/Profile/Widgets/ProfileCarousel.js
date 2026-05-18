@@ -22,7 +22,10 @@ const ProfileCarousel = ({images}) => {
       <Slider {...settings}>
         {images.map((image, index) => (
           <div key={index} className="h-full flex items-center justify-center rounded-md ">
-            <img src={image.url} alt={`Slide ${index}`} className=" w-full h-full object-cover rounded-md" />
+            <img src={image.url} alt={`Slide ${index}`} 
+            className=" w-full h-full object-cover rounded-md" 
+            loading={index === 0 ? "eager" : "lazy"}
+            fetchpriority={index === 0 ? "high" : "low"}/>
           </div>
         ))}
       </Slider>

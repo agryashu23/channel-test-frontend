@@ -51,6 +51,7 @@ const EmbedHomePage = () => {
         "/generate/embed-data",
         formData
       );
+      console.log(response);
 
       if (response.success) {
         localStorage.setItem("embedFetchedData", JSON.stringify(response));
@@ -143,7 +144,7 @@ const EmbedHomePage = () => {
                })
              );
              localStorage.setItem("auth-token", authResult.token);
-             setAllowedInTopic(authResult.allowInTopic)
+             setAllowedInTopic(authResult?.allowInTopic)
              dispatch(fetchMyData());
            }
 
@@ -151,7 +152,7 @@ const EmbedHomePage = () => {
           await fetchData();
           if (!embedLoadTimeout) {
             setReadyToRender(true);
-            navigateToChannelFromStorage(authResult.allowInTopic);
+            navigateToChannelFromStorage(authResult?.allowInTopic || false);
           }
         } catch (err) {
           console.error("Error handling embedData:", err);

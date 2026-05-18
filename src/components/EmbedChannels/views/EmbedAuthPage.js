@@ -22,6 +22,7 @@ const EmbedAuthPage = ({  }) => {
   const [channelId, setChannelId] = useState("");
   const [showOtp, setShowOtp] = useState("");
   const [embedData, setEmbedData] = useState(null);
+  const [loading,setLoading] = useState(false);
   const [embedData2, setEmbedData2] = useState(null);
   const dispatch = useDispatch();
   const csrfToken = getCsrfToken();
@@ -106,7 +107,9 @@ const EmbedAuthPage = ({  }) => {
   const handleChangeOtp = async (value) => {
     setOtp(value);
     
-    if (value.length === 6 && value === otpBackend) {
+    if (value.length === 6 
+      && value === otpBackend
+    ) {
       setNewError("");
       const userData = {
         name: fullName.trim(),
@@ -117,6 +120,7 @@ const EmbedAuthPage = ({  }) => {
         originalChannel:embedData2?.selectedChannel || null,
         originalTopic:embedData2?.selectedTopic || null,
       };
+       setLoading(true);
       try {
         await axios
           .post(`${hostUrl}/api/verify/login/embed`, userData, {
@@ -126,6 +130,7 @@ const EmbedAuthPage = ({  }) => {
             // withCredentials: true,
           })
           .then((response) => {
+            setLoading(false);
             if (response.data.success) {
               const user = response.data.user;
               const partialUser = {
@@ -166,6 +171,7 @@ const EmbedAuthPage = ({  }) => {
             }
           });
       } catch (error) {
+        setLoading(false);
         setNewError("Error Registering. Please try again");
       }
     } else if (otp.length === 6) {
@@ -307,6 +313,9 @@ const EmbedAuthPage = ({  }) => {
             </div>
           )}
         </div>
+        {loading && <div className="text-center text-theme-secondaryText my-4 font-light text-sm">
+          Loading...
+          </div>}
 
         <div className="text-center text-theme-error my-4 font-light text-sm tracking-wide">
           {newError}

@@ -12,21 +12,25 @@ import PricingCard from "./widgets.js/PricingCard";
 import { ChannelImages } from "../constants/images";
 import Loading from "../../widgets/Loading";
 import AdminPricingCard from "../Admin/Account/widgets/AdminPricingCard";
+import PaymentLoading from "../../widgets/paymentLoading";
 
 const Pricing = () => {
   const myData = useSelector((state) => state.myData);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const myUser = useSelector((state) => state.auth.user);
+  const payment = useSelector((state) => state.payment);
   const myUserId = myUser?._id;
   const [activeTabPricing, setActiveTabPricing] = useState("monthly");
   const [plans, setPlans] = useState([]);
   const [loading,setLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchPlans = async () => {
       setLoading(true);
       if(isLoggedIn && myUserId){
         const response = await postRequestAuthenticated(`/fetch/business/plans`);
+        console.log(response);
         setPlans(response.plans);
       }
       else{
@@ -38,7 +42,12 @@ const Pricing = () => {
     fetchPlans();
   }, [myUserId , isLoggedIn]);
   return (
-    <div className="flex flex-col mt-20 items-center z-10 px-8 bg-[#202020] h-full ">
+    <div className="relative flex flex-col mt-20 items-center z-10 px-8 bg-[#202020] h-full ">
+       {payment.loading && (
+              <div className="absolute inset-0 bg-[#202020] pt-20 bg-opacity-80 z-50 flex  justify-center">
+                <PaymentLoading />
+              </div>
+        )}
       <p className="text-white text-2xl font-normal">
         Choose the plan that's right for you
       </p>
@@ -70,7 +79,7 @@ const Pricing = () => {
       </div> */}
       {loading?<div className="mt-12 flex justify-center items-center"><Loading text={"Loading..."}  /></div>:<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6  w-full max-w-7xl mt-12">
         {plans?.map((plan, index) => (
-         isLoggedIn && myData._id && myData.business ? 
+         isLoggedIn && myUserId? 
          <AdminPricingCard key={index} plan={plan} index={index} type={activeTabPricing}/>:<PricingCard key={index} plan={plan}  type={activeTabPricing} />
         ))}
       </div>}

@@ -48,6 +48,7 @@ export const fetchBusinessTopicRequests = createAsyncThunk(
       const response = await postRequestAuthenticated(
         `/fetch/business/topic/requests`
       );
+      console.log(response);
       if (response.success) {
         return response;
       } else {

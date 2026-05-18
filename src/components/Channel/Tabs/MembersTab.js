@@ -66,7 +66,7 @@ const MembersTab = ({ channelId, isOwner,channel }) => {
   const myRoleData = reorderMembers.find(
   (member) => member?.user?.username === myData?.username
   );
-  const myRole = myRoleData.role;
+  const myRole = myRoleData?.role;
 
   const filteredMembers = reorderMembers.filter((member) => {
     const username = member?.user?.username;

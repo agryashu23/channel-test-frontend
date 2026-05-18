@@ -16,9 +16,7 @@ const AdminNotifications = () => {
   const navigate = useNavigate();
 
   useEffect(()=>{
-    if(business.notifications.length===0){
        dispatch(fetchBusinessNotifications())
-    }
   },[]);
 
   const handleUpdateNotification=(businessId,notificationId,route)=>{
