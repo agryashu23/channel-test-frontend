@@ -1,70 +1,113 @@
-# Getting Started with Create React App
+# Channels Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The React app behind [Channels](https://github.com/channels-social), a platform that puts a full community (channels, topics, live chat, events, polls, DMs and an AI assistant) inside any website or mobile app. One codebase serves both the admin product and the embeddable widget.
 
-## Available Scripts
+**Live:** [channelssocial.com](https://channelssocial.com) · **Docs:** [channelssocial.com/documentation/channels](https://channelssocial.com/documentation/channels) · **Platform overview:** [github.com/channels-social](https://github.com/channels-social)
 
-In the project directory, you can run:
+> **About this repo.** This is an earlier snapshot of the frontend. Current development continues in a private repository of the [`channels-social`](https://github.com/channels-social) organisation; the highlights and screenshots below show the platform as it runs today.
+>
+> Related: [`channel-test-backend`](https://github.com/agryashu23/channel-test-backend) · [`channels-test-ai`](https://github.com/agryashu23/channels-test-ai)
 
-### `npm start`
+<img src="docs/assets/embed-live.png" alt="The Channels widget open on a website" width="860">
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Screenshots
 
-### `npm test`
+**It takes on the host product's look.** Colours, typography and feel come from the customer's brand.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<img src="docs/assets/themes.png" alt="Channels themed for six different products" width="860">
 
-### `npm run build`
+<table>
+<tr>
+<td width="50%"><b>Analytics</b><br><img src="docs/assets/dashboard-analytics.png" alt="Analytics dashboard"></td>
+<td width="50%"><b>Integration in 14 stacks</b><br><img src="docs/assets/integration.png" alt="Integration snippet generator"></td>
+</tr>
+<tr>
+<td><b>Bot Studio</b><br><img src="docs/assets/bot-studio.png" alt="Bot Studio"></td>
+<td><b>Channels and topics</b><br><img src="docs/assets/channels.png" alt="Channels list"></td>
+</tr>
+</table>
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## How the embed works
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```mermaid
+sequenceDiagram
+    participant H as Host website
+    participant W as widget.js
+    participant F as Embed iframe (React)
+    participant A as Channels API
 
-### `npm run eject`
+    H->>W: loads script with apiKey
+    W->>F: creates iframe modal
+    loop until acknowledged
+        W->>F: postMessage(embedData: user, channel, theme)
+    end
+    F-->>W: ack
+    F->>A: verify API key, sign member in
+    A-->>F: member session + branding + feature flags
+    F->>F: apply brand theme, open channel
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+**Stack:** React 18 · Redux Toolkit · React Router · Tailwind CSS · Socket.IO client
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Engineering highlights
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### One codebase, two products
+- The same app runs as the **standalone admin product** and as the **embedded widget**.
+- The embed boots its **own isolated Redux store**. It reuses every chat reducer but swaps in embed-specific auth, so an embedded session never touches the admin session or the host site's state.
 
-## Learn More
+### A loader that cannot lose the race
+- `widget.js` is a small dependency-free script. It reads its API key from its own URL, builds a responsive iframe modal (6 positions, per-breakpoint sizes), and exposes `window.openChannelsWidget`.
+- It passes the host's user data to the iframe over `postMessage` and **retries until the iframe acknowledges**, so it works whichever side loads first.
+- The embed can also boot directly from URL parameters, which is how the mobile SDKs load it.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Runtime theming and feature switches
+- Each customer's accent colours, logo, banner and light/dark/auto theme are applied as CSS variables when the embed loads, with no rebuild.
+- Thirteen feature switches per community (events, file sharing, DMs, polls and more) reshape the UI.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Real-time chat
+- Replies, reactions, @mentions, pinning, link previews, media and attachments, polls, events with calendar export, topic summaries, DMs and moderation actions, over Socket.IO.
 
-### Code Splitting
+### Admin product
+- **12 dashboard sections:** overview, analytics, channels, AI setup, members, inbox, requests, notifications, integration, Bot Studio, billing and settings.
+- **A 5-step setup wizard:** account, domain verification, AI community build, embed install, customise.
+- **Integration code generator** for 14 stacks: React, Next.js, Vue, Nuxt, Angular, Svelte, HTML, WordPress, Shopify, PHP, React Native, Flutter, Android and iOS.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Mobile
+- **Deep links from native apps.** A push-notification tap in a host mobile app posts a message into the embedded web view, which navigates straight to the right channel and topic.
+- Wrapped by the [React Native](https://www.npmjs.com/package/@channels-social/react-native) and [Flutter](https://pub.dev/packages/channels_flutter) SDKs.
 
-### Analyzing the Bundle Size
+### State
+- 22 Redux slices and about 75 async thunks, with role-based UI gating for owners, admins and members.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+<img src="docs/assets/docs.png" alt="Developer documentation" width="860">
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## By the numbers
 
-### Advanced Configuration
+| | |
+|---|---|
+| Components | 150+ |
+| Redux slices | 22 |
+| Routes | 32 |
+| Integration stacks | 14 |
+| Dashboard sections | 12 |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## Run this snapshot
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+npm install
+npm start
+```
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Built by [Yashu Agrawal](https://github.com/agryashu23), co-founder and engineer at Channels.
